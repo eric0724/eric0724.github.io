@@ -1,0 +1,158 @@
+<code>
+    <!DOCTYPE html >
+    <html style="
+    text-align-last: center;
+    background-image: url(../images/games_background.jpg);
+    background-size: 100%;">
+        <head>
+            
+            <style>
+                @import url(../css/css.css);
+                .buttonR {
+                    border: none;
+                }
+
+            </style>
+            <meta charset="utf-8">
+            <title>翻牌game</title>
+            <script type="text/javascript">
+                var answers="11223344556677889900";
+                var s = 0, ss = 350, a = 0;
+                var time = 60, T = null;
+                var times1 = 0,times1answer = 10; //第一個按的字 10 是沒有任何
+                function changeColor(playx) {
+                    var playx;
+                    var button = document.getElementById(playx);
+                    x = (playx[6]);
+                    if (x == 'R') {
+                        function myTimer() {
+                            time--;
+                            playx = "button" + 'T';
+                            button = document.getElementById(playx);
+                            button.value = time;
+                            playx = "button" + 'S';
+                            button = document.getElementById(playx);
+                            button.value = s + "分\n最高" + ss;
+                            if (time <= 0) {
+                                var end = "結束~ \n 恭喜獲得 " + s + " 分\n";
+                                if (ss <= s) {
+                                    a = s - ss;
+                                    ss = s;
+                                    end += "超過最高分" + a
+                                }
+                                rTimer();
+                                confirm(end);
+                            }
+                        }
+                        function rTimer() {
+                            clearInterval(T);
+                            T = null;
+                        }
+                        rTimer();
+                        T = setInterval(function () { myTimer() }, 1000);
+                        time = 60;
+                        s = 0;
+                        button.value = "重新";
+                        var r = 0;
+                        for (b = 1; b <= 20; b++) {
+                            playx = "button" + b;
+                            button = document.getElementById(playx);
+                            button.value = 10;
+                        }
+                        for (b = 1; b <= 20; b++) {
+                            r = Math.floor((Math.random() * 20)); //1
+                            while (true){
+                                var aa =0;
+                                for (a = 1; a <= 20; a++) {
+                                    playx = "button" + a;
+                                    button = document.getElementById(playx);
+                                    if(button.value == answers[r]) aa++;
+                                }
+                                if(aa>=2) { r = Math.floor((Math.random() * 20));aa=0; }
+                                else 
+                                break;
+                            }
+                            playx = "button" + b;
+                            button = document.getElementById(playx);
+                            button.value = answers[r];
+                            button.disabled = 0;
+                            button.style.fontSize = 0 ;
+                        }
+                        playx = "button" + "R";
+                    }
+                    x = (parseInt(playx[6] + playx[7]));
+                    if (x <= 20 && time >= 0) {
+                        button.style.fontSize = "69px";
+                        if (button.value == times1answer && playx != times1) {
+                            button.disabled = "disabled";
+                            playx = times1;
+                            button = document.getElementById(playx);
+                            button.style.fontSize = "69px";
+                            button.disabled = "disabled";
+                            s+=time;
+                            times1answer = 10;
+                        }
+                        else if(times1answer == 10) {
+                            times1 = playx;
+                            times1answer = button.value;
+                        }
+                        else {
+                            button.style.color = "red";
+                            delay = setTimeout(function(){
+                                button.style.color = "black";
+                                button.style.fontSize = 0;
+                                playx =  times1;
+                                button = document.getElementById(playx);
+                                button.style.fontSize = 0;
+                                times1answer = 10;
+                            },100)
+                        }
+                    }
+                }
+            </script>
+        </head>
+        <body>
+            <input type="button" value="返回" class="buttonGames" onclick="window.location='../games.html'"></button>
+            <input type="button" value="" style="float: right;" class="buttonGames" onclick="window.location='../games.html'"></button>
+            
+            <table align="center";>
+                <input type="button" id="buttonS" value="分數" class="buttonR" onclick="changeColor('buttonS')"style="background-color: #00eeffab; width: 150px; height: 69px;" />
+                <input type="button" id="buttonR" value="開始" class="buttonR" onclick="changeColor('buttonR')"style="background-color: #55ff00ab; width: 180px; height: 87px;" />
+                <input type="button" id="buttonT" value="時間" class="buttonR" onclick="changeColor('buttonT')"style="background-color: #ff0000ab; width: 150px; height: 69px;"  />
+                <hr />
+                <tr>
+                    <td><input type="button" id="button1" class="button" onclick="changeColor('button1')"/></td>
+                    <td><input type="button" id="button2" class="button" onclick="changeColor('button2')"/></td>
+                    <td><input type="button" id="button3" class="button" onclick="changeColor('button3')"/></td>
+                    <td><input type="button" id="button4" class="button" onclick="changeColor('button4')"/></td>
+                </tr>
+                <tr>
+                    <td><input type="button" id="button5" class="button" onclick="changeColor('button5')"/></td>
+                    <td><input type="button" id="button6" class="button" onclick="changeColor('button6')"/></td>
+                    <td><input type="button" id="button7" class="button" onclick="changeColor('button7')"/></td>
+                    <td><input type="button" id="button8" class="button" onclick="changeColor('button8')"/></td>
+                    
+                </tr>
+                <tr>
+                    <td><input type="button" id="button9"  class="button" onclick="changeColor('button9')"/></td>
+                    <td><input type="button" id="button10" class="button" onclick="changeColor('button10')"/></td>
+                    <td><input type="button" id="button11" class="button" onclick="changeColor('button11')"/></td>
+                    <td><input type="button" id="button12" class="button" onclick="changeColor('button12')"/></td>
+                </tr>
+                <tr>
+                    <td><input type="button" id="button13" class="button" onclick="changeColor('button13')" /></td>
+                    <td><input type="button" id="button14" class="button" onclick="changeColor('button14')" /></td>
+                    <td><input type="button" id="button15" class="button" onclick="changeColor('button15')" /></td>
+                    <td><input type="button" id="button16" class="button" onclick="changeColor('button16')" /></td>
+                </tr>
+                <tr>
+                    <td><input type="button" id="button17" class="button" onclick="changeColor('button17')" /></td>
+                    <td><input type="button" id="button18" class="button" onclick="changeColor('button18')" /></td>
+                    <td><input type="button" id="button19" class="button" onclick="changeColor('button19')" /></td>
+                    <td><input type="button" id="button20" class="button" onclick="changeColor('button20')" /></td>
+                </tr>
+            </table>
+            <hr />
+        </body>
+    </html>
+</code>

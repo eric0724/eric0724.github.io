@@ -1,0 +1,179 @@
+<code>
+    <!DOCTYPE html >
+    <html style="text-align-last: center;
+    background-image: url(../images/games_background.jpg);
+    background-size: 100%;">
+        <head id = html>
+            <style>
+                @import url(../css/css.css);
+                .button {
+                    font-size: 30px;
+                }
+                .buttonR {
+                    border: none;
+                }
+            </style>
+            <meta charset="utf-8">
+            <title>音遊</title>
+            <script type="text/javascript">
+                var m = {};
+                var s = 0, ss = 300, a = 0,htmlcolor = 256;
+                var time = 60, T = null,errortimes = 0;
+                function changeColor(playx) {
+                    var playx;
+                    var button = document.getElementById(playx);
+                    x = (playx[6]);
+                    if (x == 'R') {
+                        function myTimer() {
+                            time--;
+                            playx = "button" + 'T';
+                            button = document.getElementById(playx);
+                            button.style.fontSize = "large"
+                            button.value = time + "\n點錯"+errortimes+"次，扣"+(errortimes*2)+"s";
+                            playx = "button" + 'S';
+                            button = document.getElementById(playx);
+                            button.value = s + "分 \n最高" + ss;
+                            
+                            document.body.style.background = "rgba("+s*2+","+s*2+","+s*2+","+(0.9-s/200)+")";
+                            if (time <= 0) {
+                                var end = "結束~ \n 恭喜獲得 " + s + " 分\n";
+                                if (ss <= s) {
+                                    a = s - ss;
+                                    ss = s;
+                                    end += "超過最高分" + a
+                                }
+                                rTimer();
+                                confirm(end);
+                            }
+                        }
+                        function rTimer() {
+                            clearInterval(T);
+                            T = null;
+                        }
+                        rTimer();
+                        T = setInterval(function () { myTimer() }, 1000);
+                        time = 60;
+                        s = 0;
+
+                        button.value = "重新";
+                        var i = 0;
+                        for (b = 1; b <= 20; b += 4) {
+                            m[i] = Math.floor((Math.random() * 4) + b); //1
+                            i++;
+                        }
+                        for (b = 1; b <= 20; b++) {
+                            playx = "button" + b;
+                            button = document.getElementById(playx);
+                            button.style="background-image: url( );";
+                        }
+                        i = 0;
+                        for (b = 1; b <= 20; b++) {
+                            playx = "button" + b;
+                            button = document.getElementById(playx);
+                            if (b != m[i]) button.style.backgroundColor = "#ababab";
+                            else {
+                                i++; 
+                                button.style.backgroundColor = "greenyellow";
+                            }
+                        }
+                        playx = "button" + "R";
+                    }
+                    x = (parseInt(playx[6] + playx[7]));
+                    if (x <= 20 && time >= 0 && x >= 17) {
+                        if (button.style.backgroundColor == "greenyellow") {
+                            for (b = 4; b >= 0; b--) {
+                                playx = "button" + m[b];
+                                button = document.getElementById(playx);
+                                button.style.backgroundColor = "#ababab";
+                                button.style="background-image: url( );";
+
+
+                                if (b != 0) m[b] = m[b - 1] + 4;
+                                else m[b] = Math.floor((Math.random() * 4) + 1);
+                                playx = "button" + m[b];
+                                button = document.getElementById(playx);
+                                //button.style="background-image: url(image/"+(s%5)+".jpg);";
+                                button.style.backgroundSize = "100%";
+                                button.style.backgroundColor = "greenyellow";
+                                /*
+                                0 https://www.google.com/imgres?imgurl=https%3A%2F%2Fpgw.udn.com.tw%2Fgw%2Fphoto.php%3Fu%3Dhttps%3A%2F%2Fuc.udn.com.tw%2Fphoto%2F2023%2F09%2F24%2F0%2F25474283.jpg%26x%3D0%26y%3D0%26sw%3D0%26sh%3D0%26sl%3DW%26fw%3D1050&tbnid=B7VPGxxX7NO5KM&vet=12ahUKEwjR9c2EvOaCAxVXGYgKHcppD8kQMygfegUIARC5AQ..i&imgrefurl=https%3A%2F%2Fgame.udn.com%2Fgame%2Fstory%2F122089%2F7462348&docid=BefHFW3qOzGVKM&w=1048&h=589&q=%E5%92%92%E8%A1%93%E8%BF%B4%E6%88%B0&ved=2ahUKEwjR9c2EvOaCAxVXGYgKHcppD8kQMygfegUIARC5AQ
+                                1 https://www.google.com/imgres?imgurl=https%3A%2F%2Fmedia.gq.com.tw%2Fphotos%2F60c1f912b3a84dd7fd5e1109%2Fmaster%2Fpass%2F4Yz2Ang.png&tbnid=hBwGKA08OxK1GM&vet=12ahUKEwjR9c2EvOaCAxVXGYgKHcppD8kQMygFegQIARB4..i&imgrefurl=https%3A%2F%2Fwww.gq.com.tw%2Flife%2Farticle%2F%25E9%2580%25B1%25E5%2588%258A%25E5%25B0%2591%25E5%25B9%25B4-jump-%25E5%2592%2592%25E8%25A1%2593%25E8%25BF%25B4%25E6%2588%25B0-%25E4%25BC%2591%25E5%2588%258A&docid=94K3yJrjekKh6M&w=1920&h=1080&q=%E5%92%92%E8%A1%93%E8%BF%B4%E6%88%B0&ved=2ahUKEwjR9c2EvOaCAxVXGYgKHcppD8kQMygFegQIARB4
+                                2 https://www.google.com/imgres?imgurl=https%3A%2F%2Fnews.agentm.tw%2Fwp-content%2Fuploads%2Fcover-1-901-750x422.jpg&tbnid=j90QBV3yRt6F9M&vet=12ahUKEwjR9c2EvOaCAxVXGYgKHcppD8kQMygRegUIARCWAQ..i&imgrefurl=https%3A%2F%2Fnews.agentm.tw%2F147266%2F&docid=naYJEpDI_wD6fM&w=750&h=422&q=%E5%92%92%E8%A1%93%E8%BF%B4%E6%88%B0&ved=2ahUKEwjR9c2EvOaCAxVXGYgKHcppD8kQMygRegUIARCWAQ
+                                3 https://www.google.com/imgres?imgurl=https%3A%2F%2Fstorage.googleapis.com%2Fwww-cw-com-tw%2Farticle%2F202203%2Farticle-621f36083510a.jpg&tbnid=RWSXMWDYVHrn9M&vet=12ahUKEwjR9c2EvOaCAxVXGYgKHcppD8kQMygTegUIARCaAQ..i&imgrefurl=https%3A%2F%2Fwww.cw.com.tw%2Farticle%2F5120252&docid=BYE6QIEzJzCYwM&w=1600&h=1072&q=%E5%92%92%E8%A1%93%E8%BF%B4%E6%88%B0&ved=2ahUKEwjR9c2EvOaCAxVXGYgKHcppD8kQMygTegUIARCaAQ
+                                4 https://www.google.com/imgres?imgurl=https%3A%2F%2Fimg.ltn.com.tw%2FUpload%2Fnews%2F600%2F2023%2F09%2F21%2FphpK0SRZu.jpg&tbnid=IFborCKg-9gQgM&vet=12ahUKEwjR9c2EvOaCAxVXGYgKHcppD8kQMygdegUIARC1AQ..i&imgrefurl=https%3A%2F%2Fnews.ltn.com.tw%2Fnews%2Fworld%2Fbreakingnews%2F4435531&docid=aa3xcvB5zFel8M&w=800&h=450&q=%E5%92%92%E8%A1%93%E8%BF%B4%E6%88%B0&ved=2ahUKEwjR9c2EvOaCAxVXGYgKHcppD8kQMygdegUIARC1AQ
+                                */
+                            }
+                            s++;
+                        }
+                        else{
+                            errortimes++;
+                            time -= 2; 
+                            button.style.backgroundColor = "red";
+                            delay = setTimeout(function(){
+                                button.style.backgroundColor = "#ababab";
+                            },100)
+                        }
+                    }
+                }
+            </script>
+        </head>
+        <body>
+            <script>
+                function keyFunction() {
+                    //confirm(event.keyCode);
+                    if (event.keyCode == 68) {
+                        changeColor('button17');
+                    } else if (event.keyCode == 70) {
+                        changeColor('button18');
+                    } else if (event.keyCode == 74) {
+                        changeColor('button19');
+                    } else if (event.keyCode == 75) {
+                        changeColor('button20');
+                    } else if (event.keyCode == 32) {
+                        changeColor('buttonR');
+                    }
+                }
+                document.onkeydown = keyFunction;
+            </script>
+            <input type="button" value="返回" class="buttonGames" onclick="window.location='../games.html'"></button>
+            <input type="button" value="" style="float: right;" class="buttonGames" onclick="window.location='../games.html'"></button>
+            <table align="center";>
+                <input type="button" id="buttonS" value="分數" onclick="changeColor('buttonS')" class="buttonR" style="background-color: #00eeffab; width: 150px; height: 69px;" />
+                <input type="button" id="buttonR" value="開始" onclick="changeColor('buttonR')" class="buttonR" style="background-color: #55ff00ab; width: 180px; height: 87px;" />
+                <input type="button" id="buttonT" value="時間" onclick="changeColor('buttonT')" class="buttonR" style="background-color: #ff0000ab; width: 150px; height: 69px;" />
+                <hr />
+                <tr>
+                    <td><input type="button" id="button1" class="button"/></td>
+                    <td><input type="button" id="button2" class="button" /></td>
+                    <td><input type="button" id="button3" class="button" /></td>
+                    <td><input type="button" id="button4" class="button" /></td>
+                </tr>
+                <tr>
+                    <td><input type="button" id="button5" class="button" /></td>
+                    <td><input type="button" id="button6" class="button"/></td>
+                    <td><input type="button" id="button7" class="button" /></td>
+                    <td><input type="button" id="button8" class="button" /></td>
+                </tr>
+                <tr>
+                    <td><input type="button" id="button9" class="button" /></td>
+                    <td><input type="button" id="button10" class="button" /></td>
+                    <td><input type="button" id="button11" class="button" /></td>
+                    <td><input type="button" id="button12" class="button" /></td>
+                </tr>
+                <tr>
+                    <td><input type="button" id="button13" class="button" /></td>
+                    <td><input type="button" id="button14" class="button" /></td>
+                    <td><input type="button" id="button15" class="button"/></td>
+                    <td><input type="button" id="button16" class="button" /></td>
+                </tr>
+                <tr>
+                    <td><input type="button" id="button17" value="d" onclick="changeColor('button17')" class="button"/></td>
+                    <td><input type="button" id="button18" value="f" onclick="changeColor('button18')" class="button" /></td>
+                    <td><input type="button" id="button19" value="j" onclick="changeColor('button19')" class="button" /></td>
+                    <td><input type="button" id="button20" value="k" onclick="changeColor('button20')" class="button" /></td>
+                </tr>
+            </table>
+            <hr />
+        </body>
+    </html>
+</code>
