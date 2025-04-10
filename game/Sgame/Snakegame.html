@@ -13,10 +13,16 @@
             border-radius: 50%;
             position: absolute;
         }
-
         .shows{
             font-size: xx-large;
             text-align: center;
+        }
+        body {
+            -webkit-user-select: none;  /* Chrome/Safari */
+            -moz-user-select: none;     /* Firefox */
+            -ms-user-select: none;      /* IE/Edge */
+            user-select: none;          /* 標準 */
+            touch-action: none;         /* 禁止預設觸控手勢，例如雙指縮放、滑動捲動 */
         }
     </style>
 </head>
@@ -26,7 +32,7 @@
 <input type="button" value="返回" class="buttonGames" onclick="window.location='../games.html'"></button>
 <input type="button" value="" style="float: right;" class="buttonGames" onclick="window.location='../games.html'"></button>     
 <input type="button" id="buttonS" value="分數" onclick="changeColor('buttonS')" class="buttonR" style="background-color: #00eeffab; width: 150px; height: 69px;" />
-<input type="button" id="buttonR" value="開始" onclick="changeColor('buttonR')" class="buttonR" style="background-color: #00ff15ab; width: 180px; height: 87px;" />
+<input type="button" id="buttonR" value="開始" onclick="changeColor('buttonR')" class="buttonR" style="background-color: #55ff00ab; width: 180px; height: 87px;" />
 <input type="button" id="buttonT" value="時間" onclick="changeColor('buttonT')" class="buttonR" style="background-color: #ff0000ab; width: 150px; height: 69px;" />
                 
 <script>
@@ -48,14 +54,24 @@
         button.value = "重新";
         location.reload()
     }
+    var time_move=0;
     function myTimer() {
-        time+=0.1;
+        time+=0.01;
         playx = "button" + 'T';
         button = document.getElementById(playx);
         button.value = time.toFixed(1); //顯示小數點一位
         playx = "button" + 'S';
         button = document.getElementById(playx);
         button.value = s + "分";
+        time_move += 0.01;
+        if(time_move>=0.2-time/2000){
+            movesnakeset();
+            time_move = 0;
+        }
+        /*
+        if(time.toFixed(0) % 2 == 0 && time.toFixed(0)/2 < 200){
+            circleMove = setInterval(function () {movesnakeset()},1);
+        }*/
         var end
         for (var i = 1; i < poslength; i++) {
             if(circlesx[i] == circlesx[0] && circlesy[i] == circlesy[0])
@@ -80,8 +96,8 @@
         circleMove = null;
     }
     rTimer();
-    circleMove = setInterval(function () {movesnakeset()},200);
-    T = setInterval(function () { myTimer() }, 100);
+    //circleMove = setInterval(function () {movesnakeset()},200);
+    T = setInterval(function () { myTimer() }, 10);
     time = 0;
     s = 0;
     playx = "button" + "R";
@@ -185,19 +201,47 @@
         circles[poslength].style.top  = appleY + 'px';
         
     }
-    
+    var startX = 0;
+    var startY = 0;
+    var endX   = 0;
+    var endY   = 0;
     document.addEventListener('keydown', keyFunction);
     function keyFunction(event) {
-            if (event.keyCode == 87 && direction != 3) {          // w
+            if ((event.keyCode == 87 || event.keyCode == 38) && direction != 3) {          // w
                 direction = 2;
-            } else if (event.keyCode == 83 && direction != 2) {   // s
+            } else if ((event.keyCode == 83 || event.keyCode == 40) && direction != 2) {   // s
                 direction = 3;
-            } else if (event.keyCode == 65 && direction != 0) {   // a
+            } else if ((event.keyCode == 65 || event.keyCode == 37 )&& direction != 0) {   // a
                 direction = 1;
-            } else if (event.keyCode == 68 && direction != 1) {   // d
+            } else if ((event.keyCode == 68 || event.keyCode == 39) && direction != 1) {   // d
                 direction = 0;
             }
     }
+    document.addEventListener("mousedown",function(e){
+        startX = e.clientX;
+        startY = e.clientY;
+    })
+    document.addEventListener("mouseup",function(e){  
+        endX = e.clientX;
+        endY = e.clientY;
+        const deltaX = endX - startX;
+        const deltaY = endY - startY;
+        if(deltaX > 50 || deltaX < -50){  
+            if( deltaX <= 0 && direction != 0){ // a
+                direction = 1;
+            }  
+            else if (direction != 1){       // d
+                direction = 0;
+            }
+        }
+        else{
+            if ( deltaY <= 0 && direction != 3) {  // w
+                direction = 2;
+            } else if (direction != 2) {   // s
+                direction = 3;
+            }
+        }
+    })
 </script>
 
 
@@ -205,4 +249,3 @@
 
 </body>
 </html>
-
