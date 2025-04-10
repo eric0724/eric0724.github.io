@@ -24,9 +24,18 @@
             user-select: none;          /* 標準 */
             touch-action: manipulation;         /* 禁止預設觸控手勢，例如雙指縮放、滑動捲動 */
         }
+        
+        #wrapper {
+            transform: scale(0.5);         /* 縮小 50% */
+            transform-origin: top left;    /* 從左上角開始縮放 */
+            width: 200vw;                  /* 調整寬度，避免被裁切 */
+            height: 200vh;
+        }
     </style>
 </head>
 <body align="center">
+<div id="wrapper">
+        <!-- 整個網頁內容放這裡 -->
 <div id="circles-container"></div>
 
 <input type="button" value="返回" class="buttonGames" onclick="window.location='../games.html'"></button>
@@ -83,7 +92,7 @@
                 var ts = ((time.toFixed(1))/s)
                 end += "每分花了(秒) :  "+ ts.toFixed(2) +"\n"
                 var ss = ((htmlheigh*htmlwidth)/100000)*ts
-                end += "    總得分    :   " + ss.toFixed(2) + "   (網頁面積/每一分花幾秒)"
+                end += "    總得分    :   " + ss.toFixed(2) ;//+ "   (網頁面積/每一分花幾秒)"
                 confirm(end);
                 rTimer();
             }
@@ -266,6 +275,7 @@
 </script>
 
 
+</div>
 
 
 </body>
