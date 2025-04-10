@@ -236,14 +236,14 @@
         endX = e.changedTouches[0].clientX;
         endY = e.changedTouches[0].clientY;
         handleSwipe();
-    })
+    })/*
     document.addEventListener('touchmove', function (e) {
         // 若是往下滑時觸發，就阻止預設行為
         if (e.touches.length === 1 && e.touches[0].clientY > 0) {
             e.preventDefault();
         }
     }, { passive: false });
-
+*/
     function handleSwipe(){
         endX = e.clientX;
         endY = e.clientY;
