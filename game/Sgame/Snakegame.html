@@ -17,9 +17,25 @@
             font-size: xx-large;
             text-align: center;
         }
+        body {
+            -webkit-user-select: none;  /* Chrome/Safari */
+            -moz-user-select: none;     /* Firefox */
+            -ms-user-select: none;      /* IE/Edge */
+            user-select: none;          /* 標準 */
+            touch-action: manipulation;         /* 禁止預設觸控手勢，例如雙指縮放、滑動捲動 */
+        }
+        
+        #wrapper {
+            transform: scale(0.5);         /* 縮小 50% */
+            transform-origin: top left;    /* 從左上角開始縮放 */
+            width: 200%;                  /* 調整寬度，避免被裁切 */
+            height: 200%;
+        }
     </style>
 </head>
 <body align="center">
+<div id="wrapper">
+        <!-- 整個網頁內容放這裡 -->
 <div id="circles-container"></div>
 
 <input type="button" value="返回" class="buttonGames" onclick="window.location='../games.html'"></button>
@@ -36,9 +52,9 @@
     var circles = [];
     var circlesx = [];
     var circlesy = [];
-    var htmlwidth = window.innerWidth-50;
+    var htmlwidth = window.innerWidth*2-50;
     while (htmlwidth % 50 != 0) htmlwidth --;
-    var htmlheigh = window.innerHeight-50;
+    var htmlheigh = window.innerHeight*2-50;
     while (htmlheigh % 50 != 0) htmlheigh --;
     var time = 0,T = null,circleMove = null;
     
@@ -47,14 +63,24 @@
         button.value = "重新";
         location.reload()
     }
+    var time_move=0;
     function myTimer() {
-        time+=0.1;
+        time+=0.01;
         playx = "button" + 'T';
         button = document.getElementById(playx);
         button.value = time.toFixed(1); //顯示小數點一位
         playx = "button" + 'S';
         button = document.getElementById(playx);
         button.value = s + "分";
+        time_move += 0.01;
+        if(time_move>=0.2-time/2000){
+            movesnakeset();
+            time_move = 0;
+        }
+        /*
+        if(time.toFixed(0) % 2 == 0 && time.toFixed(0)/2 < 200){
+            circleMove = setInterval(function () {movesnakeset()},1);
+        }*/
         var end
         for (var i = 1; i < poslength; i++) {
             if(circlesx[i] == circlesx[0] && circlesy[i] == circlesy[0])
@@ -66,7 +92,7 @@
                 var ts = ((time.toFixed(1))/s)
                 end += "每分花了(秒) :  "+ ts.toFixed(2) +"\n"
                 var ss = ((htmlheigh*htmlwidth)/100000)*ts
-                end += "    總得分    :   " + ss.toFixed(2) + "   (網頁面積/每一分花幾秒)"
+                end += "    總得分    :   " + ss.toFixed(2) ;//+ "   (網頁面積/每一分花幾秒)"
                 confirm(end);
                 rTimer();
             }
@@ -79,8 +105,8 @@
         circleMove = null;
     }
     rTimer();
-    circleMove = setInterval(function () {movesnakeset()},200);
-    T = setInterval(function () { myTimer() }, 100);
+    //circleMove = setInterval(function () {movesnakeset()},200);
+    T = setInterval(function () { myTimer() }, 10);
     time = 0;
     s = 0;
     playx = "button" + "R";
@@ -184,24 +210,73 @@
         circles[poslength].style.top  = appleY + 'px';
         
     }
-    
+    var startX = 0;
+    var startY = 0;
+    var endX   = 0;
+    var endY   = 0;
     document.addEventListener('keydown', keyFunction);
     function keyFunction(event) {
-            if (event.keyCode == 87 && direction != 3) {          // w
+            if ((event.keyCode == 87 || event.keyCode == 38) && direction != 3) {          // w
                 direction = 2;
-            } else if (event.keyCode == 83 && direction != 2) {   // s
+            } else if ((event.keyCode == 83 || event.keyCode == 40) && direction != 2) {   // s
                 direction = 3;
-            } else if (event.keyCode == 65 && direction != 0) {   // a
+            } else if ((event.keyCode == 65 || event.keyCode == 37 )&& direction != 0) {   // a
                 direction = 1;
-            } else if (event.keyCode == 68 && direction != 1) {   // d
+            } else if ((event.keyCode == 68 || event.keyCode == 39) && direction != 1) {   // d
                 direction = 0;
             }
+    }
+    document.addEventListener("mousedown",function(e){
+        startX = e.clientX;
+        startY = e.clientY;
+    })
+    // 觸控事件（手機）
+    document.addEventListener("touchstart", function(e) {
+        startX = e.touches[0].clientX;
+        startY = e.touches[0].clientY;
+    });
+    document.addEventListener("touchend", function(e) {
+        // 有些裝置可能用 changedTouches
+        endX = e.changedTouches[0].clientX;
+        endY = e.changedTouches[0].clientY;
+        handleSwipe();
+    });
+    document.addEventListener("mouseup",function(e){  
+        endX = e.changedTouches[0].clientX;
+        endY = e.changedTouches[0].clientY;
+        handleSwipe();
+    })
+    document.addEventListener('touchmove', function (e) {
+        // 若是往下滑時觸發，就阻止預設行為
+        if (e.touches.length === 1 && e.touches[0].clientY > 0) {
+            e.preventDefault();
+        }
+    }, { passive: false });
+
+    function handleSwipe(){
+        const deltaX = endX - startX;
+        const deltaY = endY - startY;
+        if(deltaX > 50 || deltaX < -50){  
+            if( deltaX <= 0 && direction != 0){ // a
+                direction = 1;
+            }  
+            else if (direction != 1){       // d
+                direction = 0;
+            }
+        }
+        else{
+            if ( deltaY <= 0 && direction != 3) {  // w
+                direction = 2;
+            } else if (direction != 2) {   // s
+                direction = 3;
+            }
+        }
     }
 </script>
 
 
+</div>
 
 
 </body>
 </html>
-
