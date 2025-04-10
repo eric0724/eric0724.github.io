@@ -245,8 +245,6 @@
     }, { passive: false });
 */
     function handleSwipe(){
-        endX = e.clientX;
-        endY = e.clientY;
         const deltaX = endX - startX;
         const deltaY = endY - startY;
         if(deltaX > 50 || deltaX < -50){  
