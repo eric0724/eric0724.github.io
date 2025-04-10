@@ -221,7 +221,23 @@
         startX = e.clientX;
         startY = e.clientY;
     })
+    // 觸控事件（手機）
+    document.addEventListener("touchstart", function(e) {
+        startX = e.touches[0].clientX;
+        startY = e.touches[0].clientY;
+    });
+    document.addEventListener("touchend", function(e) {
+        // 有些裝置可能用 changedTouches
+        endX = e.changedTouches[0].clientX;
+        endY = e.changedTouches[0].clientY;
+        handleSwipe();
+    });
     document.addEventListener("mouseup",function(e){  
+        endX = e.changedTouches[0].clientX;
+        endY = e.changedTouches[0].clientY;
+        handleSwipe();
+    })
+    function handleSwipe(){
         endX = e.clientX;
         endY = e.clientY;
         const deltaX = endX - startX;
@@ -241,7 +257,7 @@
                 direction = 3;
             }
         }
-    })
+    }
 </script>
 
 
