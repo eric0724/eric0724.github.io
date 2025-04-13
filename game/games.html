@@ -1,107 +1,205 @@
 <code>
     <!DOCTYPE html >
     <html>
-        <head>
-            <style>
-                body{
-                    text-align-last: center;
-                    background-image: url(images/games_background.jpg);
-                    background-size: 100%;
-                }
-            
-                .button {
-                    background-color: #abababab;
-                    border-radius: 50px 50px 50px 50px;
-                    width: 330px;
-                    height: 330px;
-                    font-size: 69px;
-                    background-size: 100%;
-                }
-                a {
-                    background-color: grey;
-                    width: 100%;
-                    height: 50px;
-                    font-size: 50px ;
-                    color: blue;
-                }
-                h2{
-                    font-size: 50px;
-                    color: white;
-                }
-                h1{
-                    color: rgb(0, 217, 255);
-                    font-size: 70px;
-                }
-            </style>
-            <meta charset="utf-8">
-            <title>遊戲庫</title>
-        </head>
-        <body>
-            <h1>遊戲庫
-                <hr/>
-                <h2>網頁造訪次數</h2> <br>
-                <div id="sfcf6ttke7dmg29k13ntew4qqmuypp3nwkd"></div>
-                <script type="text/javascript" src="https://counter4.optistats.ovh/private/counter.js?c=f6ttke7dmg29k13ntew4qqmuypp3nwkd&down=async" async></script>
-                <noscript><a href="https://www.freecounterstat.com" title="free hit counter"><img src="https://counter4.optistats.ovh/private/freecounterstat.php?c=f6ttke7dmg29k13ntew4qqmuypp3nwkd" border="0" title="free hit counter" alt="free hit counter"></a></noscript>
-                <br><br>
-            <hr/>
-            <table align="center">
-                <tr>   <td> <h2>html <hr/> </td>   </tr>
-                <tr>
-                    <td>
-                        <button class="button" onclick="window.location='OOXX/OOXX.html'"style="background-image: url(OOXX/OOXX_picture.png);" >
-                    </td>
-                    <td>
-                        <button class="button" onclick="window.location='musicgame/musicgame.html'"style="background-image: url(musicgame/musicgame_picture.png);" >
-                    </td>
-                </tr>
-                <tr>
-                    <td><h2>圈圈叉叉</td>
-                    <td><h2>超簡易音遊</td>
-                </tr>
-
-                <tr>
-                    <td>
-                        <button class="button" onclick="window.location='cardgame/cardgame.html'"style="background-image: url(cardgame/cardgame_picture.png);" >
-                    </td>
-                    <td>
-                        <button class="button" onclick="window.location='Sgame/Snakegame.html'" style="background-image: url(Sgame/Sgame_picture.png);" >
-                    </td>
-                </tr>
-                <tr>
-                    
-                    <td><h2>記憶翻牌</td>
-                    <td><h2>貪吃蛇</td>
-                </tr>
-                <tr> <td> <h2>MIT App Inventor<br>(手機遊戲，需下載)<hr/> </td> </tr>
-                <tr>
-                    <td>
-                        <button class="button" onclick="window.location='https://eric0724.github.io/AppI2/g2.apk'" style=" background-image: url(images/ai2game1.png);" >
-                    </td>
-                    <td>
-                        <button class="button" onclick="window.location='https://eric0724.github.io/AppI2//g0303.apk'"  style="background-image: url(images/ai2game2.png);" >
-                    </td>
-                </tr>
-                <tr>
-                    <td><h2>音遊2</td>
-                    <td><h2>弓箭傳說(改)</td>
-                </tr>
-                <tr> <td> <h2>C++<br>(電腦遊戲，需下載)<hr/> </td> </tr>
-                <tr>
-                    <td>
-                        <button class="button" onclick="window.location='https://eric0724.github.io/c++/飛機遊戲/飛機遊戲.exe'" style=" background-image: url(../c++/飛機遊戲/c++airplane.png);" >
-                    </td>
-                    <td>
-                        <button class="button" onclick="window.location='https://eric0724.github.io/c++/推箱子/推箱子.exe'"  style="background-image: url(../c++/推箱子/c++pushbox.png);" >
-                    
-                        </td>
-                </tr>
-                <tr>
-                    <td><h2>飛機遊戲</td>
-                    <td><h2>推箱子</td>
-                </tr>
-            </table>
+    <head>
+        <style>
+            body{
+                text-align-last: center;
+                background-image: url(images/games_background.jpg);
+                background-size: 100%;
+            }
         
-        </body>
+            .button {
+                background-color: #abababab;
+                border-radius: 50px 50px 50px 50px;
+                width: 330px;
+                height: 330px;
+                font-size: 69px;
+                background-size: 100%;
+            }
+            a {
+                background-color: grey;
+                width: 100%;
+                height: 50px;
+                font-size: 50px ;
+                color: blue;
+            }
+            h2{
+                font-size: 50px;
+                color: white;
+            }
+            h1{
+                color: rgb(0, 217, 255);
+                font-size: 70px;
+            }
+        </style>
+        <meta charset="utf-8">
+        <title>遊戲庫</title>
+        <!-- Firebase SDK -->
+    </head>
+    <body>
+        <h1>遊戲庫</h1>
+        <input type="text" id="inputName" style="width: 300px; font-size: 30px; text-align: center;" placeholder="name"></input>
+        <br/><hr/>
+        <h2>網頁造訪次數</h2> <br>
+        <div id="sfcf6ttke7dmg29k13ntew4qqmuypp3nwkd"></div>
+        <script type="text/javascript" src="https://counter4.optistats.ovh/private/counter.js?c=f6ttke7dmg29k13ntew4qqmuypp3nwkd&down=async" async></script>
+        <noscript><a href="https://www.freecounterstat.com" title="free hit counter"><img src="https://counter4.optistats.ovh/private/freecounterstat.php?c=f6ttke7dmg29k13ntew4qqmuypp3nwkd" border="0" title="free hit counter" alt="free hit counter"></a></noscript>
+        <br><br>
+        <hr/>
+        <table align="center">
+            <tr>   <td> <h2>html <hr/> </td>   </tr>
+            <tr>
+                <td>
+                    <button class="button" onclick="window.location='OOXX/OOXX.html'"style="background-image: url(OOXX/OOXX_picture.png);" >
+                </td>
+                <td>
+                    <button class="button" onclick="window.location='musicgame/musicgame.html'"style="background-image: url(musicgame/musicgame_picture.png);" >
+                </td>
+            </tr>
+            <tr>
+                <td><h2>圈圈叉叉</td>
+                <td><h2>超簡易音遊</td>
+            </tr>
+            <tr>
+                <td>
+                    <button class="button" onclick="window.location='cardgame/cardgame.html'"style="background-image: url(cardgame/cardgame_picture.png);" >
+                </td>
+                <td>
+                    <button class="button" onclick="window.location='Sgame/Snakegame.html'" style="background-image: url(Sgame/Sgame_picture.png);" >
+                </td>
+            </tr>
+            <tr>
+                
+                <td><h2>記憶翻牌</td>
+                <td><h2>貪吃蛇</td>
+            </tr>
+            <tr> <td> <h2>MIT App Inventor<br>(手機遊戲，需下載)<hr/> </td> </tr>
+            <tr>
+                <td>
+                    <button class="button" onclick="window.location='https://eric0724.github.io/AppI2/g2.apk'" style=" background-image: url(images/ai2game1.png);" >
+                </td>
+                <td>
+                    <button class="button" onclick="window.location='https://eric0724.github.io/AppI2//g0303.apk'"  style="background-image: url(images/ai2game2.png);" >
+                </td>
+            </tr>
+            <tr>
+                <td><h2>音遊2</td>
+                <td><h2>弓箭傳說(改)</td>
+            </tr>
+            <tr> <td> <h2>C++<br>(電腦遊戲，需下載)<hr/> </td> </tr>
+            <tr>
+                <td>
+                    <button class="button" onclick="window.location='https://eric0724.github.io/c++/飛機遊戲/飛機遊戲.exe'" style=" background-image: url(../c++/飛機遊戲/c++airplane.png);" >
+                </td>
+                <td>
+                    <button class="button" onclick="window.location='https://eric0724.github.io/c++/推箱子/推箱子.exe'"  style="background-image: url(../c++/推箱子/c++pushbox.png);" >
+                </td>
+            </tr>
+            <tr>
+                <td><h2>飛機遊戲</td>
+                <td><h2>推箱子</td>
+            </tr>
+        </table>
+        <!-- Firebase SDK -->
+        <!--<script src="https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js"></script>
+        <script src="https://www.gstatic.com/firebasejs/11.6.0/firebase-database-compat.js"></script>-->
+        <script type="module">
+            import { database, ref, get, set } from "../js/firebase.js";
+
+            let nameRef = ref(database, "name");
+            // 初始化 Firebase
+           /*
+            document.getElementById("inputName").placeholder = "play" ; 
+
+            firebase.initializeApp(firebaseConfig);
+            const database = firebase.firestore();
+
+            const app = initializeApp(firebaseConfig);
+            const database = getAuth(app);
+            */
+            
+            let namelist = []; // 全域變數
+            // 讀取資料
+            get(nameRef).then((snapshot) => {
+                if (snapshot.exists()) {
+                    namelist = snapshot.val();
+                    // 建議名稱填入 input 的 placeholder
+                    let x = 1;
+                    //document.getElementById("inputName").placeholder = namelist.includes("play" + x); 
+                    while (namelist.includes("play" + x)) {
+                        x++;
+                        document.getElementById("inputName").placeholder = "play"+x ;
+                        localStorage.setItem("playerName", "play"+x);
+                    }
+                }else{
+                    //namelist = ["play1","cardgame.html","score:100"];
+                    namelist = ["play1"];
+                    set(nameRef, namelist);
+                }
+            }).catch((error) => {
+                window.alert("錯誤：", error);
+            });
+                
+        
+            // 監聽 blur 輸入
+            document.getElementById("inputName").addEventListener("blur", function () {
+                const inputName = document.getElementById("inputName").value.trim();
+                if (inputName !== "") {
+                    if (namelist.includes(inputName)) {
+                        alert("名稱已使用\n（可繼續使用，會有之前的紀錄）");
+                    } else {
+                        namelist.push(inputName);
+                        set(nameRef, namelist); // 更新資料庫
+                        localStorage.setItem("playerName", inputName);
+                    }
+                } else {
+                    alert("未輸入名稱");
+                }
+            });
+        
+            /*
+            // 點擊進入遊戲按鈕
+            function EnterGame(gamename) {
+                window.alert("點擊進入遊戲按鈕");
+                const inputName = document.getElementById("inputName").value.trim();
+                if (inputName == "") {
+                    inputName = document.getElementById("inputName").placeholder
+                }
+                if(gamename=="超簡易音遊") window.location='musicgame/musicgame.html';
+                if(gamename=="貪吃蛇") window.location='Sgame/Snakegame.html';
+                if(gamename=="記憶翻牌") window.location='cardgame/cardgame.html';
+                //window.location.href = "第二個頁面.html"; // 替換成你要跳轉的頁面
+            };
+            */
+
+
+            /*
+                //const playerId = document.getElementById('playerId').value;
+                
+                let x = 1;
+                while (x!=0) {
+                    document.getElementById("inputName").placeholder = "play" ; x=0;
+                    const playerId = "play"+x;
+                    firebase.database().ref('players/' + playerId).once('value').then((snapshot) => {/*
+                        if (!snapshot.exists()) {
+                            document.getElementById("inputName").placeholder = "play" + x;
+                            x=0;
+                        }else x++;
+                        
+                        if (data) {
+                            document.getElementById('output').innerText = `名稱：${data.name}，分數：${data.score}`;
+                        } else {
+                            document.getElementById('output').innerText = '查無資料';
+                        }
+                        
+                    }).catch((error) => {
+                        window.alert = "❌ 讀取失敗：" + error.message;
+                    });
+                }
+            */
+        </script>
+        <!--<script type="module" src="/eric0724.github.io/js/firebase.js"></script>-->
+    </body>
     </html>
 </code>

@@ -44,11 +44,14 @@
                             document.body.style.background = "rgba("+s*2+","+s*2+","+s*2+","+(0.9-s/200)+")";
                             if (time <= 0) {
                                 var end = "結束~ \n 恭喜獲得 " + s + " 分\n";
+                                addfirebase(s);
+                                /*
                                 if (ss <= s) {
                                     a = s - ss;
                                     ss = s;
                                     end += "超過最高分" + a
                                 }
+                                */
                                 rTimer();
                                 confirm(end);
                             }
@@ -181,6 +184,9 @@
                 </tr>
             </table>
             <hr />
+            <!--排行-->
+            <h1 id="ranking">hi</h1>
+            <script type="module" src="../../js/ranking.js"></script>
         </body>
     </html>
 </code>
