@@ -89,11 +89,11 @@
                 end += "恭喜獲得(分) :  " + s + "\n";
                 end += "總共花了(秒) :  " + time.toFixed(1) +"\n"
                 
-                var ts = ((time.toFixed(1))/s)
+                var ts = ((s/time.toFixed(1)))
                 end += "每分花了(秒) :  "+ ts.toFixed(2) +"\n"
-                var ss = ((htmlheigh*htmlwidth)/100000)*ts
-                end += "    總得分    :   " + ss.toFixed(2) ;//+ "   (網頁面積/每一分花幾秒)"
-                addfirebase(s);
+                var ss = ((htmlheigh*htmlwidth)/100000)*ts 
+                end += "    總得分    :   " + ss.toFixed(2) +"\n(不要太在意這個評分系統)";//+ "   (網頁面積/每一分花幾秒)"
+                addfirebase(ss);
                 confirm(end);
                 rTimer();
             }
