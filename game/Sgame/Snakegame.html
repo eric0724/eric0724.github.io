@@ -92,6 +92,7 @@
                 var ts = ((s/time.toFixed(1)))
                 end += "每分花了(秒) :  "+ ts.toFixed(2) +"\n"
                 var ss = ((htmlheigh*htmlwidth)/100000)*ts 
+                ss = parseInt(ss);
                 end += "    總得分    :   " + ss.toFixed(2) +"\n(不要太在意這個評分系統)";//+ "   (網頁面積/每一分花幾秒)"
                 addfirebase(ss);
                 confirm(end);
