@@ -17,38 +17,42 @@ function addfirebase(s){
     namelist.push(currentURLname);
     namelist.push("score:"+s);
     */
-   var s_now
-   var isNoSamName = true;
-   if(namelist.includes(playerName)){
-        for(var i=1;i<namelist.length;i++){
-            if(namelist[i]==playerName){
-                if(GameNamelist[i]==currentURLname){
-                    s_now =  parseInt(scorelist[i].split(":").pop());
-                    if(s_now >= s) isNoSamName = false;
-                    
+   //window.alert(playerName)
+   if(playerName == "undefined" || currentURLname == "undefined" || s == "undefined") window.alert("null")
+    else{
+        var s_now
+        var isNoSamName = true;
+        if(namelist.includes(playerName)){
+            for(var i=1;i<namelist.length;i++){
+                if(namelist[i]==playerName){
+                    if(GameNamelist[i]==currentURLname){
+                        s_now =  parseInt(scorelist[i].split(":").pop());
+                        if(s_now >= s) isNoSamName = false;
+                        
+                    }
                 }
             }
         }
-   }
-   //window.alert("daf") +parseInt(scorelist[i].split(":").pop())+"\n"
-   /*
-   for(var i=1;i<namelist.length;i++){
-        s_now = parseInt(scorelist[i].split(":").pop());
-        window.alert(currentURLname+"\n"+playerName+"\n"+s_now+"\n"+s)
-   }*/
-   if(isNoSamName){
-       namelist.push(playerName);scorelist
-       GameNamelist.push(currentURLname);
-       scorelist.push("score:"+s);
-   
-       nameRef = ref(database, "name");
-       set(nameRef, namelist);
-       nameRef = ref(database, "GameName");
-       set(nameRef, GameNamelist);
-       nameRef = ref(database, "score");
-       set(nameRef, scorelist);
+        //window.alert("daf") +parseInt(scorelist[i].split(":").pop())+"\n"
+        /*
+        for(var i=1;i<namelist.length;i++){
+            s_now = parseInt(scorelist[i].split(":").pop());
+            window.alert(currentURLname+"\n"+playerName+"\n"+s_now+"\n"+s)
+        }*/
+        if(isNoSamName){
+            namelist.push(playerName);scorelist
+            GameNamelist.push(currentURLname);
+            scorelist.push("score:"+s);
+
+            nameRef = ref(database, "name");
+            set(nameRef, namelist);
+            nameRef = ref(database, "GameName");
+            set(nameRef, GameNamelist);
+            nameRef = ref(database, "score");
+            set(nameRef, scorelist);
+        }
+        showranking()
     }
-    showranking()
 }
 window.addfirebase = addfirebase; // ⬅ 這樣會變成全域函式
 showranking()

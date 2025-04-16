@@ -43,9 +43,11 @@
 <input type="button" id="buttonS" value="分數" onclick="changeColor('buttonS')" class="buttonR" style="background-color: #00eeffab; width: 150px; height: 69px;" />
 <input type="button" id="buttonR" value="開始" onclick="changeColor('buttonR')" class="buttonR" style="background-color: #55ff00ab; width: 180px; height: 87px;" />
 <input type="button" id="buttonT" value="時間" onclick="changeColor('buttonT')" class="buttonR" style="background-color: #ff0000ab; width: 150px; height: 69px;" />
+<br/>
+<input type="button" id="ranking_button" value="顯示排行" onclick="ranking_button()" style="font-size: 30px; width: 500px;" />
                 
 <script>
-    var posX = 250   , posY = 150;
+    var posX = 250   , posY = 200;
     var appleX = 250 , appleY = 250;
     var poslength = 4, s = 0;
     var direction = 0;
@@ -88,13 +90,10 @@
                 end = "結束~ \n"
                 end += "恭喜獲得(分) :  " + s + "\n";
                 end += "總共花了(秒) :  " + time.toFixed(1) +"\n"
-                
-                var ts = ((s/time.toFixed(1)))
-                end += "每分花了(秒) :  "+ ts.toFixed(2) +"\n"
-                var ss = ((htmlheigh*htmlwidth)/100000)*ts 
-                ss = parseInt(ss);
-                end += "    總得分    :   " + ss.toFixed(2) +"\n(不要太在意這個評分系統)";//+ "   (網頁面積/每一分花幾秒)"
-                addfirebase(ss);
+                var wh = (htmlwidth/50+1) + (htmlheigh/50+1)/5
+                var ts = (((wh*s)-time)).toFixed(1);
+                end += "    總得分    :   " + ts +"\n(不要太在意這個評分系統)";//+ "   (網頁面積/每一分花幾秒)"
+                addfirebase(ts);
                 confirm(end);
                 rTimer();
             }
@@ -127,21 +126,21 @@
         circlesy.push(posY+'px');
     }
     for (var a = 0; a < 2; a++) {
-        for (var i = 0; i < (htmlwidth/50+1); i++) {
+        for (var i = 0; i < (htmlwidth/50-1); i++) {
             var circle = createCircle();
             document.getElementById('circles-container').appendChild(circle);
             circle.style.left = i*50 + 'px';
-            if(a==0) circle.style.top = 100 + 'px';
-            else     circle.style.top = htmlheigh + 'px';
+            if(a==0) circle.style.top = 150 + 'px';
+            else     circle.style.top = htmlheigh-50 + 'px';
             circle.style.backgroundColor = "black"
         }
     }
     for (var a = 0; a < 2; a++) {
-        for (var i = 2; i < (htmlheigh/50+1); i++) {
+        for (var i = 2; i < (htmlheigh/50-1); i++) {
             var circle = createCircle();
             document.getElementById('circles-container').appendChild(circle);
-            circle.style.top = i*50 + 'px';
-            if(a==0) circle.style.left = htmlwidth + 'px';
+            circle.style.top = i*50+50 + 'px';
+            if(a==0) circle.style.left = htmlwidth-50 + 'px';
             else     circle.style.left = 0 + 'px';
             circle.style.backgroundColor = "black";
         }
@@ -149,20 +148,20 @@
 
     function movesnakeset(){
         if (direction == 0) {   // 右 (d)
-            if ((posX + 50) <= htmlwidth-50) posX += 50;
+            if ((posX + 50) <= htmlwidth-100) posX += 50;
             else posX = 50;
         }
         if (direction == 1) {   // 左 (a)
             if ((posX - 50) >= 50) posX -= 50;
-            else posX = (window.htmlwidth-50);
+            else posX = (window.htmlwidth-100);
         }
         if (direction == 2) {   // 上 (w)
-            if ((posY - 50) >= 150) posY -= 50;
-            else posY = (htmlheigh-50);
+            if ((posY - 50) >= 200) posY -= 50;
+            else posY = (htmlheigh-100);
         }
         if (direction == 3) {   // 下 (s)
-            if ((posY + 50) <= htmlheigh-50) posY += 50;
-            else posY = 150;
+            if ((posY + 50) <= htmlheigh-100) posY += 50;
+            else posY = 200;
         }
         // 移動圓圈
         for (var i = poslength - 1; i > 0; i--) {
@@ -197,7 +196,7 @@
             appleX =  Math.floor( Math.random() * htmlwidth);
             appleY =  Math.floor( Math.random() * htmlheigh);
             //appleX =  300;
-            if (appleX%50 == 0 && appleY%50 == 0 && appleX <= htmlwidth-50 && appleX >= 50 && appleY >= 150 && appleY <= htmlheigh-50)
+            if (appleX%50 == 0 && appleY%50 == 0 && appleX <= htmlwidth-100 && appleX >= 50 && appleY >= 200 && appleY <= htmlheigh-100)
             {
                  for (var i = 0; i < poslength; i++) {
                     if(circlesx[i] == (appleX+"px") && circlesy[i] == (appleY+"px"))
@@ -244,8 +243,8 @@
         handleSwipe();
     });
     document.addEventListener("mouseup",function(e){  
-        endX = e.changedTouches[0].clientX;
-        endY = e.changedTouches[0].clientY;
+        endX = e.clientX;
+        endY = e.clientY;
         handleSwipe();
     })
     document.addEventListener('touchmove', function (e) {
@@ -274,12 +273,20 @@
             }
         }
     }
+    function ranking_button(){
+        document.getElementById("ranking").hidden = !document.getElementById("ranking").hidden/*
+        var showUI = document.getElementById("ranking").hidden = !hidden
+        if(showUI == "display: inline;") 
+            document.getElementById("ranking").style = "display: none;"
+        else
+            document.getElementById("ranking").style= "display: block;"*/
+    }
 </script>
 
 
 </div>
 <!--排行-->
-<h1 id="ranking">hi</h1>
+<h1 id="ranking" hidden="!hidden">hi</h1>
 <script type="module" src="../../js/ranking.js"></script>
 
 
