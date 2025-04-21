@@ -29,15 +29,17 @@
                 var s = 0, a = 0,gameover = 0;
                 var time = 60, T = null;
                 var answer = 0;  FlagsNumber = BombsNumber        //是否放旗子
-                var newsize = 0;
+                var newsize = 50;
                 var ButtonQuantity = 20 
                 function changeColor(playx) {
                     var playx;
                     var button = document.getElementById(playx);
                     x = (playx[6]);
                     if (x == 'R') {
-                        if(a >= 17) gameover=1;
                         function myTimer() {
+                            if(a >= ButtonQuantity - BombsNumber) {
+                                gameover = 1;
+                            }
                             time+=0.1;
                             playx = "button" + 'R';
                             button = document.getElementById(playx);
@@ -50,7 +52,7 @@
                             button.value = parseInt(s)+ "分\n最高";
                             if (gameover != 0) {
                                 var end = "Game Over";
-                                if(a >= ButtonQuantity - BombsNumber) 
+                                if(a >= ButtonQuantity - BombsNumber) end = "Victory\n獲得"+s.toFixed(1)+"分"
                                 rTimer();
                                 confirm(end);
                             }
@@ -154,6 +156,7 @@
                             }
                         }
                         else if(button.style.backgroundColor != "orange"){
+                            button.disabled = "disabled";
                             button.style.color = "black";
                             button.style.fontSize = "69px";
                             button.style.backgroundColor = "#ababab"
