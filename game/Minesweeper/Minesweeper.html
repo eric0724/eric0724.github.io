@@ -29,8 +29,26 @@
                 var s = 0, a = 0,gameover = 0;
                 var time = 60, T = null;
                 var answer = 0;  FlagsNumber = BombsNumber        //是否放旗子
-                var newsize = 50;
-                var ButtonQuantity = 20 
+                var newsize = 0;
+                var ButtonQuantity = 30
+                
+                document.addEventListener('mousedown', keyFunction);
+                function keyFunction(event) {
+                    //window.alert(event.button);
+                    if(event.button == 2){
+                        answer_change()
+                    }
+                }
+                function answer_change(){
+                    if(answer == 1)
+                    {
+                        answer = 0
+                        document.getElementById("Ttext").innerHTML = "未開啟放置旗子"
+                    }else{
+                        answer = 1
+                        document.getElementById("Ttext").innerHTML = "開始放置旗子"
+                    }
+                }
                 function changeColor(playx) {
                     var playx;
                     var button = document.getElementById(playx);
@@ -49,8 +67,10 @@
                             button.value = FlagsNumber+'\n暗下來放置旗子';
                             playx = "button" + 'S';
                             button = document.getElementById(playx);
-                            button.value = parseInt(s)+ "分\n最高";
+                            button.value = parseInt(a)+ "個\n";
                             if (gameover != 0) {
+                                s = 10000 - s;
+                                s /= 10;
                                 var end = "Game Over";
                                 if(a >= ButtonQuantity - BombsNumber) end = "Victory\n獲得"+s.toFixed(1)+"分"
                                 rTimer();
@@ -68,7 +88,7 @@
                         gameover = 0;
                         button.value = "重新";
 
-                        for (b = 1; b <= 20; b++) {
+                        for (b = 1; b <= ButtonQuantity; b++) {
                             playx = "button" + b;
                             button = document.getElementById(playx);
                             button.value = "";
@@ -80,7 +100,7 @@
                         BombsNumber = 3
                         var r = 0; 
                         for (b = 1; b <= BombsNumber; b++) {
-                            r = Math.floor((Math.random() * 20)); //1
+                            r = Math.floor((Math.random() * ButtonQuantity)); //1
                             while (true){
                                 playx = "button" + r;
                                 button = document.getElementById(playx);
@@ -90,14 +110,14 @@
                             button.value = 10;
                             button.style.fontSize = newsize ;
                         }
-                        for (b = 1; b <= 20; b++) {
+                        for (b = 1; b <= ButtonQuantity; b++) {
                             var nearbyBombsNumber = 0
                             playx = "button" + b;
                             button = document.getElementById(playx);
                             if( button.value == "") {
-                                for (bn = -5; bn <= -3; bn++) {
+                                for (bn = -6; bn <= -4; bn++) {
                                     var bnplace = (b+bn)        // 判斷是否再同一排
-                                    if( ( bnplace > 0 ) && ((parseInt((b-1)/4)-1)== (parseInt((bnplace-1)/4))) ) { //parseInt(5/2)除法取整數
+                                    if( ( bnplace > 0 ) && ((parseInt((b-1)/5)-1)== (parseInt((bnplace-1)/5))) ) { //parseInt(5/2)除法取整數
                                         playx = "button" + bnplace ;
                                         button = document.getElementById(playx);
                                         if(button.value == 10) nearbyBombsNumber = nearbyBombsNumber + 1;
@@ -105,15 +125,15 @@
                                 }
                                 for (bn = -1; bn <= 1; bn+=2) {
                                     var bnplace = (b+bn)
-                                    if( ( bnplace > 0 ) && ((parseInt((b-1)/4))== (parseInt((bnplace-1)/4))) ) { //parseInt(5/2)除法取整數
+                                    if( ( bnplace > 0 ) && ((parseInt((b-1)/5))== (parseInt((bnplace-1)/5))) ) { //parseInt(5/2)除法取整數
                                         playx = "button" + bnplace ;
                                         button = document.getElementById(playx);
                                         if(button.value == 10) nearbyBombsNumber = nearbyBombsNumber + 1;
                                     }
                                 }
-                                for (bn = 3; bn <= 5; bn+=1) {
+                                for (bn = 4; bn <= 6; bn+=1) {
                                     var bnplace = (b+bn)
-                                    if( ( bnplace < 21 ) && ((parseInt((b-1)/4)+1)== (parseInt((bnplace-1)/4))) ) { //parseInt(5/2)除法取整數
+                                    if( ( bnplace <= ButtonQuantity ) && ((parseInt((b-1)/5)+1)== (parseInt((bnplace-1)/5))) ) { //parseInt(5/2)除法取整數
                                         playx = "button" + bnplace ;
                                         button = document.getElementById(playx);
                                         if(button.value == 10) nearbyBombsNumber = nearbyBombsNumber + 1;
@@ -123,23 +143,19 @@
                                 button = document.getElementById(playx);
                                 button.value = nearbyBombsNumber;//parseInt(5/2)
                                 button.style.fontSize = newsize ;
+                                if(a==0 && nearbyBombsNumber==0) {
+                                    button.style.fontSize = 50;
+                                    a++;
+                                }
                             }
                         }
                         playx = "button" + "R";
                     }
                     if (x == 'T') {
-                        if(answer == 1)
-                        {
-                            answer = 0
-                            document.getElementById("Ttext").innerHTML = "未開啟放置旗子"
-                        }else{
-                            answer = 1
-                            document.getElementById("Ttext").innerHTML = "開始放置旗子"
-                        }
-
+                        answer_change()
                     }
                     x = (parseInt(playx[6] + playx[7]));
-                    if (x <= 20 && gameover >= 0 ) {
+                    if (x <= ButtonQuantity && gameover >= 0 ) {
                         if (button.value == 10 && answer==0 && button.style.backgroundColor != "orange") {
                             button.disabled = "disabled";
                             button.style.color = "red";
@@ -195,35 +211,49 @@
                     <td><input type="button" id="button2" class="button" onclick="changeColor('button2')"/></td>
                     <td><input type="button" id="button3" class="button" onclick="changeColor('button3')"/></td>
                     <td><input type="button" id="button4" class="button" onclick="changeColor('button4')"/></td>
+                    <td><input type="button" id="button5" class="button" onclick="changeColor('button5')"/></td>
                 </tr>
                 <tr>
-                    <td><input type="button" id="button5" class="button" onclick="changeColor('button5')"/></td>
                     <td><input type="button" id="button6" class="button" onclick="changeColor('button6')"/></td>
                     <td><input type="button" id="button7" class="button" onclick="changeColor('button7')"/></td>
                     <td><input type="button" id="button8" class="button" onclick="changeColor('button8')"/></td>
+                    <td><input type="button" id="button9" class="button" onclick="changeColor('button9')"/></td>
+                    <td><input type="button" id="button10" class="button" onclick="changeColor('button10')"/></td>
                     
                 </tr>
                 <tr>
-                    <td><input type="button" id="button9"  class="button" onclick="changeColor('button9')"/></td>
-                    <td><input type="button" id="button10" class="button" onclick="changeColor('button10')"/></td>
-                    <td><input type="button" id="button11" class="button" onclick="changeColor('button11')"/></td>
+                    <td><input type="button" id="button11"  class="button" onclick="changeColor('button11')"/></td>
                     <td><input type="button" id="button12" class="button" onclick="changeColor('button12')"/></td>
+                    <td><input type="button" id="button13" class="button" onclick="changeColor('button13')"/></td>
+                    <td><input type="button" id="button14" class="button" onclick="changeColor('button14')"/></td>
+                    <td><input type="button" id="button15" class="button" onclick="changeColor('button15')"/></td>
                 </tr>
                 <tr>
-                    <td><input type="button" id="button13" class="button" onclick="changeColor('button13')" /></td>
-                    <td><input type="button" id="button14" class="button" onclick="changeColor('button14')" /></td>
-                    <td><input type="button" id="button15" class="button" onclick="changeColor('button15')" /></td>
                     <td><input type="button" id="button16" class="button" onclick="changeColor('button16')" /></td>
-                </tr>
-                <tr>
                     <td><input type="button" id="button17" class="button" onclick="changeColor('button17')" /></td>
                     <td><input type="button" id="button18" class="button" onclick="changeColor('button18')" /></td>
                     <td><input type="button" id="button19" class="button" onclick="changeColor('button19')" /></td>
-                    <td><input type="button" id="button20" class="button" onclick="changeColor('button20')" /></td>
+                    <td><input type="button" id="button20" class="button" onclick="changeColor('button20')"/></td>
+                </tr>
+                <tr>
+                    <td><input type="button" id="button21" class="button" onclick="changeColor('button21')" /></td>
+                    <td><input type="button" id="button22" class="button" onclick="changeColor('button22')" /></td>
+                    <td><input type="button" id="button23" class="button" onclick="changeColor('button23')" /></td>
+                    <td><input type="button" id="button24" class="button" onclick="changeColor('button24')" /></td>
+                    <td><input type="button" id="button25" class="button" onclick="changeColor('button25')"/></td>
+                </tr>
+                <tr>
+                    <td><input type="button" id="button26" class="button" onclick="changeColor('button26')" /></td>
+                    <td><input type="button" id="button27" class="button" onclick="changeColor('button27')" /></td>
+                    <td><input type="button" id="button28" class="button" onclick="changeColor('button28')" /></td>
+                    <td><input type="button" id="button29" class="button" onclick="changeColor('button29')" /></td>
+                    <td><input type="button" id="button30" class="button" onclick="changeColor('button30')"/></td>
                 </tr>
             </table>
             <hr />
-            <h1 class="answerbb"><button class="answerb" onclick="changeColor('buttonT')">按下滑鼠左鍵來放置旗子</button></var>
+            <!--
+                <h1 class="answerbb"><button class="answerb" onclick="changeColor('buttonT')">按下滑鼠左鍵來放置旗子</button></var>
+            -->
         </body>
     </html>
 </code>
