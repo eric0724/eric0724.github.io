@@ -83,12 +83,12 @@ function showranking(){
                     for(var j=1;j < rankinglist.length;j+=2){
                         if(!maxidlist.includes(j)){
                             //window.alert(j+"\n"+maxidlist+"\n"+!maxidlist.includes(j))
-                            var s1 =  parseInt(rankinglist[j].split(":").pop())
+                            var s1 =  parseFloat(rankinglist[j].split(":").pop())
                             //window.alert(s1);
                             if(s1 > max || maxid == null){
                                 //window.alert(j+"\n"+maxidlist)
                                 maxid = j ;
-                                max =  parseInt(rankinglist[maxid].split(":").pop())
+                                max =  parseFloat(rankinglist[maxid].split(":").pop())
                                 //window.alert(max)
                             }
                         }

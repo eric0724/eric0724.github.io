@@ -31,15 +31,7 @@
                 var answer = 0;  FlagsNumber = BombsNumber        //是否放旗子
                 var newsize = 0;
                 var ButtonQuantity = 30
-                
-                document.addEventListener('mousedown', keyFunction);
-                function keyFunction(event) {
-                    //window.alert(event.button);
-                    if(event.button == 2){
-                        answer_change()
-                    }
-                }
-                function answer_change(){
+                function answerchange(){
                     if(answer == 1)
                     {
                         answer = 0
@@ -70,11 +62,12 @@
                             button.value = parseInt(a)+ "個\n";
                             if (gameover != 0) {
                                 s = 10000 - s;
-                                s /= 10;
+                                s /= 100;
                                 var end = "Game Over";
                                 if(a >= ButtonQuantity - BombsNumber) end = "Victory\n獲得"+s.toFixed(1)+"分"
                                 rTimer();
                                 confirm(end);
+                                addfirebase(s.toFixed(1));
                             }
                         }
                         function rTimer() {
@@ -152,7 +145,7 @@
                         playx = "button" + "R";
                     }
                     if (x == 'T') {
-                        answer_change()
+                        answerchange()
                     }
                     x = (parseInt(playx[6] + playx[7]));
                     if (x <= ButtonQuantity && gameover >= 0 ) {
@@ -191,12 +184,7 @@
                 }
             </script>
         </head>
-        <body oncontextmenu="myFunction(event); return false;"  >
-            <script>
-                function myFunction(event) {
-                    answer = 1
-                }
-            </script>
+        <body oncontextmenu="answerchange(); return false;"  > <!--按滑鼠右鍵-->
             <input type="button" value="返回" class="buttonGames" onclick="window.location='../games.html'"></button>
             <input type="button" value="" style="float: right;" class="buttonGames" onclick="window.location='../games.html'"></button>
             
@@ -254,6 +242,9 @@
             <!--
                 <h1 class="answerbb"><button class="answerb" onclick="changeColor('buttonT')">按下滑鼠左鍵來放置旗子</button></var>
             -->
+            <!--排行-->
+            <h1 id="ranking">hi</h1>
+            <script type="module" src="../../js/ranking.js"></script>
         </body>
     </html>
 </code>
