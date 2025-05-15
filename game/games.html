@@ -32,6 +32,11 @@
                 color: rgb(0, 217, 255);
                 font-size: 70px;
             }
+            .star{
+                font-size: 50px;
+                color: white;
+                display:inline-block;
+            }
         </style>
         <meta charset="utf-8">
         <title>遊戲庫</title>
@@ -46,6 +51,12 @@
         <script type="text/javascript" src="https://counter4.optistats.ovh/private/counter.js?c=f6ttke7dmg29k13ntew4qqmuypp3nwkd&down=async" async></script>
         <noscript><a href="https://www.freecounterstat.com" title="free hit counter"><img src="https://counter4.optistats.ovh/private/freecounterstat.php?c=f6ttke7dmg29k13ntew4qqmuypp3nwkd" border="0" title="free hit counter" alt="free hit counter"></a></noscript>
         <br><br>
+        <a href="score.html" style="font-size: 30px;">評分網站</a><br>
+        <h2 class="star" id="star1">☆</h2>
+        <h2 class="star" id="star2">☆</h2>
+        <h2 class="star" id="star3">☆</h2>
+        <h2 class="star" id="star4">☆</h2>
+        <h2 class="star" id="star5">☆</h2>
         <hr/>
         <table align="center">
             <tr>   <td> <h2>html <hr/> </td>   </tr>
@@ -124,7 +135,6 @@
         <script type="module">
             alert("4/12 新增網頁瀏覽次數\n4/13 新增取名、分數紀錄功能\n4/22 增加踩地雷遊戲")
             import { database, ref, get, set } from "../js/firebase.js";
-
             let nameRef = ref(database, "name");
             // 初始化 Firebase
            /*
@@ -136,6 +146,31 @@
             const app = initializeApp(firebaseConfig);
             const database = getAuth(app);
             */
+            var isstarclick = false
+            var starlist = document.getElementsByClassName("star")
+                Array.from(starlist).forEach(star => {
+                    star.addEventListener("click",function(){
+                        isstarclick = true
+                    })
+                    star.addEventListener("mouseover",function(){
+                        star.textContent = "★";
+                        starall(parseInt(star.id.slice(-1)))
+                    })
+                    star.addEventListener("mouseout",function(){
+                        Array.from(starlist).forEach(star => {
+                            if(!isstarclick){
+                                star.textContent = "☆"
+                            }
+                        })
+                    })
+                });
+            
+            function starall(n){
+                if(n>=2) document.getElementById("star1").textContent = "★"
+                if(n>=3) document.getElementById("star2").textContent = "★"
+                if(n>=4) document.getElementById("star3").textContent = "★"
+                if(n>=5) document.getElementById("star4").textContent = "★"
+            }
             
             let namelist = []; // 全域變數
             // 讀取資料

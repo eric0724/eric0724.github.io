@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>評分網站</title>
+    <style>
+        h1{
+            font-size: 50px;
+        }
+        p{
+            font-size: 30px;
+        }
+        .star{
+            font-size: 30px;
+            color: black;
+            display:inline-block;
+        }
+        input{
+            size: 30px;
+            font-size: 30px;
+        }
+    </style>
+</head>
+<body style="text-align-last: center; font-size: 30px;">
+    <h1>評分網站</h1>
+    <p>整體網站評分*</p>
+    <h2 class="star" id="star1">☆</h2>
+    <h2 class="star" id="star2">☆</h2>
+    <h2 class="star" id="star3">☆</h2>
+    <h2 class="star" id="star4">☆</h2>
+    <h2 class="star" id="star5">☆</h2>
+    <p>最喜歡的遊戲</p>
+    <input type="checkbox" name="lovegame" id="圈圈叉叉"> 圈圈叉叉
+    <input type="checkbox" name="lovegame" id="超簡易音遊"> 超簡易音遊
+    <input type="checkbox" name="lovegame" id="記憶翻牌"> 記憶翻牌
+    <input type="checkbox" name="lovegame" id="貪吃蛇"> 貪吃蛇
+    <input type="checkbox" name="lovegame" id="踩地雷"> 踩地雷
+    <input type="checkbox" name="lovegame" id="蟻巢生存"> 蟻巢生存
+    <input type="checkbox" name="lovegame" id="音遊2"> 音遊2
+    <input type="checkbox" name="lovegame" id="弓箭傳說"> 弓箭傳說(改)
+    <input type="checkbox" name="lovegame" id="飛機遊戲"> 飛機遊戲
+    <input type="checkbox" name="lovegame" id="推箱子"> 推箱子
+    <button id="sum">送出</button>
+    <p>是否有想對遊戲提出建議？*</p>
+    <input type="checkbox" id="isSY"> 有
+    <input type="checkbox" id="isSN"> 沒有
+    <div id="divCanSuggestion">
+        <p>想對那些遊戲提出意見</p>
+        <input type="checkbox" name="moreSbox" id="圈圈叉叉"> 圈圈叉叉
+        <input type="checkbox" name="moreSbox" id="超簡易音"> 超簡易音遊
+        <input type="checkbox" name="moreSbox" id="記憶翻牌"> 記憶翻牌
+        <input type="checkbox" name="moreSbox" id="貪吃蛇"> 貪吃蛇
+        <input type="checkbox" name="moreSbox" id="踩地雷"> 踩地雷
+        <input type="checkbox" name="moreSbox" id="蟻巢生存"> 蟻巢生存
+        <input type="checkbox" name="moreSbox" id="音遊2"> 音遊2
+        <input type="checkbox" name="moreSbox" id="弓箭傳說"> 弓箭傳說(改)
+        <input type="checkbox" name="moreSbox" id="飛機遊戲"> 飛機遊戲
+        <input type="checkbox" name="moreSbox" id="推箱子"> 推箱子
+        <div id="moreS"></div>
+        <p>想對"整體網站"提出什麼建議</p>
+        <input type="text">
+    </div>
+    <script>
+        window.alert("還未設計完成")
+        var UImoreSbox = document.getElementsByName("moreSbox")
+        Array.from(UImoreSbox).forEach(moreSbox => {
+            moreSbox.addEventListener("change",function(){
+                if(this.checked){
+                    const p = document.createElement("p");
+                    p.textContent = "對於\""+this.id+"\"的建議";
+                    // 建立 <input>
+                    const input = document.createElement("input");
+                    input.type = "text";
+
+                    // 用 <div> 包住這組元素，方便整組刪除
+                    const group = document.createElement("div");
+                    group.className = this.id;
+                    group.appendChild(p);
+                    group.appendChild(input);
+
+                    // 加入 container
+                    document.getElementById("moreS").appendChild(group)
+                }else{
+                    const moreS = document.getElementById("moreS");
+                    const firstGroup = moreS.querySelector("."+this.id);
+
+                    if (firstGroup) {
+                        moreS.removeChild(firstGroup);
+                    }else
+                    window.alert("錯誤:")
+                }
+            })
+        })
+        //------------------------喜灣的遊戲------------------------
+        var UIlovegamelist = document.getElementsByName("lovegame")
+        document.getElementById("sum").addEventListener("click",function(){
+            Array.from(UIlovegamelist).forEach(lovegame => {
+                if(lovegame.checked){
+                    window.alert(lovegame.id)
+                }
+            })
+        })
+        //----------------------是否有想對遊戲提出建議？*----------------------
+        divCanSuggestion = document.getElementById("divCanSuggestion")
+        divCanSuggestion.style.display = "none"
+        document.getElementById("isSY").addEventListener("change",function(){
+            if(this.checked){
+                divCanSuggestion.style.display = "block"
+                document.getElementById("isSN").checked = false;
+            }
+        })
+        document.getElementById("isSN").addEventListener("change",function(){
+            if(this.checked){
+                divCanSuggestion.style.display = "none"
+                document.getElementById("isSY").checked = false;
+            } 
+        })
+        //----------------------星星----------------------------------
+        var isstarclick = false
+            var starlist = document.getElementsByClassName("star")
+                Array.from(starlist).forEach(star => {
+                    star.addEventListener("click",function(){
+                        isstarclick = true
+                    })
+                    star.addEventListener("mouseover",function(){
+                        star.textContent = "★";
+                        starall(parseInt(star.id.slice(-1)))
+                    })
+                    star.addEventListener("mouseout",function(){
+                        Array.from(starlist).forEach(star => {
+                            if(!isstarclick){
+                                star.textContent = "☆"
+                            }
+                        })
+                    })
+                });
+            
+            function starall(n){
+                if(n>=2) document.getElementById("star1").textContent = "★"
+                if(n>=3) document.getElementById("star2").textContent = "★"
+                if(n>=4) document.getElementById("star3").textContent = "★"
+                if(n>=5) document.getElementById("star4").textContent = "★"
+            }
+    </script>
+</body>
+</html>
