@@ -23,6 +23,7 @@
     </style>
 </head>
 <body style="text-align-last: center; font-size: 30px;">
+    <button onclick="window.location.href='games.html'">返回遊戲庫</button>
     <h1>評分網站</h1>
     <p>整體網站評分*</p>
     <h2 class="star" id="star1">☆</h2>
@@ -73,7 +74,7 @@
                     // 建立 <input>
                     const input = document.createElement("input");
                     input.type = "text";
-                    input.className = "moresuggestion"
+                    input.name = "moresuggestion"
                     input.id = this.id+"suggestion";
 
                     // 用 <div> 包住這組元素，方便整組刪除
@@ -152,7 +153,7 @@
                 if(star.textContent=="★") GameSScore+=1
             })
             GameSScorelist = localStorage.getItem("GameSScore");
-            GameSScorelist+=GameSScore
+            GameSScorelist += GameSScore
             localStorage.setItem("GameSScore",GameSScorelist);
             //---------
             if(document.getElementById("isSY").checked){
@@ -160,11 +161,10 @@
                 allsuggestionlist += document.getElementById("allsuggestion").value +"\n"
                 localStorage.setItem("allsuggestionlist",allsuggestionlist);
                 var UImoreuSug = document.getElementsByName("moresuggestion")
-                Array.from(UImoreuSug).forEach(moreuSug => {
-                    window.alert("moreuSug")
-                    suggestionlist = localStorage.getItem(moreuSug.id+"suggestionlist");
-                    suggestionlist = document.getElementById(moreuSug.id+"suggestion").value +"\n"
-                    localStorage.setItem(moreuSug.id+"suggestionlist",suggestionlist);
+                Array.from(UImoreuSug).forEach(moreuSug => { 
+                    suggestionlist = localStorage.getItem(moreuSug.id);
+                    suggestionlist += moreuSug.value +"\n"
+                    localStorage.setItem(moreuSug.id,suggestionlist);
                     
                 })
             }
