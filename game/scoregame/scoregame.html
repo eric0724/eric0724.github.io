@@ -20,8 +20,8 @@
 </head>
 <body >
     <h1>Is the game fun?</h1>
-    <button id="yes"onclick="window.location.href = '../games.html'";style="left:40%">good</button>
-    <button id="no" onclick="window.location.href = '../games.html'";style="left:60%;">no</button>
+    <button id="yes"onclick="end('yes')";style="left:40%">good</button>
+    <button id="no" onclick="end('no')";style="left:60%;">no</button>
     <p id="t"></p>
     <script>
         var goodbUI = document.getElementById("yes");
@@ -84,10 +84,41 @@
                 document.getElementById("t").innerHTML = ""
             }
             if(timeEnd <= 0){
-                window.location.href = "../games.html"
+                end('yes')
             }
             //document.getElementById("t").innerHTML = mousex;
         },1000)
+        function end(bn){
+            var endlist = ""
+            getfirbase("scoregame").then((data) => {
+                endlist = data || ""; // 如果沒有資料就設為空物件
+                endlist += bn
+                addfirebase("scoregame",endlist)
+                window.location.href = "../score.html"
+            });
+        }
+    </script>
+    <a href="../score.html"></a>
+    <script type="module">
+        try {
+            // ⬇ 動態載入你的 firebase 模組
+            const firebaseModule = await import('../scoreFirebase.js');
+        } catch (error) {
+            window.alert("載入或取得資料失敗：", error);
+        }
+
+        import { database, ref, get, set } from "../../js/firebase.js"
+        function addfirebase(x,data){
+            var nameRef = ref(database, x);
+            set(nameRef, data)
+            .then(() => {
+                //window.alert("儲存成功");
+            })
+            .catch((error) => {
+                console.error("儲存失敗：", error);
+            });
+        }
+        window.addfirebase = addfirebase; // ⬅ 這樣會變成全域函式
     </script>
 </body>
 </html>

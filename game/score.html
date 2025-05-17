@@ -20,6 +20,9 @@
             size: 30px;
             font-size: 30px;
         }
+        button{
+            font-size: 30px;
+        }
     </style>
 </head>
 <body style="text-align-last: center; font-size: 30px;">
@@ -65,6 +68,30 @@
     </div>
     <br>
     <button id="sum" style="width: 100%; height: 50px; font-size: 35px;">送出</button>
+    
+    <script type="module">
+        document.getElementById("sum").disabled  = true
+        try {
+            // ⬇ 動態載入你的 firebase 模組
+            const firebaseModule = await import('./scoreFirebase.js');
+            document.getElementById("sum").disabled  = false
+        } catch (error) {
+            window.alert("載入或取得資料失敗：", error);
+        }
+
+        import { database, ref, get, set } from "../js/firebase.js"
+        function addfirebase(x,data){
+            var nameRef = ref(database, x);
+            set(nameRef, data)
+            .then(() => {
+                //window.alert("儲存成功");
+            })
+            .catch((error) => {
+                console.error("儲存失敗：", error);
+            });
+        }
+        window.addfirebase = addfirebase; // ⬅ 這樣會變成全域函式
+    </script>
     <script>
         var UImoreSbox = document.getElementsByName("moreSbox")
         Array.from(UImoreSbox).forEach(moreSbox => {
@@ -76,7 +103,7 @@
                     const input = document.createElement("input");
                     input.type = "text";
                     input.name = "moresuggestion"
-                    input.id = this.id+"suggestion";
+                    input.id = this.id;
 
                     // 用 <div> 包住這組元素，方便整組刪除
                     const group = document.createElement("div");
@@ -138,13 +165,23 @@
             if(n>=5) document.getElementById("star4").textContent = "★"
         }
         //------------------------喜灣的遊戲------------------------
+        //import { database, ref, get, set } from "../js/firebase.js";
+        var endloveGlist = {}
         var UIlovegamelist = document.getElementsByName("lovegame")
         document.getElementById("sum").addEventListener("click",function(){
+            //if(){}
             Array.from(UIlovegamelist).forEach(lovegame => {
                 if(lovegame.checked){
+                    /*
                     var gamescore = localStorage.getItem(lovegame.id);
                     if(gamescore == null) gamescore = 0
                     localStorage.setItem(lovegame.id,(parseInt(gamescore)+1));
+                    */
+                    getfirbase("lovegame").then((data) => {
+                        endloveGlist = data || {}; // 如果沒有資料就設為空物件
+                        endloveGlist[lovegame.id] = (endloveGlist[lovegame.id] || 0) + 1
+                        addfirebase("lovegame",endloveGlist)
+                    });
                 }
             })
             //---------
@@ -153,22 +190,45 @@
             Array.from(starlist).forEach(star => {
                 if(star.textContent=="★") GameSScore+=1
             })
-            GameSScorelist = localStorage.getItem("GameSScore");
-            GameSScorelist += GameSScore
-            localStorage.setItem("GameSScore",GameSScorelist);
+            //GameSScorelist = localStorage.getItem("GameSScore");
+            //GameSScorelist += GameSScore
+            //localStorage.setItem("GameSScore",GameSScorelist);
+            var GameSScorelist = ""
+            getfirbase("GameSScore").then((data) => {
+                GameSScorelist = data ?? ""; // 如果沒有資料就設為空物件
+                GameSScorelist += GameSScore
+                addfirebase("GameSScore",GameSScorelist)
+            });
             //---------
             if(document.getElementById("isSY").checked){
+                var allsuggestionlist = "";
+                getfirbase("allsuggestionlist").then((data) => {
+                    allsuggestionlist = data ?? ""; // 如果沒有資料就設為空物件    
+                    allsuggestionlist += document.getElementById("allsuggestion").value +"<br>"
+                    addfirebase("allsuggestionlist",allsuggestionlist)
+                });
+
+                /*
                 allsuggestionlist = localStorage.getItem("allsuggestionlist");
                 if(allsuggestionlist != null)allsuggestionlist += document.getElementById("allsuggestion").value +"<br>"
                 else allsuggestionlist = document.getElementById("allsuggestion").value +"<br>"
                 localStorage.setItem("allsuggestionlist",allsuggestionlist)
+                */
                 //---------;
                 var UImoreuSug = document.getElementsByName("moresuggestion")
                 Array.from(UImoreuSug).forEach(moreuSug => { 
+                    /*
                     suggestionlist = localStorage.getItem(moreuSug.id);
                     if(suggestionlist != null) suggestionlist += moreuSug.value +"<br>"
                     else suggestionlist == moreuSug.value +"<br>"
                     localStorage.setItem(moreuSug.id,suggestionlist);
+                    */
+                    var suggestionlist = {};
+                    getfirbase("moresuggestion").then((data) => {
+                        suggestionlist = data || {}; // 如果沒有資料就設為空物件
+                        suggestionlist[moreuSug.id] = (suggestionlist[moreuSug.id] || "") + moreuSug.value +"<br>"
+                        addfirebase("moresuggestion",suggestionlist)
+                    });
                 })
             }
             window.location.href = "scoreShow.html"
