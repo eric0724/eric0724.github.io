@@ -10,29 +10,33 @@
     <button style=" font-size: 20px;" onclick="location.href = 'score.html'">返回</button>
     <h1>評分統計</h1>
     <hr>
-    <p>整體網站評分</p>
+        <p style="font-size: 30px;">整體網站評分</p>
     <tr>
-        <td>1分:</td><td><input id="gamesScoreUI1" disabled type="range" style="width: 80%;height: 25px;"></td>
+        <td>1星:</td><td><input id="gamesScoreUI1" disabled type="range" style="width: 80%;height: 25px;"></td>
     </tr><br>
     <tr>
-        <td>2分:</td><td><input id="gamesScoreUI2" disabled type="range" style="width: 80%;height: 25px;"></td>
+        <td>2星:</td><td><input id="gamesScoreUI2" disabled type="range" style="width: 80%;height: 25px;"></td>
     </tr><br>
     <tr>
-        <td>3分:</td><td><input id="gamesScoreUI3" disabled type="range" style="width: 80%;height: 25px;"></td>
+        <td>3星:</td><td><input id="gamesScoreUI3" disabled type="range" style="width: 80%;height: 25px;"></td>
     </tr><br>
     <tr>
-        <td>4分:</td><td><input id="gamesScoreUI4" disabled type="range" style="width: 80%;height: 25px;"></td>
+        <td>4星:</td><td><input id="gamesScoreUI4" disabled type="range" style="width: 80%;height: 25px;"></td>
     </tr><br>
     <tr> 
-        <td>5分:</td><td><input id="gamesScoreUI5" disabled type="range" style="width: 80%;height: 25px;"></td>
+        <td>5星:</td><td><input id="gamesScoreUI5" disabled type="range" style="width: 80%;height: 25px;"></td>
     </tr><br>
     <hr style="width: 95%;">
-    <p>意見回饋</p>
+    <div id="lovegame">
+        <p style="font-size: 30px;">個別遊戲評分</p>
+    </div>
+    <hr style="width: 95%;">
+        <p style="font-size: 30px;">意見回饋</p>
     <p id="allsuggestionlist"></p>
     <hr style="width: 95%;">
-    <div id="moreS"></div>
-    <hr style="width: 95%;">
-    <div id="lovegame"></div>
+    <div id="moreS">
+        <p style="font-size: 30px;">個別遊戲意見</p>
+    </div>
     <script>
         var GameSScore = localStorage.getItem("GameSScore");
         var score1=0,score2=0,score3=0,score4=0,score5=0
