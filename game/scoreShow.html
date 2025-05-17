@@ -7,7 +7,8 @@
     
 </head>
 <body style="text-align: center; font-size: 25px;">
-    <button style=" font-size: 20px;" onclick="location.href = 'score.html'">返回</button>
+    <button onclick="window.location.href ='games.html'" style="font-size: 20px;">返回遊戲庫</button>
+    <button onclick="window.location.href ='score.html'" style="font-size: 20px;">返回評分網站</button>
     <h1>評分統計</h1>
     <hr>
         <p style="font-size: 30px;">整體網站評分</p>
@@ -66,6 +67,7 @@
         //------------------------------------
         var allsuggestionlist = localStorage.getItem("allsuggestionlist");
         allsuggestionlist = allsuggestionlist.replace("\n", "<br>")
+        //window.alert(allsuggestionlist);
         document.getElementById("allsuggestionlist").innerHTML = allsuggestionlist;
         //-----------------------------------------
         var gamelist = ["圈圈叉叉","超簡易音遊","記憶翻牌","貪吃蛇","踩地雷","蟻巢生存","音遊2","弓箭傳說","飛機遊戲推箱子"]
@@ -92,7 +94,7 @@
                 <td>5分:</td><td><input disabled type="range" style="width: 80%;height: 25px;"></td>
             </tr><br>
         */
-       var max = 0;
+        var max = 0;
         gamelist.forEach(gamename => {
             var get = localStorage.getItem(gamename);
             if(get != null){

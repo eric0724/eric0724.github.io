@@ -159,15 +159,19 @@
             //---------
             if(document.getElementById("isSY").checked){
                 allsuggestionlist = localStorage.getItem("allsuggestionlist");
-                allsuggestionlist += document.getElementById("allsuggestion").value +"\n"
-                localStorage.setItem("allsuggestionlist",allsuggestionlist);
+                if(allsuggestionlist != null)allsuggestionlist += document.getElementById("allsuggestion").value +"<br>"
+                else allsuggestionlist = document.getElementById("allsuggestion").value +"<br>"
+                localStorage.setItem("allsuggestionlist",allsuggestionlist)
+                //---------;
                 var UImoreuSug = document.getElementsByName("moresuggestion")
                 Array.from(UImoreuSug).forEach(moreuSug => { 
                     suggestionlist = localStorage.getItem(moreuSug.id);
-                    suggestionlist += moreuSug.value +"\n"
+                    if(suggestionlist != null) suggestionlist += moreuSug.value +"<br>"
+                    else suggestionlist == moreuSug.value +"<br>"
                     localStorage.setItem(moreuSug.id,suggestionlist);
                 })
             }
+            window.location.href = "scoreShow.html"
         })
     </script>
 </body>
