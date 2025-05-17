@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>評分統計</title>
+    
+</head>
+<body style="text-align: center; font-size: 25px;">
+    <button style=" font-size: 20px;" onclick="location.href = 'score.html'">返回</button>
+    <h1>評分統計</h1>
+    <hr>
+    <p>整體網站評分</p>
+    <tr>
+        <td>1分:</td><td><input id="gamesScoreUI1" disabled type="range" style="width: 80%;height: 25px;"></td>
+    </tr><br>
+    <tr>
+        <td>2分:</td><td><input id="gamesScoreUI2" disabled type="range" style="width: 80%;height: 25px;"></td>
+    </tr><br>
+    <tr>
+        <td>3分:</td><td><input id="gamesScoreUI3" disabled type="range" style="width: 80%;height: 25px;"></td>
+    </tr><br>
+    <tr>
+        <td>4分:</td><td><input id="gamesScoreUI4" disabled type="range" style="width: 80%;height: 25px;"></td>
+    </tr><br>
+    <tr> 
+        <td>5分:</td><td><input id="gamesScoreUI5" disabled type="range" style="width: 80%;height: 25px;"></td>
+    </tr><br>
+    <hr style="width: 95%;">
+    <p>意見回饋</p>
+    <p id="allsuggestionlist"></p>
+    <hr style="width: 95%;">
+    <div id="moreS"></div>
+    <hr style="width: 95%;">
+    <div id="lovegame"></div>
+    <script>
+        var GameSScore = localStorage.getItem("GameSScore");
+        var score1=0,score2=0,score3=0,score4=0,score5=0
+        for(var i=0;i<GameSScore.length;i++){
+            var score = GameSScore[i]
+            if(score == "1")score1 += 1
+            else if(score == "2")score2 += 1
+            else if(score == "3")score3 += 1
+            else if(score == "4")score4 += 1
+            else if(score == "5")score5 += 1
+        };
+        var max = 0
+        if(score1 > score2) max = score1; else max = score2
+        if(score3 > max) max = score3;if(score4 > max) max = score4;
+        if(score5 > max) max = score5;
+        var UI = document.getElementById("gamesScoreUI1");
+        UI.value = score1; UI.max = max;
+        var UI = document.getElementById("gamesScoreUI2");
+        UI.value = score2; UI.max = max;
+        var UI = document.getElementById("gamesScoreUI3");
+        UI.value = score3; UI.max = max;
+        var UI = document.getElementById("gamesScoreUI4");
+        UI.value = score4; UI.max = max;
+        var UI = document.getElementById("gamesScoreUI5");
+        UI.value = score5; UI.max = max;
+
+        //------------------------------------
+        var allsuggestionlist = localStorage.getItem("allsuggestionlist");
+        allsuggestionlist = allsuggestionlist.replace("\n", "<br>")
+        document.getElementById("allsuggestionlist").innerHTML = allsuggestionlist;
+        //-----------------------------------------
+        var gamelist = ["圈圈叉叉","超簡易音遊","記憶翻牌","貪吃蛇","踩地雷","蟻巢生存","音遊2","弓箭傳說","飛機遊戲推箱子"]
+        gamelist.forEach(gamename => {
+            var get = localStorage.getItem(gamename+"suggestion");
+            if(get != null){
+                const p = document.createElement("p");
+                p.innerHTML = "對於\""+gamename+"\"的建議";
+                // 建立 <input>
+                const ptext = document.createElement("p");
+                ptext.innerHTML = get.replace("\n" , "<br>");
+    
+                // 用 <div> 包住這組元素，方便整組刪除
+                const group = document.createElement("div");
+                group.appendChild(p);
+                group.appendChild(ptext);
+    
+                // 加入 container
+                document.getElementById("moreS").appendChild(group)
+            }
+        });
+        /*
+            <tr> 
+                <td>5分:</td><td><input disabled type="range" style="width: 80%;height: 25px;"></td>
+            </tr><br>
+        */
+       var max = 0;
+        gamelist.forEach(gamename => {
+            var get = localStorage.getItem(gamename);
+            if(get != null){
+                if(max < get) max = get
+            }
+        })
+        gamelist.forEach(gamename => {
+            var get = localStorage.getItem(gamename);
+            if(get != null){
+                const p = document.createElement("p");
+                p.innerHTML = gamename+" 喜歡人數( " + get+" 人 )";
+                
+                const input = document.createElement("input");
+                input.type = "range"; input.disabled = "true"
+                input.style = "width: 80%;height: 25px;";
+                input.value = get; input.max = max; 
+                const br = document.createElement("br");
+    
+                // 用 <div> 包住這組元素，方便整組刪除
+                const group = document.createElement("div");
+                group.appendChild(p); group.appendChild(input); group.appendChild(br);
+    
+                // 加入 container
+                document.getElementById("lovegame").appendChild(group)
+            }
+        });
+        /*
+        localStorage.setItem(lovegame.id,(parseInt(gamescore)+1));
+        
+        localStorage.setItem(moreuSug.id,suggestionlist);
+        */
+    </script>
+</body>
+</html>

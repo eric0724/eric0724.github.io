@@ -25,6 +25,8 @@
 <body style="text-align-last: center; font-size: 30px;">
     <button onclick="window.location.href='games.html'">返回遊戲庫</button>
     <h1>評分網站</h1>
+    <a href="scoreShow.html">查看評分統計</a>
+    <hr>
     <p>整體網站評分*</p>
     <h2 class="star" id="star1">☆</h2>
     <h2 class="star" id="star2">☆</h2>
@@ -48,7 +50,7 @@
     <div id="divCanSuggestion">
         <p>想對哪些遊戲提出意見</p>
         <input type="checkbox" name="moreSbox" id="圈圈叉叉"> 圈圈叉叉
-        <input type="checkbox" name="moreSbox" id="超簡易音"> 超簡易音遊
+        <input type="checkbox" name="moreSbox" id="超簡易音遊"> 超簡易音遊
         <input type="checkbox" name="moreSbox" id="記憶翻牌"> 記憶翻牌
         <input type="checkbox" name="moreSbox" id="貪吃蛇"> 貪吃蛇
         <input type="checkbox" name="moreSbox" id="踩地雷"> 踩地雷
@@ -64,7 +66,6 @@
     <br>
     <button id="sum" style="width: 100%; height: 50px; font-size: 35px;">送出</button>
     <script>
-        var gamelist = ["圈圈叉叉","超簡易音遊","記憶翻牌","貪吃蛇","踩地雷","蟻巢生存","音遊2","弓箭傳說","飛機遊戲推箱子"]
         var UImoreSbox = document.getElementsByName("moreSbox")
         Array.from(UImoreSbox).forEach(moreSbox => {
             moreSbox.addEventListener("change",function(){
@@ -165,7 +166,6 @@
                     suggestionlist = localStorage.getItem(moreuSug.id);
                     suggestionlist += moreuSug.value +"\n"
                     localStorage.setItem(moreuSug.id,suggestionlist);
-                    
                 })
             }
         })
