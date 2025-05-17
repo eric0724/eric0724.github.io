@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>評分遊戲</title>
+    <style>
+        button{
+            height: 80px;
+            width: 80px;
+            font-size: 20px;
+            position:absolute; 
+            top:100px;
+        }
+        body{
+            font-size: 20px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body >
+    <h1>Is the game fun?</h1>
+    <button id="yes"onclick="window.location.href = '../games.html'";style="left:40%">good</button>
+    <button id="no" onclick="window.location.href = '../games.html'";style="left:60%;">no</button>
+    <p id="t"></p>
+    <script>
+        var goodbUI = document.getElementById("yes");
+        var nobUI = document.getElementById("no");
+        var mousex
+        var mousey
+        var timede = 0,timeEnd = 4;
+        var mouseover = false;
+        goodbUI.addEventListener("mouseover",function(){
+            mouseover = true;
+        })
+        goodbUI.addEventListener("mouseout",function(){ 
+            mouseover = false;
+        })
+        document.addEventListener("mousemove", function(event) {
+            var nodb = nobUI.getBoundingClientRect();
+            nodbx = nodb.left + nodb.width / 2;
+            nodby = nodb.top + nodb.height / 2;
+            //document.getElementById("t").innerHTML = ("X:"+event.pageX+ "Y:"+ event.pageY);
+            let dx = nodbx - event.clientX;
+            let dy = nodby - event.clientY;
+            var l = Math.sqrt(dx * dx + dy * dy);
+            if(l < 100){
+                nobUI.style.left = (Math.random() * (window.innerWidth- nodb.width / 2)) + "px";
+                nobUI.style.top  = (Math.random() * (window.innerHeight- nodb.width / 2)) + "px";
+            } 
+            var goodb = goodbUI.getBoundingClientRect();
+            if(time>5 && time > timede){
+                timede = time + 0.5
+                if(goodb.top > (event.clientY-goodb.height/2)){
+                    goodbUI.style.top = (goodb.top-10 ) + "px";
+                }
+                else{
+                    goodbUI.style.top = (goodb.top+10 ) + "px";
+                }
+                if(goodb.left > (event.clientX-goodb.height/2)){
+                    goodbUI.style.left = (goodb.left-10 ) + "px";
+                }
+                else{
+                    goodbUI.style.left = (goodb.left+10 )  + "px";
+                }
+            }
+        })
+        var time = 0
+        window.setInterval(function(){
+            time += 1
+            if(time > 5){
+                goodbUI.style.height = (80+time*3) + "px"
+                goodbUI.style.width = (80+time*3) + "px"
+            }
+            if(time > 10 && time < 30){
+                nobUI.style.height = (80-time*2) + "px"
+                nobUI.style.width = (80-time*2) + "px"
+            }
+            if(mouseover) {
+                timeEnd--;
+                document.getElementById("t").innerHTML = "確定選擇?("+timeEnd+")"
+            }else{
+                timeEnd = 4
+                document.getElementById("t").innerHTML = ""
+            }
+            if(timeEnd <= 0){
+                window.location.href = "../games.html"
+            }
+            //document.getElementById("t").innerHTML = mousex;
+        },1000)
+    </script>
+</body>
+</html>
