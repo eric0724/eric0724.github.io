@@ -1,4 +1,4 @@
-額// 小龍蝦 (Miniclaw) 控制中樞 - 前端動力邏輯
+// 小龍蝦 (Miniclaw) 控制中樞 - 前端動力邏輯
 
 const GOOGLE_CLIENT_ID = '251069433697-sg19f5eq4r0a94nanr92v5h64mkn0fho.apps.googleusercontent.com';
 
