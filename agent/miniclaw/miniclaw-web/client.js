@@ -1,4 +1,4 @@
-// 小龍蝦 (Miniclaw) 控制中樞 - 前端動力邏輯
+額// 小龍蝦 (Miniclaw) 控制中樞 - 前端動力邏輯
 
 const GOOGLE_CLIENT_ID = '251069433697-sg19f5eq4r0a94nanr92v5h64mkn0fho.apps.googleusercontent.com';
 
@@ -1685,6 +1685,20 @@ function setupChatEvents() {
 }
 
 function handleOutboundMessage(text) {
+  // 先檢查餘額狀態（終端連線和非終端模式都需要）
+  if (webState.aiQuotaExhausted && localStorage.getItem('miniclaw_ollama_ready') !== 'true') {
+    // 純聊天指令不需要 API（如截圖、查檔案等）
+    const query = text.toLowerCase();
+    const needsTerminal = query.includes('ping ') || query.includes('ipconfig') ||
+      query.includes('關機') || query.includes('重開機') || query.includes('截圖') ||
+      query.includes('查看') || query.includes('列出') || query.includes('建立') ||
+      query.includes('網路') || query.includes('錄製') || query.includes('執行腳本');
+    if (!needsTerminal) {
+      appendMessage('ai', '❌ AI 點數不足或已失效，無法回應您的對話，請在設定面板更新 API 金鑰或重新登入 Google 帳號。');
+      return;
+    }
+  }
+
   // 如果終端已連接，透過 WebSocket 傳送
   if (webState.isTerminalConnected && webState.ws && webState.ws.readyState === WebSocket.OPEN) {
     webState.ws.send(JSON.stringify({

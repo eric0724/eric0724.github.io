@@ -566,3 +566,4 @@ Restore
 [2026-06-08 12:08] 日誌架構實作 | server.js新增POST /save-local-log端點寫入chat_history.txt | client.js appendMessage加本機日誌自動POST | ai_talk.md新增三層日誌架構說明
 [2026-06-08 13:40] 修Google登入後額度顯示 | client.js updateBalanceDisplay優先檢查googleAccessToken顯示Gemini免費額度 | server.js加Session內對話歷史(chatHistory陣列20輪) | processUserCommand偵測「繼續上次」關鍵字注入chat_history.txt短期記憶
 [2026-06-08 14:20] 加API餘額自動檢查 | client.js新增checkAPIBalance()函式 | Step2測試金鑰成功後自動檢查 | 大廳設定面板儲存API Key後自動檢查 | 支援Gemini/OpenAI/Openround三種API
+[2026-06-08 14:28] 大廳傳訊息時檢查餘額 | handleOutboundMessage加aiQuotaExhausted檢查 | 無餘額時提示更新金鑰或重新登入 | 終端指令不受影響
