@@ -1,0 +1,23 @@
+.buttonGames {
+    border: none;
+    background-color:rgba(255, 255, 255,0.3);
+    width: 80px;
+    height: 80px;
+    text-align: center;
+    font-size: 50%;
+    float: left;
+    background-image: url(../return.png);
+    background-size: 100%;
+}
+.buttonR {
+    text-align: center;
+    font-size: x-large;
+    vertical-align:middle;
+}
+.button {
+    border: none;
+    background-color: #ababab;
+    width: 100px;
+    height: 100px;
+    text-align: center;
+}

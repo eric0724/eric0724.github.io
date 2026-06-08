@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>霓虹太空電玩城 | Neon Space Arcade</title>
+  <meta name="description" content="極致視覺饗宴的賽博朋克網頁遊戲大廳。暢玩霓虹打磚塊與星際射擊遊戲，解鎖成就徽章，爭奪神級排行榜首！">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- 霓虹太空背景網格 -->
+  <div class="retro-grid" id="retroGrid"></div>
+  <div class="stars" id="starsContainer"></div>
+
+  <!-- 頁首與設定列 -->
+  <header>
+    <div class="brand">
+      <div class="brand-logo">N</div>
+      <div class="brand-text">
+        <h1 id="mainTitle">NEON SPACE ARCADE</h1>
+      </div>
+    </div>
+    
+    <div class="controls-bar">
+      <!-- 網頁音效引擎切換 -->
+      <button class="ctrl-btn" id="toggleMusicBtn">
+        <span>🎵</span> <span id="musicStatusText">音樂: 關</span>
+      </button>
+      <button class="ctrl-btn" id="toggleSoundBtn">
+        <span>🔊</span> <span id="soundStatusText">音效: 開</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- 主要內容區 -->
+  <main>
+    
+    <!-- 大廳 (預設顯示) -->
+    <div class="arcade-lobby" id="arcadeLobby">
+      
+      <!-- 歡迎看板 -->
+      <section class="welcome-banner glass-panel neon-cyan-border">
+        <h2>霓虹太空電玩城</h2>
+        <p>歡迎來到未來復古電玩空間，點擊下方卡片即可啟動高流暢度的沉浸式 Canvas 遊戲！</p>
+      </section>
+
+      <!-- 遊戲卡片清單 -->
+      <section class="games-grid">
+        
+        <!-- 遊戲 A：霓虹打磚塊 -->
+        <article class="glass-panel game-card neon-pink-border" id="cardBreakout">
+          <div class="game-preview">
+            <canvas class="game-preview-canvas" id="breakoutPreviewCanvas"></canvas>
+            <div class="game-preview-overlay"></div>
+            <div class="game-card-icon">⚡</div>
+          </div>
+          <div class="game-info">
+            <h3>霓虹打磚塊 (Cyber-Break)</h3>
+            <p class="game-desc">體驗極致流暢的反射打磚塊！解鎖雷射砲擊、多重分球與能量護盾，享受粒子爆炸與劇烈震屏的暢快打擊感。</p>
+            <div class="game-stats">
+              <div>
+                <span class="stat-label">最高得分:</span>
+                <span class="stat-val" id="breakoutHighScore">00000</span>
+              </div>
+              <div>
+                <span class="stat-label">難度等級:</span>
+                <span class="stat-val">漸進式</span>
+              </div>
+            </div>
+            <button class="play-btn" id="btnPlayBreakout">啟動遊戲</button>
+          </div>
+        </article>
+
+        <!-- 遊戲 B：星際星航者 -->
+        <article class="glass-panel game-card neon-cyan-border" id="cardRunner">
+          <div class="game-preview">
+            <canvas class="game-preview-canvas" id="runnerPreviewCanvas"></canvas>
+            <div class="game-preview-overlay"></div>
+            <div class="game-card-icon">🚀</div>
+          </div>
+          <div class="game-info">
+            <h3>星際星航者 (Cosmo-Rider)</h3>
+            <p class="game-desc">駕駛超音速戰機穿梭於深邃星海！射擊摧毀阻擋的隕石，收集神秘的星雲結晶，挑戰反應力與連續射擊 Combo！</p>
+            <div class="game-stats">
+              <div>
+                <span class="stat-label">最高得分:</span>
+                <span class="stat-val" id="runnerHighScore">00000</span>
+              </div>
+              <div>
+                <span class="stat-label">速度級別:</span>
+                <span class="stat-val">極速</span>
+              </div>
+            </div>
+            <button class="play-btn" id="btnPlayRunner">啟動遊戲</button>
+          </div>
+        </article>
+
+      </section>
+
+      <!-- 排行榜與成就儀表板 -->
+      <section class="dashboard-row">
+        
+        <!-- 排行榜 -->
+        <div class="glass-panel dashboard-panel neon-cyan-border">
+          <h3 class="panel-title">🏆 傳奇殿堂排行榜</h3>
+          <div class="leaderboard-list" id="leaderboardList">
+            <!-- JS 動態生成 -->
+            <div class="leaderboard-item">
+              <span class="rank-badge rank-1">1</span>
+              <span class="player-name">NEON_MASTER</span>
+              <span class="player-score text-glow-cyan">15,000</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 榮譽成就 -->
+        <div class="glass-panel dashboard-panel neon-pink-border">
+          <h3 class="panel-title">✨ 榮譽成就室</h3>
+          <div class="achievements-grid" id="achievementsGrid">
+            <!-- JS 動態生成 -->
+          </div>
+        </div>
+
+      </section>
+
+    </div>
+
+    <!-- 遊戲執行視窗 (初始隱藏) -->
+    <div class="game-viewport-container" id="gameViewport">
+      
+      <div class="game-header">
+        <h2 class="game-title-text" id="gameTitle">GAME TITLE</h2>
+        <button class="game-exit-btn" id="btnExitGame">返回電玩大廳</button>
+      </div>
+
+      <div class="game-workspace" id="gameWorkspace">
+        
+        <!-- 頂端 HUD (分數、生命等) -->
+        <div class="game-hud">
+          <div class="hud-item"><span id="hudLabel1">分數:</span> <strong id="hudVal1">0</strong></div>
+          <div class="hud-item"><span id="hudLabel2">生命:</span> <strong id="hudVal2">3</strong></div>
+          <div class="hud-item" id="hudExtraContainer"><span id="hudLabel3">關卡:</span> <strong id="hudVal3">1</strong></div>
+        </div>
+
+        <!-- 遊戲畫布 -->
+        <canvas class="game-canvas-element" id="gameCanvas" width="800" height="500"></canvas>
+
+        <!-- 浮空狀態覆蓋層 (Start / Pause / Game Over) -->
+        <div class="game-overlay" id="gameOverlay">
+          <h3 class="overlay-title" id="overlayTitle">準備啟動</h3>
+          <p class="overlay-desc" id="overlayDesc">按下方按鈕以開始遊戲。</p>
+          
+          <!-- 分數結算與輸入框 (Game Over 時顯示) -->
+          <div id="highScoreSubmitArea" style="display: none; width: 100%; display: flex; flex-direction: column; align-items: center;">
+            <input type="text" class="overlay-input" id="playerNameInput" maxlength="10" placeholder="輸入您的傳奇代號 (最多10字)">
+          </div>
+
+          <button class="overlay-btn" id="btnOverlayAction">開始遊戲</button>
+        </div>
+
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- 底部列 -->
+  <footer>
+    <p>⚡ NEON SPACE ARCADE &copy; 2026 | Powered by <a href="#" onclick="return false;">Web Audio &amp; HTML5 Canvas</a> ⚡</p>
+  </footer>
+
+  <!-- 徽章解鎖通知容器 -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- 引入主控與遊戲腳本 -->
+  <script src="app.js"></script>
+  <script src="game-breakout.js"></script>
+  <script src="game-runner.js"></script>
+</body>
+</html>

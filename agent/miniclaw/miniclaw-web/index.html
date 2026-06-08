@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>小龍蝦控制中樞 | Miniclaw Control Center</title>
+  <meta name="description" content="小龍蝦 (Miniclaw) 本地自癒防護與全平台 AI 對話控制中心。配合雙端 WebSocket 與自動故障移轉。">
+  <link rel="stylesheet" href="style.css">
+  <!-- Google Identity Services -->
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+</head>
+<body>
+
+  <!-- 背景網格 -->
+  <div class="cyber-grid"></div>
+
+  <div class="app-container">
+    
+    <!-- 頂端導覽與狀態列 -->
+    <header class="glass-box orange-accent">
+      <div class="header-brand">
+        <span class="brand-icon">🦞</span>
+        <div>
+          <h1>MINICLAW</h1>
+          <p style="font-size: 0.75rem; color: var(--text-muted); font-family: var(--font-mono);">Web UI &amp; Executor v1.0</p>
+        </div>
+      </div>
+      
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
+        <div class="status-indicator" id="connectionStatusPanel">
+          <span class="status-dot inactive" id="connectionStatusDot"></span>
+          <span id="connectionStatusText" style="color: var(--neon-orange);">本地終端: 離線</span>
+        </div>
+        <div class="status-indicator" id="aiStatusPanel">
+          <span class="status-dot inactive" id="aiStatusDot"></span>
+          <span id="aiStatusText" style="color: var(--text-muted); font-size:0.8rem;">AI: 未連接</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- 📥 彈出式多步驟初始化視窗 (Modal Onboarding) -->
+    <div class="modal-overlay" id="onboardingModal">
+      <div class="glass-box orange-accent modal-content">
+        
+        <div class="modal-header">
+          <h2 style="font-family: var(--font-title); letter-spacing: 2px; color: #fff;">初始化小龍蝦控制中樞</h2>
+          <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 5px;">只需幾個簡單步驟，即可建立極致流暢的本地 AI 守護系統</p>
+        </div>
+
+        <!-- 步驟節點追蹤器 -->
+        <div class="modal-steps-tracker">
+          <div class="step-node active" data-step="1">1</div>
+          <div class="step-node" data-step="2">2</div>
+          <div class="step-node" data-step="3">3</div>
+          <div class="step-node" data-step="4">4</div>
+        </div>
+
+        <!-- Step 2：API 鎖定與路徑判定 -->
+        <div class="step-pane" id="paneStep1">
+          <h3 class="step-title">Step 2：取得並驗證 AI 使用權限</h3>
+          <p class="step-desc">先依照上一個步驟選好的模式，再選擇下方任一方式取得 AI 使用權限：</p>
+
+          <!-- 方式 A：Google 登入（推薦） -->
+          <div style="background:rgba(66,133,244,0.08);border:1px solid rgba(66,133,244,0.35);border-radius:12px;padding:18px;margin-bottom:16px;">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+              <span style="font-size:1.3rem;">🔵</span>
+              <strong style="color:#fff;font-size:0.95rem;">方式 A：用 Google 帳號登入（推薦，免輸入金鑰）</strong>
+            </div>
+            <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:14px;line-height:1.6;">
+              登入後自動取得 Gemini 使用權限，不需要手動複製貼上任何金鑰。
+            </p>
+            <!-- Google 登入按鈕 -->
+            <div id="googleSignInBtn" style="display:flex;justify-content:center;"></div>
+            <div id="googleLoginResult" style="display:none;margin-top:12px;padding:10px 14px;border-radius:8px;font-size:0.85rem;font-family:var(--font-mono);"></div>
+          </div>
+
+          <!-- 分隔線 -->
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+            <div style="flex:1;height:1px;background:rgba(255,255,255,0.1);"></div>
+            <span style="color:var(--text-muted);font-size:0.8rem;">或</span>
+            <div style="flex:1;height:1px;background:rgba(255,255,255,0.1);"></div>
+          </div>
+
+          <!-- 方式 C：本地 AI -->
+          <div style="background:rgba(57,255,20,0.05);border:1px solid rgba(57,255,20,0.25);border-radius:12px;padding:18px;margin-bottom:16px;">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+              <span style="font-size:1.3rem;">🖥️</span>
+              <strong style="color:var(--neon-green);font-size:0.95rem;">方式 C：使用本地 AI（完全免費，不需網路）</strong>
+            </div>
+            <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:14px;line-height:1.6;">
+              在你的電腦上跑 AI 模型，不需要任何 API Key，也不會消耗點數。需要先安裝 Ollama（約 2GB，只需下載一次）。<br>
+              <span style="color:var(--neon-orange);font-size:0.8rem;">⚠️ 偵測方式：有終端 → 先完成 Step 1 連線再偵測；直接在本機開啟網頁 → 可直接偵測。</span>
+            </p>
+            <a href="https://raw.githubusercontent.com/eric0724/eric0724.github.io/main/agent/miniclaw/miniclaw-executor.zip" class="cyber-btn muted" download="miniclaw-executor.zip" style="display:block;text-align:center;text-decoration:none;margin-bottom:10px;font-size:0.82rem;padding:8px;">
+              📥 下載執行器（內含 install-local-ai.bat）
+            </a>
+            <p style="font-size:0.8rem;color:var(--text-muted);margin-bottom:10px;">解壓縮後，點兩下 <code style="color:var(--neon-green);">install-local-ai.bat</code> 自動安裝。安裝完成後點下方按鈕偵測。</p>
+            <button class="cyber-btn orange" id="btnDetectOllama" style="width:100%;padding:10px;">🔍 偵測本地 AI</button>
+            <div id="ollamaDetectResult" style="display:none;margin-top:10px;padding:10px 14px;border-radius:8px;font-size:0.85rem;font-family:var(--font-mono);"></div>
+          </div>
+
+          <!-- 分隔線 2 -->
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+            <div style="flex:1;height:1px;background:rgba(255,255,255,0.1);"></div>
+            <span style="color:var(--text-muted);font-size:0.8rem;">或</span>
+            <div style="flex:1;height:1px;background:rgba(255,255,255,0.1);"></div>
+          </div>
+
+          <!-- 方式 B：手動輸入 API Key -->
+          <div style="background:rgba(0,0,0,0.2);border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:18px;margin-bottom:16px;">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+              <span style="font-size:1.3rem;">🔑</span>
+              <strong style="color:#fff;font-size:0.95rem;">方式 B：手動輸入 Gemini API 金鑰</strong>
+            </div>
+
+            <!-- 教學步驟卡片 -->
+            <div class="api-guide-steps" style="margin-bottom:14px;">
+              <div class="api-guide-step">
+                <span class="api-guide-num">1</span>
+                <div class="api-guide-body">
+                  <strong>前往 Google AI Studio</strong>
+                  <span>點擊下方連結，登入您的 Google 帳號</span>
+                  <a href="https://aistudio.google.com/apikey" target="_blank" class="free-key-tip" style="margin-top:6px;">
+                    🌐 前往 aistudio.google.com/apikey
+                  </a>
+                </div>
+              </div>
+              <div class="api-guide-step">
+                <span class="api-guide-num">2</span>
+                <div class="api-guide-body">
+                  <strong>點擊「Create API Key」</strong>
+                  <span>點擊藍色按鈕，選擇任意一個專案（或建新專案），即可生成金鑰。</span>
+                </div>
+              </div>
+              <div class="api-guide-step">
+                <span class="api-guide-num">3</span>
+                <div class="api-guide-body">
+                  <strong>複製金鑰，貼到下方欄位</strong>
+                  <span>金鑰格式通常為 <code style="color:var(--neon-cyan);background:rgba(0,255,200,0.08);padding:1px 6px;border-radius:4px;">AIzaSy...</code>（39 個字元）</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="input-group">
+              <label class="input-label" for="apiKeyInput">貼上您的 Gemini API 金鑰</label>
+              <div style="display:flex;gap:10px;align-items:center;">
+                <input type="password" class="cyber-input" id="apiKeyInput" placeholder="AIzaSy..." style="flex:1;">
+                <button class="cyber-btn orange" id="btnTestApiKey" style="white-space:nowrap;padding:10px 18px;">🔍 測試</button>
+              </div>
+              <div id="apiTestResult" style="display:none;margin-top:12px;padding:10px 14px;border-radius:8px;font-size:0.85rem;font-family:var(--font-mono);"></div>
+            </div>
+          </div>
+
+          <div class="modal-footer-btns" style="margin-top:10px;">
+            <button class="cyber-btn muted" id="btnBackToTerminalStep">上一步</button>
+            <div style="display:flex;gap:10px;">
+              <button class="cyber-btn muted" id="btnSkipToStep3">跳過（啟動沙盒模式）</button>
+              <button class="cyber-btn orange" id="btnGoToStep2" disabled style="opacity:0.4;cursor:not-allowed;" title="請先完成 Google 登入、API 金鑰驗證或本地 AI 偵測">確認，下一步 →</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 1：選擇模式 -->
+        <div class="step-pane active" id="paneStep2">
+          <h3 class="step-title">Step 1：選擇使用模式 🖥️</h3>
+          <p class="step-desc">請選擇你想要的使用方式：</p>
+
+          <!-- 模式選擇按鈕 -->
+          <div style="display:flex;gap:14px;margin-bottom:20px;">
+            <button class="cyber-btn orange" id="btnWantTerminal" style="flex:1;padding:14px 10px;font-size:0.95rem;">🖥️ 要終端<br><span style="font-size:0.75rem;font-weight:normal;color:rgba(255,255,255,0.6);">可控制電腦、跨裝置</span></button>
+            <button class="cyber-btn muted" id="btnNoTerminal" style="flex:1;padding:14px 10px;font-size:0.95rem;">💬 不要終端<br><span style="font-size:0.75rem;font-weight:normal;color:rgba(255,255,255,0.6);">純 AI 對話模式</span></button>
+          </div>
+
+          <!-- 不要終端時顯示的提示 -->
+          <div id="noTerminalMsg" style="display:none;background:rgba(0,240,255,0.07);border:1px solid rgba(0,240,255,0.25);border-radius:10px;padding:16px 18px;margin-bottom:16px;text-align:center;">
+            <div style="font-size:1.5rem;margin-bottom:8px;">💬</div>
+            <strong style="color:var(--neon-cyan);">已選擇純 AI 對話模式</strong>
+            <p style="font-size:0.82rem;color:var(--text-muted);margin-top:6px;line-height:1.6;">無需安裝任何程式，直接使用 AI 對話功能。<br>若日後想啟用終端控制，可在設定面板重新引導。</p>
+          </div>
+
+          <!-- 要終端時顯示的教學內容 -->
+          <div id="terminalGuideContent" style="display:none;">
+          <p class="step-desc" style="margin-top:0;">小龍蝦需要在你的電腦裡跑一個小程式，這樣網頁才能控制你的電腦。照著下面的步驟一步一步做就好！</p>
+
+          <!-- 偵測到的平台 -->
+          <div style="background:rgba(0,240,255,0.05);border:1px solid rgba(0,240,255,0.2);border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:0.82rem;display:flex;align-items:center;gap:8px;">
+            <span style="color:var(--text-muted);">🖥️ 偵測到的平台：</span>
+            <span id="detectedPlatformText" style="color:var(--neon-cyan);font-family:var(--font-mono);">偵測中...</span>
+          </div>
+
+          <!-- 步驟 1：下載 -->
+          <div id="step2DownloadBlock" style="background:rgba(0,0,0,0.3);border-radius:12px;padding:16px;margin-bottom:14px;border:1px solid rgba(255,255,255,0.07);">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+              <span style="background:var(--neon-orange);color:#000;font-weight:bold;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">1</span>
+              <strong style="color:#fff;font-size:0.95rem;">下載小龍蝦執行器</strong>
+            </div>
+            <a href="https://raw.githubusercontent.com/eric0724/eric0724.github.io/main/agent/miniclaw/miniclaw-executor.zip"
+               class="cyber-btn orange" download="miniclaw-executor.zip"
+               style="width:100%;display:block;text-decoration:none;text-align:center;box-sizing:border-box;">
+              📥 點這裡下載執行器（miniclaw-executor.zip）
+            </a>
+            <p style="font-size:0.8rem;color:var(--text-muted);margin-top:8px;">解壓後最外層只需認 <code style="color:var(--neon-green);">openminiclaw.bat</code>（Windows）或 <code style="color:var(--neon-cyan);">start.sh</code>（Mac/Linux）；其餘程式在 <code style="color:var(--neon-cyan);">app</code> 資料夾，不用手動開。</p>
+          </div>
+
+          <!-- 步驟 2：點兩下 openminiclaw.bat（主要方式） -->
+          <div id="step2BatBlock" style="background:rgba(57,255,20,0.05);border-radius:12px;padding:16px;margin-bottom:14px;border:1px solid rgba(57,255,20,0.25);">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+              <span style="background:var(--neon-green);color:#000;font-weight:bold;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">2</span>
+              <strong style="color:var(--neon-green);font-size:0.95rem;">點兩下 openminiclaw.bat，全自動啟動 🚀</strong>
+            </div>
+            <p style="font-size:0.82rem;color:var(--text-muted);line-height:1.8;margin-bottom:8px;">進入資料夾，找到 <code style="color:var(--neon-green);">openminiclaw.bat</code>，直接點兩下。它會自動幫你完成所有設定並開啟網頁。</p>
+            <div style="background:rgba(255,165,0,0.08);border:1px solid rgba(255,165,0,0.35);border-radius:6px;padding:8px 12px;font-size:0.8rem;color:var(--neon-orange);line-height:1.7;margin-bottom:8px;">
+              ⚠️ <strong>第一次執行常會自動安裝元件</strong>（例如 Node.js、ngrok）。若視窗關掉、沒有繼續跑、出現錯誤，或畫面提示要「重新開啟／reopen」：請先關閉該視窗，再<strong>重新點兩下</strong> <code style="color:var(--neon-green);">openminiclaw.bat</code>。首次設定有時需重開 <strong>1～2 次</strong> 才會正常啟動並開啟網頁。
+            </div>
+            <div style="background:rgba(0,255,100,0.08);border:1px solid rgba(0,255,100,0.2);border-radius:6px;padding:8px 12px;font-size:0.8rem;color:var(--neon-green);">
+              ✅ 看到「[OK] Server started」就代表成功了！
+            </div>
+          </div>
+
+          <!-- 備用：手動步驟（折疊） -->
+          <details style="margin-bottom:14px;">
+            <summary style="cursor:pointer;font-size:0.82rem;color:var(--text-muted);padding:8px 12px;background:rgba(0,0,0,0.2);border-radius:8px;border:1px solid rgba(255,255,255,0.07);">⚙️ openminiclaw.bat 無法執行？點這裡展開手動步驟</summary>
+            <div style="padding:14px;background:rgba(0,0,0,0.2);border-radius:0 0 8px 8px;border:1px solid rgba(255,255,255,0.07);border-top:none;font-size:0.82rem;color:var(--text-muted);line-height:1.8;">
+              <strong style="color:var(--neon-orange);">① 安裝 Node.js（只需做一次）</strong><br>
+              <p style="font-size:0.75rem;color:var(--neon-cyan);margin-top:4px;">⚠️ 成功安裝後，請重新開啟本頁面以確保功能正常。</p>
+              <div style="display:flex;align-items:center;gap:8px;margin:6px 0 12px;">
+                <code id="bootstrapCommandText" style="flex:1;color:var(--neon-green);padding:7px 12px;background:rgba(0,0,0,0.5);border-radius:6px;border:1px solid rgba(57,255,20,0.2);font-size:0.8rem;">winget install OpenJS.NodeJS</code>
+                <button onclick="navigator.clipboard.writeText(document.getElementById('bootstrapCommandText').innerText)" style="flex-shrink:0;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.15);color:#fff;padding:5px 12px;border-radius:5px;cursor:pointer;font-size:0.75rem;">📋 複製</button>
+              </div>
+              <strong style="color:var(--neon-orange);">② 進入 app 資料夾，依序執行</strong><br>
+              <div style="display:flex;align-items:center;gap:8px;margin:6px 0 6px;">
+                <code style="flex:1;color:var(--neon-green);padding:7px 12px;background:rgba(0,0,0,0.5);border-radius:6px;border:1px solid rgba(57,255,20,0.2);">cd app</code>
+                <button onclick="navigator.clipboard.writeText('cd app')" style="flex-shrink:0;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.15);color:#fff;padding:5px 12px;border-radius:5px;cursor:pointer;font-size:0.75rem;">📋 複製</button>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px;margin:6px 0 6px;">
+                <code style="flex:1;color:var(--neon-green);padding:7px 12px;background:rgba(0,0,0,0.5);border-radius:6px;border:1px solid rgba(57,255,20,0.2);">npm install</code>
+                <button onclick="navigator.clipboard.writeText('cd app && npm install')" style="flex-shrink:0;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.15);color:#fff;padding:5px 12px;border-radius:5px;cursor:pointer;font-size:0.75rem;">📋 複製</button>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+                <code style="flex:1;color:var(--neon-green);padding:7px 12px;background:rgba(0,0,0,0.5);border-radius:6px;border:1px solid rgba(57,255,20,0.2);">node server.js</code>
+                <button onclick="navigator.clipboard.writeText('cd app && node server.js')" style="flex-shrink:0;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.15);color:#fff;padding:5px 12px;border-radius:5px;cursor:pointer;font-size:0.75rem;">📋 複製</button>
+              </div>
+              <strong style="color:var(--neon-orange);">③ 另開視窗執行 ngrok</strong><br>
+              <div style="display:flex;align-items:center;gap:8px;margin:6px 0 6px;">
+                <code style="flex:1;color:var(--neon-green);padding:7px 12px;background:rgba(0,0,0,0.5);border-radius:6px;border:1px solid rgba(57,255,20,0.2);">ngrok http 3000</code>
+                <button onclick="navigator.clipboard.writeText('ngrok http 3000')" style="flex-shrink:0;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.15);color:#fff;padding:5px 12px;border-radius:5px;cursor:pointer;font-size:0.75rem;">📋 複製</button>
+              </div>
+              還沒有 ngrok？先執行 <code style="color:var(--neon-cyan);">winget install ngrok.ngrok</code>，再去 <a href="https://dashboard.ngrok.com/get-started/your-authtoken" target="_blank" style="color:var(--neon-cyan);">取得 authtoken</a> 設定。
+            </div>
+          </details>
+
+          <!-- 步驟 3：確認連線 -->
+          <div style="background:rgba(0,0,0,0.3);border-radius:12px;padding:16px;margin-bottom:6px;border:1px solid rgba(255,255,255,0.07);">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+              <span style="background:var(--neon-orange);color:#000;font-weight:bold;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">3</span>
+              <strong style="color:#fff;font-size:0.95rem;">確認連線</strong>
+            </div>
+            <div style="background:rgba(0,255,100,0.06);border:1px solid rgba(0,255,100,0.2);border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:0.82rem;color:var(--neon-green);">
+              🔍 用 <strong>openminiclaw.bat</strong> 啟動的話，網頁會自動偵測並填入 ngrok 網址，不需要手動填！
+            </div>
+            <div class="input-group" style="margin-bottom:10px;">
+              <label class="input-label" for="ngrokUrlInput">ngrok 網址（自動填入或手動貼上）</label>
+              <input type="text" class="cyber-input" id="ngrokUrlInput" placeholder="https://xxxx-xxxx.ngrok-free.app">
+            </div>
+            <button class="cyber-btn orange" id="btnTestExecutor" style="width:100%;padding:10px 18px;">🔍 測試連線</button>
+            <div id="executorTestResult" style="display:none;margin-top:12px;padding:10px 14px;border-radius:8px;font-size:0.85rem;font-family:var(--font-mono);"></div>
+          </div>
+
+          </div><!-- end terminalGuideContent -->
+
+          <div class="modal-footer-btns">
+            <button class="cyber-btn muted" id="btnBackToStep1" style="visibility:hidden;">上一步</button>
+            <div style="display:flex;gap:10px;">
+              <button class="cyber-btn orange" id="btnGoToStep3" disabled style="opacity:0.4;cursor:not-allowed;" title="請先選擇使用模式">下一步 →</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 3：選擇是否連接 LINE/DC -->
+        <div class="step-pane" id="paneStep3">
+          <h3 class="step-title">Step 3：設定遠端遙控溝通</h3>
+          <p class="step-desc">是否要連接 LINE 或 Discord 機器人，讓你可以用手機遠端控制小龍蝦？</p>
+
+          <!-- 要/不要 LINE/DC 選擇 -->
+          <div style="display:flex;gap:14px;margin-bottom:20px;" id="lineDCChoiceRow">
+            <button class="cyber-btn orange" id="btnWantLineDC" style="flex:1;padding:14px 10px;font-size:0.95rem;">📱 要連接<br><span style="font-size:0.75rem;font-weight:normal;color:rgba(255,255,255,0.6);">LINE / Discord 遠端控制</span></button>
+            <button class="cyber-btn muted" id="btnNoLineDC" style="flex:1;padding:14px 10px;font-size:0.95rem;">🚀 不要，直接進大廳<br><span style="font-size:0.75rem;font-weight:normal;color:rgba(255,255,255,0.6);">跳過遠端設定</span></button>
+          </div>
+
+          <!-- 無終端警告（有終端時隱藏） -->
+          <div id="noTerminalLineDCWarning" style="display:none;background:rgba(255,102,0,0.12);border:1px solid rgba(255,102,0,0.5);border-radius:10px;padding:14px 16px;margin-bottom:16px;">
+            <strong style="color:var(--neon-orange);">⚠️ 未連接終端</strong>
+            <p style="font-size:0.82rem;color:rgba(255,200,100,0.9);margin-top:6px;line-height:1.6;">LINE/DC 無法跨裝置查看對話紀錄，且無法用 LINE/DC 控制電腦。</p>
+          </div>
+
+          <!-- LINE/DC 表單（預設隱藏，選「要」才顯示） -->
+          <div id="lineDCFormSection" style="display:none;">
+
+          <!-- 控制方式選擇 -->
+          <div style="margin-bottom:18px;">
+            <div style="font-size:0.85rem;color:#fff;font-weight:bold;margin-bottom:10px;">📲 選擇手機控制電腦的方式：</div>
+            <div style="display:flex;gap:10px;">
+              <button class="cyber-btn orange" id="btnCtrlModeWeb" style="flex:1;padding:12px 8px;font-size:0.85rem;">🌐 手機開網頁<br><span style="font-size:0.72rem;font-weight:normal;color:rgba(255,255,255,0.6);">填 ngrok 網址即可</span></button>
+              <button class="cyber-btn muted" id="btnCtrlModeLine" style="flex:1;padding:12px 8px;font-size:0.85rem;">💬 在 LINE 裡打字<br><span style="font-size:0.72rem;font-weight:normal;color:rgba(255,255,255,0.6);">需設定 Webhook</span></button>
+            </div>
+          </div>
+
+          <!-- 手機開網頁說明 -->
+          <div id="ctrlModeWebGuide" style="background:rgba(0,240,255,0.06);border:1px solid rgba(0,240,255,0.25);border-radius:10px;padding:14px 16px;margin-bottom:16px;">
+            <strong style="color:var(--neon-cyan);">🌐 手機開網頁控制電腦</strong>
+            <p style="font-size:0.82rem;color:var(--text-muted);margin-top:8px;line-height:1.8;">
+              1. 手機瀏覽器開啟 <code style="color:var(--neon-cyan);">eric0724.github.io</code><br>
+              2. Step 1 填入同一個 ngrok 網址<br>
+              3. 連線成功後，手機網頁就能直接控制電腦<br>
+              <span style="color:var(--neon-green);">✅ 不需要額外設定，現在就能用！</span>
+            </p>
+          </div>
+
+          <!-- LINE Webhook 說明（預設隱藏） -->
+          <div id="ctrlModeLineGuide" style="display:none;background:rgba(0,0,0,0.25);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:14px 16px;margin-bottom:16px;">
+            <strong style="color:#fff;">💬 LINE 打字控制電腦 — 設定步驟</strong>
+            <div style="font-size:0.82rem;color:var(--text-muted);margin-top:10px;line-height:2;">
+              1. 先確認 ngrok 已啟動，取得你的 ngrok 網址<br>
+              2. 去 <a href="https://developers.line.biz/console/" target="_blank" style="color:var(--neon-cyan);">LINE Developers Console</a> → 你的 Bot → Messaging API<br>
+              3. 找到「Webhook URL」欄位，填入：<br>
+              <div style="display:flex;align-items:center;gap:8px;margin:6px 0 10px;">
+                <code id="lineWebhookUrlDisplay" style="flex:1;color:var(--neon-green);padding:7px 12px;background:rgba(0,0,0,0.5);border-radius:6px;border:1px solid rgba(57,255,20,0.2);font-size:0.8rem;word-break:break-all;">（請先在 Step 1 填入 ngrok 網址）</code>
+                <button onclick="navigator.clipboard.writeText(document.getElementById('lineWebhookUrlDisplay').innerText)" style="flex-shrink:0;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.15);color:#fff;padding:5px 12px;border-radius:5px;cursor:pointer;font-size:0.75rem;">📋 複製</button>
+              </div>
+              4. 點「Verify」確認連線 → 開啟「Use webhook」開關<br>
+              5. 之後在 LINE 傳訊息，電腦就會自動執行！
+            </div>
+          </div>
+          
+          <div class="option-cards-row">
+            <div class="option-card selected" id="cardRemoteA">
+              <span class="option-card-icon">🟢</span>
+              <h4 class="option-card-title">A. 填入憑證設定</h4>
+              <p class="option-card-desc">填入 LINE/Discord 的 Token 與 Secret，小龍蝦會自動建立 Webhook 通道進行雙向通訊。</p>
+            </div>
+            <div class="option-card" id="cardRemoteB">
+              <span class="option-card-icon">⏭️</span>
+              <h4 class="option-card-title">B. 稍後再設定</h4>
+              <p class="option-card-desc">先跳過，之後可以在大廳右側的設定面板隨時回來設定。</p>
+            </div>
+          </div>
+
+          <!-- 表單輸入區 -->
+          <div id="remoteCredentialsForm" style="display: block;">
+            <div style="display: flex; gap: 15px; margin-bottom: 15px;">
+              <button class="cyber-btn orange" id="btnSelectLINE" style="flex: 1; padding: 8px;">LINE Bot 配置</button>
+              <button class="cyber-btn muted" id="btnSelectDiscord" style="flex: 1; padding: 8px;">Discord Bot 配置</button>
+            </div>
+
+            <!-- LINE 輸入欄 -->
+            <div id="lineFormFields" style="display: block;">
+              <div class="input-group">
+                <label class="input-label">LINE Channel Access Token</label>
+                <input type="password" class="cyber-input" id="lineTokenInput" placeholder="輸入 LINE 憑證金鑰...">
+              </div>
+              <div class="input-group">
+                <label class="input-label">LINE Channel Secret</label>
+                <input type="password" class="cyber-input" id="lineSecretInput" placeholder="輸入 LINE 秘密金鑰...">
+              </div>
+              <div class="input-group">
+                <label class="input-label">LINE User ID（推播目標，以 U 開頭）</label>
+                <input type="text" class="cyber-input" id="lineUserIdInput" placeholder="Uxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx">
+                <span style="font-size:0.75rem;color:var(--text-muted);">在 LINE Developers Console → Messaging API → 「Your user ID」取得</span>
+              </div>
+            </div>
+
+            <!-- Discord 輸入欄 -->
+            <div id="discordFormFields" style="display: none;">
+              <div class="input-group">
+                <label class="input-label">Discord Bot Token</label>
+                <input type="password" class="cyber-input" id="discordTokenInput" placeholder="輸入 Discord 機器人金鑰...">
+              </div>
+              <div class="input-group">
+                <label class="input-label">Discord Channel ID (頻道識別碼)</label>
+                <input type="text" class="cyber-input" id="discordChannelInput" placeholder="輸入用於對話之頻道 ID...">
+              </div>
+            </div>
+            <!-- Step 3 測試區域 -->
+            <div class="input-group" style="margin-top:15px; border-top:1px dashed rgba(255,255,255,0.1); padding-top:15px; text-align: left;">
+              <label class="input-label" for="btnTestRemote">遠端機器人連線測試</label>
+              <div style="display:flex;gap:10px;align-items:center;">
+                <button class="cyber-btn orange" id="btnTestRemote" style="flex:1;padding:10px 18px;">🔍 測試機器人連線</button>
+              </div>
+              <div id="remoteTestResult" style="display:none;margin-top:12px;padding:10px 14px;border-radius:8px;font-size:0.85rem;font-family:var(--font-mono);"></div>
+            </div>
+          </div>
+
+          </div><!-- end lineDCFormSection -->
+
+          <div class="modal-footer-btns">
+            <button class="cyber-btn muted" id="btnBackToStep2">上一步</button>
+            <button class="cyber-btn orange" id="btnGoToStep4" disabled style="opacity:0.4;cursor:not-allowed;" title="請先測試並通過機器人驗證">保存設定，下一步 →</button>
+          </div>
+        </div>
+
+        <!-- Step 4：正式啟動 -->
+        <div class="step-pane" id="paneStep4">
+          <h3 class="step-title">Step 4：恭喜！小龍蝦部署完成 🎉</h3>
+          <p class="step-desc" id="step4Desc">設定完成！小龍蝦已為您調配好專屬的快捷指令包，隨時可以開始使用。</p>
+          
+          <div style="text-align: center; padding: 20px 0; margin-bottom: 20px;">
+            <div style="font-size: 5rem; animation: pulse-green 2s infinite; filter: drop-shadow(0 0 15px var(--neon-green));">🦞</div>
+            <p style="color: var(--neon-green); font-family: var(--font-title); font-size: 1.2rem; margin-top: 15px; letter-spacing: 2px;">SYSTEMS ACTIVE (100% 運轉中)</p>
+          </div>
+
+          <div class="modal-footer-btns" style="justify-content: center;">
+            <button class="cyber-btn orange" id="btnOpenMainWorkspace" style="width: 80%;">啟動小龍蝦控制大廳 🚀</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- 🖥️ 大廳主介面區 (常駐面板) -->
+    <div class="workspace-layout" id="mainWorkspace" style="display: none;">
+
+      <!-- 對話列表側欄 -->
+      <aside class="chat-sidebar glass-box" id="chatSidebar">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+          <span style="font-size:0.8rem;color:var(--text-muted);font-family:var(--font-mono);">對話列表</span>
+          <button id="btnNewChat" class="cyber-btn orange" style="font-size:0.75rem;padding:4px 12px;">＋ 新對話</button>
+        </div>
+        <div id="chatList" style="display:flex;flex-direction:column;gap:6px;overflow-y:auto;flex:1;">
+          <!-- 動態渲染 -->
+        </div>
+
+        <!-- 對話紀錄儲存（側欄底部） -->
+        <div style="margin-top:auto;padding-top:10px;border-top:1px solid rgba(255,255,255,0.07);">
+          <div style="font-size:0.72rem;color:var(--text-muted);margin-bottom:8px;font-family:var(--font-mono);">🗂️ 紀錄儲存</div>
+
+          <div class="settings-item" style="margin-bottom:6px;">
+            <span style="font-size:0.75rem;color:var(--text-muted);">啟用紀錄</span>
+            <label class="switch-control">
+              <input type="checkbox" id="toggleChatLog">
+              <span class="slider"></span>
+            </label>
+          </div>
+
+          <div id="chatLogSubOptions" style="display:none;flex-direction:column;gap:8px;">
+            <div class="settings-item">
+              <span style="font-size:0.75rem;color:var(--text-muted);">LINE/DC</span>
+              <label class="switch-control">
+                <input type="checkbox" id="toggleLineDCHistory">
+                <span class="slider"></span>
+              </label>
+            </div>
+            <div id="lineDCHistoryStatus" style="display:none;font-size:0.72rem;font-family:var(--font-mono);padding:4px 8px;border-radius:4px;"></div>
+            <div class="settings-item">
+              <span style="font-size:0.75rem;color:var(--text-muted);">GDrive</span>
+              <label class="switch-control">
+                <input type="checkbox" id="toggleGDriveBackup">
+                <span class="slider"></span>
+              </label>
+            </div>
+            <div id="gdriveStatus" style="display:none;font-size:0.72rem;font-family:var(--font-mono);padding:4px 8px;border-radius:4px;"></div>
+          </div>
+        </div>
+      </aside>
+
+      <!-- 中欄：AI 聊天操控面板 -->
+      <section class="glass-box cyan-accent chat-panel">
+        
+        <!-- 頂列：即時額度監控 -->
+        <div class="chat-top-status-bar">
+          <div class="balance-monitor">
+            <span>📊 餘額:</span>
+            <span class="balance-val" id="monitorBalanceVal">$0.00</span>
+          </div>
+          <div class="balance-monitor">
+            <span>⚡</span>
+            <span id="monitorModeText" style="color: var(--neon-cyan); font-weight: bold;">離線</span>
+          </div>
+        </div>
+
+        <!-- 系統狀態列（固定，不在對話泡泡裡） -->
+        <div id="systemStatusBar" style="padding:6px 12px;background:rgba(0,0,0,0.25);border-bottom:1px solid rgba(255,255,255,0.06);font-size:0.75rem;font-family:var(--font-mono);display:flex;gap:16px;align-items:center;flex-wrap:wrap;">
+          <span id="sysStatusTerminal" style="color:var(--neon-orange);">🔴 終端: 離線</span>
+          <span id="sysStatusApi" style="color:var(--text-muted);">🔑 API: 未設定</span>
+          <span id="sysStatusPlatform" style="color:var(--text-muted);">🖥️ 平台: 偵測中</span>
+          <div style="margin-left:auto;display:flex;gap:6px;">
+            <button class="cyber-btn orange" id="btnTestTerminal" style="font-size:0.72rem;padding:3px 10px;">🖥️ 測試連線</button>
+            <button class="cyber-btn muted" id="btnGameAssist" style="font-size:0.72rem;padding:3px 10px;opacity:0.4;cursor:not-allowed;" disabled title="需要終端連線才能使用">🎮 遊戲助手</button>
+            <button class="cyber-btn muted" id="btnOpenRecorder" style="font-size:0.72rem;padding:3px 10px;opacity:0.4;cursor:not-allowed;" disabled title="需要終端連線才能使用">⏺️ 錄製操作</button>
+            <button class="cyber-btn muted" id="btnRunAutoScript" style="font-size:0.72rem;padding:3px 10px;opacity:0.4;cursor:not-allowed;" disabled title="需要終端連線才能使用">▶️ 執行腳本</button>
+          </div>
+        </div>
+
+        <!-- 聊天訊息歷史 -->
+        <div class="messages-box" id="chatHistoryContainer">
+
+          <!-- 功能卡片（沒對話時顯示） -->
+          <div id="featureCards" style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:16px;padding:20px;">
+            <div style="font-size:2rem;margin-bottom:4px;">🦞</div>
+            <div style="font-size:1rem;color:#fff;font-weight:bold;letter-spacing:1px;">小龍蝦控制中樞</div>
+            <div style="font-size:0.82rem;color:var(--text-muted);margin-bottom:8px;">選擇功能或直接輸入指令開始</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%;max-width:360px;">
+              <button class="feature-card-btn" onclick="sendQuickCommand('幫我截圖目前畫面')">🖥️<br><span>畫面監控</span></button>
+              <button class="feature-card-btn" onclick="sendQuickCommand('列出桌面的檔案')">📁<br><span>檔案管理</span></button>
+              <button class="feature-card-btn" onclick="sendQuickCommand('幫我診斷網路連線狀態')">🌐<br><span>網路診斷</span></button>
+              <button class="feature-card-btn" onclick="sendQuickCommand('查看下載資料夾的內容')">⬇️<br><span>查看下載</span></button>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- 輸入欄 -->
+        <form class="chat-input-bar" id="chatForm">
+          <input type="text" id="chatInput" placeholder="輸入指令，例如「幫我螢幕截圖」..." autocomplete="off">
+          <button type="submit" class="cyber-btn orange" style="padding: 10px 22px;">傳送</button>
+        </form>
+
+      </section>
+
+      <!-- 右欄：常駐設定面板 (Settings Panel) -->
+      <aside class="settings-panel">
+
+        <!-- 群組 1：終端連線（最頂端） -->
+        <div class="glass-box orange-accent settings-group">
+          <h3 class="settings-group-title">🖥️ 終端連線</h3>
+
+          <div class="settings-item">
+            <span class="settings-label">連線狀態</span>
+            <span id="settingTerminalStatus" style="color:var(--neon-orange);font-size:0.82rem;">離線</span>
+          </div>
+
+          <div class="settings-item" style="flex-direction:column;align-items:flex-start;gap:6px;margin-top:4px;">
+            <span class="settings-label">ngrok 網址</span>
+            <div style="display:flex;gap:6px;width:100%;">
+              <input type="text" class="cyber-input" id="settingNgrokInput" placeholder="https://xxxx.ngrok-free.app" style="flex:1;padding:6px 10px;font-size:0.78rem;">
+              <button class="cyber-btn orange" id="btnReconnectTerminal" style="font-size:0.75rem;padding:6px 10px;flex-shrink:0;">重新連線</button>
+            </div>
+          </div>
+
+          <!-- 診斷燈號 -->
+          <div style="margin-top:10px;padding:10px 12px;background:rgba(0,0,0,0.25);border-radius:8px;border:1px solid rgba(255,255,255,0.06);font-size:0.78rem;font-family:var(--font-mono);display:flex;flex-direction:column;gap:6px;">
+            <div id="diagnosticLocalhost" style="color:var(--neon-orange);">🟠 HTTP 通道：未偵測</div>
+            <div id="diagnosticLocal" style="color:var(--neon-orange);">🟠 WebSocket：未連線</div>
+            <div style="color:var(--text-muted);">ngrok：<span id="diagnosticNgrokUrl" style="color:var(--neon-orange);">未設定</span></div>
+          </div>
+
+          <div class="settings-item" style="margin-top:8px;">
+            <span class="settings-label">完整執行端運作</span>
+            <label class="switch-control">
+              <input type="checkbox" id="toggleCompleteExecution" checked>
+              <span class="slider"></span>
+            </label>
+          </div>
+
+          <!-- 關閉執行器 -->
+          <button class="cyber-btn muted" id="btnShutdownExecutor" style="width:100%;margin-top:10px;font-size:0.78rem;padding:7px;opacity:0.4;cursor:not-allowed;" disabled title="需要終端連線才能使用">🔴 關閉執行器</button>
+        </div>
+
+        <!-- 群組 0：帳號與 API 金鑰 -->
+        <div class="glass-box orange-accent settings-group">
+          <h3 class="settings-group-title">👤 帳號與 API 金鑰</h3>
+
+          <!-- Google 登入狀態 -->
+          <div class="settings-item" style="flex-direction:column;align-items:flex-start;gap:8px;">
+            <span class="settings-label">Google 帳號</span>
+            <div id="settingGoogleStatus" style="font-size:0.82rem;color:var(--text-muted);">未登入</div>
+            <button class="cyber-btn muted" id="btnSettingGoogleLogin" style="font-size:0.78rem;padding:6px 14px;width:100%;">🔵 用 Google 帳號登入</button>
+          </div>
+
+          <div style="height:1px;background:rgba(255,255,255,0.07);margin:12px 0;"></div>
+
+          <!-- API Key 顯示與修改 -->
+          <div class="settings-item" style="flex-direction:column;align-items:flex-start;gap:6px;">
+            <span class="settings-label">Gemini API 金鑰</span>
+            <div style="display:flex;gap:8px;width:100%;align-items:center;">
+              <span id="settingApiKeyDisplay" style="font-size:0.78rem;color:var(--text-muted);flex:1;font-family:var(--font-mono);">未設定</span>
+              <button class="cyber-btn muted" id="btnEditApiKey" style="font-size:0.75rem;padding:4px 10px;flex-shrink:0;">修改</button>
+            </div>
+            <div id="editApiKeyForm" style="display:none;width:100%;margin-top:6px;">
+              <div style="display:flex;gap:6px;">
+                <input type="password" class="cyber-input" id="settingApiKeyInput" placeholder="AIzaSy..." style="flex:1;padding:6px 10px;font-size:0.82rem;">
+                <button class="cyber-btn orange" id="btnSaveApiKey" style="font-size:0.75rem;padding:6px 10px;">儲存</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 群組 1：終端連線（已移至頂端） -->
+
+        <!-- 群組 2：遠端平台通訊 -->
+        <div class="glass-box cyan-accent settings-group">
+          <h3 class="settings-group-title">🌐 遠端平台通訊</h3>
+          
+          <div class="settings-item">
+            <span class="settings-label">LINE 機器人</span>
+            <span style="color: var(--neon-orange);font-size:0.82rem;" id="settingStatusLINE">未設定</span>
+          </div>
+          <div class="settings-item">
+            <span class="settings-label">Discord 機器人</span>
+            <span style="color: var(--neon-orange);font-size:0.82rem;" id="settingStatusDiscord">未設定</span>
+          </div>
+
+          <!-- 快速修改 LINE -->
+          <div id="quickEditLINE" style="display:none;margin-top:8px;padding:10px;background:rgba(0,0,0,0.2);border-radius:8px;border:1px solid rgba(255,255,255,0.07);">
+            <div style="font-size:0.78rem;color:var(--text-muted);margin-bottom:6px;">LINE Channel Access Token</div>
+            <input type="password" class="cyber-input" id="settingLineToken" placeholder="輸入 Token..." style="width:100%;padding:6px 10px;font-size:0.78rem;margin-bottom:6px;">
+            <div style="font-size:0.78rem;color:var(--text-muted);margin-bottom:6px;">LINE Channel Secret</div>
+            <input type="password" class="cyber-input" id="settingLineSecret" placeholder="輸入 Secret..." style="width:100%;padding:6px 10px;font-size:0.78rem;margin-bottom:8px;">
+            <button class="cyber-btn orange" id="btnSaveLINE" style="width:100%;font-size:0.78rem;padding:7px;">💾 儲存 LINE 設定</button>
+          </div>
+
+          <!-- 快速修改 Discord -->
+          <div id="quickEditDiscord" style="display:none;margin-top:8px;padding:10px;background:rgba(0,0,0,0.2);border-radius:8px;border:1px solid rgba(255,255,255,0.07);">
+            <div style="font-size:0.78rem;color:var(--text-muted);margin-bottom:6px;">Discord Bot Token</div>
+            <input type="password" class="cyber-input" id="settingDiscordToken" placeholder="輸入 Token..." style="width:100%;padding:6px 10px;font-size:0.78rem;margin-bottom:6px;">
+            <div style="font-size:0.78rem;color:var(--text-muted);margin-bottom:6px;">Discord Channel ID</div>
+            <input type="text" class="cyber-input" id="settingDiscordChannel" placeholder="輸入 Channel ID..." style="width:100%;padding:6px 10px;font-size:0.78rem;margin-bottom:8px;">
+            <button class="cyber-btn orange" id="btnSaveDiscord" style="width:100%;font-size:0.78rem;padding:7px;">💾 儲存 Discord 設定</button>
+          </div>
+
+          <div style="display:flex;gap:8px;margin-top:10px;">
+            <button class="cyber-btn muted" id="btnToggleEditLINE" style="flex:1;font-size:0.75rem;padding:7px;">✏️ 修改 LINE</button>
+            <button class="cyber-btn muted" id="btnToggleEditDiscord" style="flex:1;font-size:0.75rem;padding:7px;">✏️ 修改 Discord</button>
+          </div>
+        </div>
+
+        <!-- 群組 3：AI 設定 -->
+        <div class="glass-box orange-accent settings-group">
+          <h3 class="settings-group-title">🧠 AI 設定</h3>
+          
+          <div class="settings-item">
+            <span class="settings-label">優先供應商</span>
+            <select class="cyber-select" id="selectAIPriority">
+              <option value="gemini">Gemini (推薦)</option>
+              <option value="openai">OpenAI</option>
+              <option value="ollama">本地 AI (Ollama)</option>
+            </select>
+          </div>
+
+          <div class="settings-item">
+            <span class="settings-label">自動故障分流</span>
+            <label class="switch-control">
+              <input type="checkbox" id="toggleAPIFailover" checked>
+              <span class="slider"></span>
+            </label>
+          </div>
+
+          <div class="input-group" style="margin-top:12px;margin-bottom:0;">
+            <label class="input-label" style="font-size:0.75rem;">自訂 System Prompt（選填）</label>
+            <textarea class="cyber-input" id="customSystemPrompt" placeholder="留空使用預設提示詞..." style="padding:8px 12px;font-size:0.78rem;resize:vertical;min-height:60px;width:100%;"></textarea>
+            <button class="cyber-btn muted" id="btnSaveSystemPrompt" style="width:100%;font-size:0.75rem;padding:6px;margin-top:6px;">💾 儲存提示詞</button>
+          </div>
+        </div>
+
+        <!-- 群組 4：對話管理 -->
+        <div class="glass-box cyan-accent settings-group">
+          <h3 class="settings-group-title">💬 對話管理</h3>
+
+          <div style="display:flex;gap:8px;">
+            <button class="cyber-btn muted" id="btnClearChat" style="flex:1;font-size:0.78rem;padding:8px;">🗑️ 清除對話</button>
+            <button class="cyber-btn muted" id="btnExportChat" style="flex:1;font-size:0.78rem;padding:8px;">📥 匯出對話</button>
+          </div>
+        </div>
+
+        <!-- 群組 5：外觀 -->
+        <div class="glass-box orange-accent settings-group">
+          <h3 class="settings-group-title">🎨 外觀</h3>
+          <div class="input-group" style="margin-bottom: 0;">
+            <label class="input-label" style="font-size: 0.75rem;">背景圖片 URL</label>
+            <input type="text" class="cyber-input" id="bgImageUrlInput" placeholder="貼上圖片網址..." style="padding: 6px 12px; font-size: 0.85rem;">
+          </div>
+        </div>
+
+        <!-- 群組 6：安全自癒與備份還原 -->
+        <div class="glass-box cyan-accent settings-group">
+          <h3 class="settings-group-title">🛠️ 安全防禦與還原</h3>
+          <p style="font-size: 0.75rem; color: var(--text-muted); line-height: 1.4; margin-bottom: 15px;">
+            若本地端核心邏輯出錯，可在此還原備份。
+          </p>
+          <div id="backupFilesList">
+            <div class="bak-item">
+              <div>
+                <strong style="color: var(--neon-cyan);">server.js.bak</strong>
+                <div style="font-size: 0.65rem; color: var(--text-muted); margin-top: 2px;">系統啟動時自動複製</div>
+              </div>
+              <button class="bak-btn-restore" onclick="triggerServerRestoration()">點擊還原</button>
+            </div>
+          </div>
+          <button class="cyber-btn muted" id="btnResetAllOnboarding" style="width: 100%; font-size: 0.8rem; padding: 8px; margin-top: 15px; border-color: rgba(255, 102, 0, 0.3); color: var(--neon-orange);">重置並重啟引導設定</button>
+        </div>
+
+      </aside>
+
+    </div>
+
+  </div>
+
+  <!-- Toast 解鎖成就通知容器 -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- 固定底部資訊列 -->
+  <div style="position:fixed;bottom:0;left:0;right:0;z-index:1001;background:rgba(6,5,11,0.92);backdrop-filter:blur(10px);border-top:1px solid rgba(255,102,0,0.2);padding:8px 20px;display:flex;justify-content:space-between;align-items:center;font-size:0.75rem;font-family:var(--font-mono);">
+    <span style="color:var(--text-muted);">💬 有任何問題或意見，歡迎聯絡：<a href="mailto:eric940724@gmail.com" style="color:var(--neon-cyan);text-decoration:none;">eric940724@gmail.com</a></span>
+    <span style="color:#ffffff;">上次更新：2026-06-08 09:48</span>
+  </div>
+
+  <!-- 前端引導邏輯與通訊協定 -->
+  <script src="client.js"></script>
+</body>
+</html>

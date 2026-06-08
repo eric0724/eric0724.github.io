@@ -1,0 +1,1756 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <!-- http://127.0.0.1:5500/eric0724.github.io/html/ExpenseLog.html?room=room1&pass=roo1 -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>簡易記帳</title>
+    <!-- 先引入 Firebase -->
+     <!-- Firebase 初始化 -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+    <script>
+        // Firebase 初始化
+        const firebaseConfig = { 
+            apiKey: "AIzaSyBCcFD4Q1aJOb0Jh2XPh_860LC9S9DiZCA",
+            authDomain: "buybookkeeping-c0d8c.firebaseapp.com",
+            databaseURL: "https://buybookkeeping-c0d8c-default-rtdb.firebaseio.com/",
+            projectId: "buybookkeeping-c0d8c",
+        };
+        firebase.initializeApp(firebaseConfig);
+    </script>
+    <style>
+        .button-row {
+            display: flex;
+            justify-content: center; /* 水平置中 */
+            align-items: center;    /* 垂直對齊 */
+            gap: 10px;              /* 按鈕間距 */
+            
+        }
+
+        .button-row button {
+            width: 120px;
+            max-width: 120;overflow: hidden;
+            padding: 12px 20px; 
+            border-radius: 8px;
+            border: none;
+            background-color: #f0b513e2;
+            cursor: pointer;          /*滑鼠移到按鈕上會變成手型*/
+            
+        }
+
+        .button-row button:hover {
+            background-color: #f0b51355;
+        }
+        /* 中間按鈕大一些 */
+        .button-row #add_button {
+            padding: 20px 28px;
+            background-color: #f0b513e2;
+            color:black;
+        }
+        .button-row #add_button:hover {
+            background-color: #f0b51355;
+        }
+        /*--------------------------------------------------------*/
+        .button{
+            display: flex;
+            justify-content: center; /* 水平置中 */
+            align-items: center;    /* 垂直對齊 */
+            width: 80%;
+            margin: 20px auto;
+        }
+    </style>
+</head>
+<body style="margin:0; padding:0; min-height:100vh; position:relative;">
+<script>
+    var Global_userid = 1
+    var Global_userpass = "1"
+    var Global_room_name = ""
+    var Global_room_pass = "1"
+    var room_userNames = []
+    var type = ""
+    var old_type = ""
+    //--------------------------------------
+    //--------------------------------------
+    var G_canUpdate = true
+    var need_update = false
+    var end_update = true // 避免同時執行兩次更新
+    //--------------------------------------
+    let buysRef = null;// 監控更新
+    //--------------------------------------
+    let userRef = null;// 監控更新
+    //--------------------------------------
+    let Vlogout = null;// 監控 訪客 退出
+    //--------------------------------------
+    var some_item_color = "yellow";// 監控 訪客 退出
+    //--------------------------------------
+    let rateTWD = { TWD:1, USD:31.5, EUR:37.2, GBP:42.5, AUD:21, JPY:0.202, KRW:0.0426 };
+
+</script>
+<h1 style=" text-align: center; font-size: 30px; ">簡易記帳</h1>
+<!-----------------------------三個大按鈕-------------------------------->
+<div class="button-row">
+    <button id="logIn_button" onclick="logIn_onclick()">帳號</button>
+    <button id="add_button" onclick="add_buy_onclick()">新增</button>
+    <button id="Together_button" onclick="Group_onclick()">共同建立</button>
+</div>   
+<script>
+    document.getElementById("Together_button").style.backgroundColor = "orange"
+</script>
+<br>
+<style>
+    .input_backG_sty{
+        width: 300px; padding: 20px; background:#f0b51373; margin: 0 auto;
+        border-radius: 8px; margin-bottom: 10px; border: 3px solid rgba(0,0,0,0.12);
+        text-align: center;
+    }
+</style>
+<!------------房間設定-------->
+<div id="input2_backG" class="input_backG_sty">
+    <!--------房客權限-------------->
+    <div id="input2_div_Permissions">
+        <p id="input2_text1">房客權限</p>
+        <select id="input2_input_user" style="font-size: 18px;" onchange="edit_Permissions_name_onchange(this.value)">
+            <option value="Use1r">名稱1</option>
+            <option value="Use2">名稱2</option>
+        </select>            
+        <select id="input2_Permissions" onchange="edit_Permissions_onchange(this.value)" 
+                style="font-size: 18px;">
+            <option value="User">一般使用者(User)</option>
+            <option value="Admin">管理者(Admin)</option>
+        </select>
+    </div>
+    <br><br><br>
+    <button onclick="copyLink()" style="width: 80%;">複製邀請連結</button>
+    <button onclick="close_Permissions()" style="width: 80%;">關閉管理員模式(測試用)</button>
+    <br><br>
+    <button id="Exit_the_room_button" style="width: 60%; background-color: rgb(228, 108, 108);
+                                                    border: 0px; height: 25px;">退出房間</button>
+    <!----------------------------------------------------------------------->
+    <!--------------------------離開前 跳出的視窗----------------------------->
+    <script>
+        function showCustomConfirm(message, onConfirm, onCancel) {
+            // 創建遮罩層
+            const overlay = document.createElement("div");
+            overlay.style.position = "fixed";
+            overlay.style.top = "0";
+            overlay.style.left = "0";
+            overlay.style.width = "100%";
+            overlay.style.height = "100%";
+            overlay.style.backgroundColor = "rgba(0,0,0,0.5)";
+            overlay.style.display = "flex";
+            overlay.style.justifyContent = "center";
+            overlay.style.alignItems = "center";
+            overlay.style.zIndex = "9999";
+
+            // 創建對話框
+            const dialog = document.createElement("div");
+            dialog.style.backgroundColor = "#fff";
+            dialog.style.padding = "20px 30px";
+            dialog.style.borderRadius = "10px";
+            dialog.style.textAlign = "center";
+            dialog.style.minWidth = "300px";
+            dialog.style.boxShadow = "0 5px 15px rgba(0,0,0,0.3)";
+            dialog.style.position = "relative"; // 為了方便定位小字
+
+            // 小提示文字
+            const tip = document.createElement("div");
+            tip.innerText = "此視窗是 AI 做的";
+            tip.style.fontSize = "12px";
+            tip.style.color = "#888";
+            tip.style.position = "absolute";
+            tip.style.top = "5px";
+            tip.style.right = "10px";
+            dialog.appendChild(tip);
+
+            // 文字訊息
+            const msg = document.createElement("p");
+            msg.innerText = message;
+            msg.style.marginBottom = "20px";
+            msg.style.fontSize = "16px";
+            dialog.appendChild(msg);
+
+            // 按鈕容器
+            const btnContainer = document.createElement("div");
+            btnContainer.style.display = "flex";
+            btnContainer.style.justifyContent = "space-around";
+
+            // 確定按鈕
+            const okBtn = document.createElement("button");
+            okBtn.innerText = "確定";
+            okBtn.style.padding = "8px 20px";
+            okBtn.style.backgroundColor = "#4CAF50";
+            okBtn.style.color = "#fff";
+            okBtn.style.border = "none";
+            okBtn.style.borderRadius = "5px";
+            okBtn.style.cursor = "pointer";
+            okBtn.onclick = () => {
+                document.body.removeChild(overlay);
+                if (onConfirm) onConfirm();
+            };
+
+            // 拒絕按鈕
+            const cancelBtn = document.createElement("button");
+            cancelBtn.innerText = "拒絕";
+            cancelBtn.style.padding = "8px 20px";
+            cancelBtn.style.backgroundColor = "#f44336";
+            cancelBtn.style.color = "#fff";
+            cancelBtn.style.border = "none";
+            cancelBtn.style.borderRadius = "5px";
+            cancelBtn.style.cursor = "pointer";
+            cancelBtn.onclick = () => {
+                document.body.removeChild(overlay);
+                if (onCancel) onCancel();
+            };
+
+            btnContainer.appendChild(okBtn);
+            btnContainer.appendChild(cancelBtn);
+            dialog.appendChild(btnContainer);
+            overlay.appendChild(dialog);
+            document.body.appendChild(overlay);
+        }
+
+        // 使用範例：按鈕點擊時呼叫
+        document.getElementById("Exit_the_room_button").addEventListener("click", () => {
+            showCustomConfirm(
+                "確定要離開嗎？",
+                () => { 
+                        // 立即執行 async 函式
+                        Exit_the_room().then(() => {
+                            console.log("已離開房間");
+                        }).catch(err => {
+                            console.error(err);
+                        });
+                    },
+                () => {  }
+            );
+        });
+
+    </script>\
+    <!--------------------------房間--------------------------------------------->
+    <script> 
+        function close_Permissions(){
+            var documenti = document.getElementById("Together_button")
+            if(documenti.style.backgroundColor == "orange") documenti.style.backgroundColor = "#f0b513e2"
+            else documenti.style.backgroundColor = "orange"
+        }
+        //--------------------------------------------------------------------------
+        //----------------------跟著 f 修改資料---------------------------------------
+        async function listen_users(){
+            // 解除舊的
+            if (userRef) userRef.off();
+
+            // 建立新的
+            userRef = firebase.database().ref("usernames/" + Global_userid);
+            userRef.on("value", snapshot => {
+                var permissioni = snapshot.val().Permissions
+                if(permissioni == "User") 
+                    document.getElementById("Together_button").style.backgroundColor = "#f0b513e2"
+                else 
+                    document.getElementById("Together_button").style.backgroundColor = "orange"
+            });
+        }
+        //----------------------跟著 f 修改資料---------------------------------------
+        function listenBuys(group_name){
+            // 解除舊的
+            if (buysRef) buysRef.off();
+
+            // 建立新的
+            buysRef = firebase.database().ref("groups/" + group_name + "/buys");
+            buysRef.on("value", snapshot => {
+                need_update = true;
+            });
+            
+        }
+        setInterval(()=>{ 
+            if(need_update){ 
+                test()
+                need_update = false
+            }
+            /*
+            if(G_canUpdate && need_update){ 
+                    test()
+                }
+            }
+            */
+            },1000)
+        //-----------------------依照f 自己 權限變更-----------------------------------------
+        /*
+        firebase.database().ref("username/" + Global_userid + "Permissions").on("value", snapshot => {
+            if(this.value == "User") document.getElementById("Together_button").backgroundColor = "#f0b513e2"
+            else document.getElementById("Together_button").backgroundColor = "orange"
+        });
+        */
+        //-------------------------------------------------------------------------
+        //-----------------------退出房間--------------------------------------
+        async function Exit_the_room(){
+            var snapshot = await firebase.database().ref("groups/" + Global_room_name + "/buys")
+                .orderByChild("uid").equalTo(Global_userid)
+                .once("value");
+            const removes = [];
+            if (snapshot.exists()) {
+                snapshot.forEach(childSnap => {
+                    const key = childSnap.key;
+                    removes.push(firebase.database().ref("groups/" + Global_room_name + "/buys/" + key).remove());
+                });
+            }
+            // 等所有刪除完成
+            await Promise.all(removes);
+            await add_room_name_new();
+            await firebase.database().ref("usernames/" + Global_userid + "/roomname").set(Global_room_name)
+            await firebase.database().ref("usernames/" + Global_userid + "/Permissions").set("Admin")
+            document.getElementById("Together_button").textContent = "共同建立"
+            re_upbutton()
+            test()
+        }
+        //------------------------更改房客 權限------------------------------------------
+        function edit_Permissions_onchange(changeValue)
+        {
+            var B_colr = document.getElementById("Together_button").style.backgroundColor
+            if( B_colr != "orange"){
+                alert("你不是房組，無法修改")
+                return
+            }
+            var input2 = document.getElementById("input2_input_user").value;
+            firebase.database().ref("usernames/" + input2 + "/Permissions").set(changeValue) // 將數量加 1
+        }
+        //------------------------選擇後 名字 顯示他的 權限-------------------------------
+        function edit_Permissions_name_onchange(changeValue)
+        {
+            firebase.database().ref("usernames/" + changeValue + "/Permissions")
+                .once("value")
+                .then(snapshot => {
+                    var permission = snapshot.val(); // "User" 或 "Admin"
+                    document.getElementById("input2_Permissions").value = permission;
+                });
+        }
+        //-------------------------------------------------------------------------------
+        //------------------------找出房內 所有 名字--------------------------------------
+        async function inRoom_nameS(){
+            var snapshot = await firebase.database().ref("usernames/").once("value");
+            const childrenData = [];
+            snapshot.forEach(childSnap => {
+                childrenData.push({
+                    key: childSnap.key,
+                    val: childSnap.val()
+                });
+            });
+            for (const childSnap of childrenData) {
+                try {
+                    const uidi = childSnap.key;
+                    const data = childSnap.val;
+                    let name = await getName(uidi);
+                    if (!name) name = uidi;
+                    if(typeof name != "string" || name.startsWith("Group_buy_use_user")){
+                        continue
+                    }
+                    if( data.roomname == Global_room_name){
+                        if (!room_userNames.some(u => u.uid === uidi)) 
+                        {
+                            room_userNames.push({ username: name, uid: uidi });
+                        }
+                    }
+                } catch(e) {
+                    alert("(inroom)Error in loop: " + e);
+                }
+            }
+        }
+        //------------------------列出 名字 清單------------------------------------------
+        async function edit_Permissions_username()
+        {
+            await inRoom_nameS()
+            // 更新 <select>
+            var select = document.getElementById("input2_input_user");
+            select.innerHTML = "";
+            room_userNames.forEach(u => {
+                var option = document.createElement("option");
+                option.value = u.uid;       // value 儲存 uid
+                option.textContent = u.username; // 顯示 username
+                select.appendChild(option);
+            });
+
+        }
+        function copyLink(){
+            var roomName = Global_room_name;
+            var roomPass = Global_room_pass;
+            //roomName = "合買群A";
+            //roomPass = "合買群A";
+            var link = location.origin + location.pathname +
+                "?room=" + encodeURIComponent(roomName) +
+                "&pass=" + encodeURIComponent(roomPass);
+
+            navigator.clipboard.writeText(link);
+            alert("已複製邀請連結");
+        }
+    </script>
+</div>
+<!-----------三個大按鈕-------->
+<div id="input1_backG" class="input_backG_sty">
+    <p id="input1_type"></p>
+    <p id="input1_text1">帳號</p>  <input type='text' id="input1_u" />
+    <br>
+    <p id="input1_text2">密碼</p> <input type='number' id="input1_pass" style="width: 120px;" />
+    <!--貨幣-->
+    <select id="input1_cur" style="font-size: 15px;">
+        <option value="TWD">臺幣</option>
+        <option value="USD">美元</option>
+        <option value="EUR">歐元</option>
+        <option value="GBP">英鎊</option>
+        <option value="AUD">澳幣</option>
+        <option value="JPY">日圓</option>
+        <option value="KRW">韓圓</option>
+    </select>
+    <br>
+    <!--優惠-->
+    <select id="input1_discount" style="font-size: 15px;width: 120px;text-align: center;">
+        <option value="無優惠">無優惠</option>
+        <option value="95折">95折</option>
+        <option value="9折">9折</option>
+        <option value="買一送一">買一送一</option>
+        <option value="買二送一">買二送一</option>
+    </select>   
+    <var id="input1_text3_var">
+        <p style="display:inline-block">數量</p> <input type='number' id="input1_number" value="1" style="width: 30px;"/>
+    </var>
+    
+    <!--購買人-->
+    <var id="input3_buyname_var">
+        <p style="display:inline-block">購買人</p> 
+        <div id="menu" style="background:#fff; border:1px solid #000;">
+            
+        </div>
+    </var>
+    <br>
+    <button id="input1_button1" onclick="input1_button1_onclick()">登入</button>
+    <button id="input1_button2" onclick="input1_button2_onclick()">註冊</button>
+</div>
+<!-------------------------------合買------------------------------------>
+<button id="add_text" class="button" onclick="add_Group_buy()">新增合買</button>
+<!--------------合買---------------->
+<script>
+    async function add_Group_buy() {
+        if(document.getElementById("Together_button").textContent == "共同建立"){
+            alert("沒有群組無法使用")
+            return
+        }
+        add_buy_onclick("Group_buy")
+        await inRoom_nameS()
+        const menu = document.getElementById("menu");
+        menu.innerHTML = ""; // 清空
+
+        room_userNames.forEach(u => {
+            const label = document.createElement("label");
+            const checkbox = document.createElement("input");
+            checkbox.type = "checkbox";
+            checkbox.value = u.uid;
+            checkbox.textContent = u.username
+            checkbox.className  = "input3_checkbox"
+            label.appendChild(checkbox);
+            label.append(" " + u.username);
+            menu.appendChild(label);
+        });
+
+    }
+</script>
+<button id="SUM_text" class="button" style="font-size: 18px; background-color: yellow;">total: </button>
+<select class="button" style="font-size: 18px; text-align: center;" 
+        onchange="edit_SUM_cur(value)" id= "show_SUM_cur" >
+    <option value="TWD" >臺幣</option>
+    <option value="USD" >美元</option>
+    <option value="EUR" >歐元</option>
+    <option value="GBP" >英鎊</option>
+    <option value="AUD" >澳幣</option>
+    <option value="JPY" >日圓</option>
+    <option value="KRW" >韓圓</option>
+</select>
+<!-----------------------------顯示購買商品------------------------------------------>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<style>
+    /*----------------------------*/
+    .show_button{
+        font-size: 20px; width: 120px;
+    }
+    .show_userx_name{
+        width: 500px; 
+        padding: 20px; 
+        background:#f0b51373;
+        margin: 0 auto;
+        border-radius: 8px; 
+        margin-bottom: 10px; 
+        border: 3px solid rgba(0,0,0,0.12);
+        text-align: center;
+    }
+    #show_buys{
+        max-width: 90%;            /* 最大寬度 */
+        margin: 0 auto;            /* 將 div 自身置中 */
+        display: flex;             /* 讓 div 變成彈性容器 */
+        justify-content: center;   /* 水平置中子元素 */
+        flex-wrap: wrap;           /* 允許換行 */
+    }
+</style>
+<div id="show_buys">
+    <!--
+    <div id="show_userx_name">
+        <h3>1</h3>
+        <div id="show_userx_buys">
+            <button class="show_button" style="width: 30px">+</button>
+            <button class="show_button" style="width: 240px">商品x</button>
+            <button class="show_button" style="width: 80px">價格x</button>
+            <button class="show_button" style="width: 30px">-</button>
+        </div>
+    </div>-->
+</div>
+<!-----------------------------底部資訊------------------------------------------->
+<div style="
+                background-color: #f0b513e2;
+                padding: 8px 0;
+                text-align: center;
+                font-size: 10px;
+                font-weight: bold;
+                font-family: Arial, sans-serif;
+                width: 100%;
+                position: absolute;   /* 不會跟滾輪跑 */
+                bottom: 0;            /* 在頁面底部 */
+                left: 0;
+         ">
+    email: eric940724@gmail.com
+    <br>
+    其他:
+    <a href="https://eric0724.github.io/game/games.html">
+        https://eric0724.github.io/game/games.html
+    </a>
+</div>
+<!-----------------------------js開始-------------------------------------------->
+<script>
+    //---------------------------++++++++++++-------------------------------
+    /*
+    $(document).ready(function() {
+        for (var i = 0; i < month.length; i++) {
+            $("#notebook_ul").append(
+                "<div style='background-color: #f0f0f0;'>" +
+                "<li data-role='list-divider'>" +
+                    "<div data-role='collapsible'>" +
+                        "<h3>" + month[i] + "</h3>" +
+                        "<p>" +
+                            "<form method='post'>" +
+                                "<label for='" + month[i] + "_inputText'>文字:</label>" +
+                                "<input type='text' name='inputText' id='" + month[i] + "_inputText'/>" +
+                                "<input type='submit' name='button1' id='" + month[i] + "_button_addtext' data-inline='true' value='確定'>" +
+                                "<input type='reset' name='button2' id='" + month[i] + "_button_addtext_r' data-inline='true' value='重設'>" +
+                            "</form>" +
+                        "</p>" +
+                    "</div>" +
+                "</li>" +
+                "<li id='_taxt'>    </li>" +
+                "</div>"
+            ).trigger("create"); // 使用 jQuery Mobile 增加東西
+        }
+    })*/
+    //---------------------------input1重新設定-------------------------------
+    document.getElementById("input1_backG").style.display = "none";//none
+    function re_upbutton() {
+        let el1 = document.getElementById("input1_backG");
+        let el2 = document.getElementById("input2_backG")
+        if(document.getElementById("Together_button").textContent == "共同建立")
+            document.getElementById("input2_backG").style.display = "none"
+        else {
+            if(type != "together"){
+                document.getElementById("input2_backG").style.display = "none"
+            }
+            else{
+                el1.style.display = "none";
+            }
+        }
+        document.getElementById("input1_text2").style.display = "block"
+        document.getElementById("input1_pass").style.display = "inline-block"
+        document.getElementById("input1_pass").type = "number"
+        document.getElementById("input1_text3_var").style.display = "none"
+        document.getElementById("input1_cur").style.display = "none"
+        document.getElementById("input1_discount").style.display = "none"
+        document.getElementById("input1_button2").style.display = "inline-block"
+        if (el1.style.display === "none" || el1.style.display === "" ) {
+            G_canUpdate = false
+            el1.style.display = "block";
+        } 
+        else if(type == old_type){
+            G_canUpdate = true
+            el1.style.display = "none";
+        }
+             document.getElementById("input3_buyname_var").style.display = "none"
+        if(type == "Group_buy"){
+            const div = document.getElementById("input1_backG");
+            const btn = document.getElementById("add_text");
+            div.parentNode.insertBefore(btn, div);
+             document.getElementById("input3_buyname_var").style.display = "block"
+        }
+        if(old_type == "Group_buy" && type != "Group_buy"){
+            const div = document.getElementById("input1_backG");
+            const btn = document.getElementById("add_text");
+            div.parentNode.insertBefore(div,btn );
+             document.getElementById("input3_buyname_var").style.display = "none"
+        }
+        old_type = type
+    }
+    function input1_button1_onclick(){
+        if(type == "login") login()
+        if(type == "add_Buy") add_buy()
+        if(type == "Group_buy") add_buy("input3")
+        if(type == "addroom_name") to_room_name()
+        
+    }
+    function input1_button2_onclick(){
+        if(type == "login") register()
+        if(type == "addroom_name") add_room_name()
+    }
+    
+    //--------------------------新增商品(無列印)------------------------
+    function add_buy_onclick(typen = "add_Buy"){
+        type = typen
+        re_upbutton()
+        document.getElementById("input1_text1").textContent = "商品名"
+        document.getElementById("input1_text2").textContent = "金額"
+        document.getElementById("input1_button1").textContent = "新增"
+        document.getElementById("input1_button2").style.display = "none"
+        document.getElementById("input1_cur").style.display = "inline-block"
+        document.getElementById("input1_text3_var").style.display = "block"
+        document.getElementById("input1_discount").style.display = "inline-block"
+    }
+
+    function add_buy(inputn = "input1"){
+        var buy_name = document.getElementById("input1_u").value
+        var money = Number(document.getElementById("input1_pass").value) || 0;
+        //計算匯率
+        let cur = document.getElementById("input1_cur").value;
+        //計算折扣
+        let discounti = document.getElementById("input1_discount").value;
+        //計算折扣
+        let quantityi = Number(document.getElementById("input1_number").value);
+        
+        fire_add(buy_name,quantityi,money,cur,discounti,inputn)
+        //fire_add()
+    }
+    //--------------------------找名字-------------------------
+    async function getName(uid){
+        var snapshot = await firebase.database()
+            .ref("groups/" + group_name + "/buys")
+            .orderByChild("uid").equalTo(uid)
+            .once("value");
+
+        let name = "";
+        snapshot.forEach(childSnap => {
+            name = childSnap.val().username;
+        });
+        return name;
+    }
+    //---------------------_____-存檔_____--------------------
+    async function fire_add(buy_name,quantityi,money,cur,discounti,inputn){
+        localStorage.setItem("account", Global_userid);
+        localStorage.setItem("password", Global_userpass);
+        localStorage.setItem("local_roomName", Global_room_name);
+        localStorage.setItem("local_roomPass", Global_room_pass);
+        userid = document.getElementById("logIn_button").textContent
+        if (userid == "帳號") userid = Global_userid
+        group_name = document.getElementById("Together_button").textContent
+        if (group_name == "共同建立") {
+            group_name = Global_room_name
+            firebase.database().ref("rooms/" + group_name).set(group_name);
+            firebase.database().ref("usernames/" + userid + "/pass").set(Global_userpass);
+            firebase.database().ref("usernames/" + userid + "/roomname").set(group_name) // 將數量加 1
+        }
+        //------------------如果 合買將增加一個 uid---------------------------------
+        //#region
+        var have_Group_buy_use_uid = false
+        var snapshots = await firebase.database().ref("usernames/")
+                                .orderByChild("roomname").equalTo(Global_room_name)
+                                .once("value") ;
+        var Group_buy_use_user = ""
+        snapshots.forEach(childSnap => {
+            var uid = childSnap.key    
+            var val = childSnap.val()
+            // 是否字串前面有"Group_buy_use_user"
+            if( uid.startsWith("Group_buy_use_user")){ 
+                have_Group_buy_use_uid = true
+                Group_buy_use_user = uid
+            }
+        });
+        if(!have_Group_buy_use_uid){
+            var n = 0
+            while(await fcheck_UidExists("Group_buy_use_user" + n)){
+                n += 1
+            }
+            Group_buy_use_user = "Group_buy_use_user" + n
+            firebase.database().ref("usernames/" + Group_buy_use_user + "/roomname").set(Global_room_name);
+        }
+        //#endregion
+        //------------------------------------------------------------------------
+        
+        var name = await getName(userid) 
+        if (name == null||name == "") name = userid
+        const checkedBoxes = document.querySelectorAll(".input3_checkbox:checked");
+        let newUser = {}
+        if(inputn == "input3"){
+            // 合買人
+            const peopleS = [];
+            checkedBoxes.forEach(box => {
+                peopleS.push(box.value);
+            });
+            userid = Group_buy_use_user
+            newUser = { uid:userid, username:peopleS, item:buy_name, 
+                quantity:quantityi, price:money, currency:cur, discount:discounti,Group_buy:"T"};
+        }
+        else{
+            newUser = { uid:userid, username:name, item:buy_name, 
+                quantity:quantityi, price:money, currency:cur, discount:discounti,Group_buy:"F"};
+        }
+        
+        const snapshot = await firebase.database()
+                        .ref("groups/" + Global_room_name + "/buys")
+                        .once("value");
+
+        let found = false;
+            var some_buyi = false
+            snapshot.forEach(childSnap => {
+                const key = childSnap.key;
+                const data = childSnap.val();
+                if (data.item === buy_name) {
+                    if (data.uid === userid) {
+                        alert("商品已存在，自動將商品數量加一")
+                        found = true;
+                        firebase.database()
+                            .ref("groups/" + Global_room_name + "/buys/" + key + "/quantity")
+                            .set(Number(data.quantity) + 1);
+                    }
+                    else{
+                        some_buyi =true
+                        //alert("以有其他人購買商品已存在，但本系統預設為分開計算")
+                    }
+                }
+            });
+        if(some_buyi) {
+            alert("以有其他人購買商品已存在，但本系統預設為分開計算")
+            some_buyi = false
+        }
+        // 沒找到相同商品才新增
+        if (!found) {
+            await firebase.database().ref("groups/" + group_name + "/buys").push(newUser);
+        }
+        if (Vlogout != null){
+            await Vlogout.cancel(); // 取消訪客模式自動刪除
+            Vlogout = null;
+        }
+        test()
+    }
+    //--------------------------相同物品標記------------------------
+    async function some_item_mark(){
+        /*
+        let newUser = { uid:userid, username:name, item:buy_name, 
+            quantity:quantityi, price:money, currency:cur, discount:discounti};
+        */
+        const snapshot = await firebase.database()
+                        .ref("groups/" + Global_room_name + "/buys")
+                        .once("value");
+        
+        const list = [];
+        snapshot.forEach(s =>{
+            list.push({uid:s.val().uid,item:s.val().item});
+        } );
+        for (let i = 0; i < list.length; i++) {
+            for (let j = i + 1; j < list.length; j++) {
+                if (list[i].item === list[j].item) {
+                    var snapshotL = await firebase.database().ref("usernames/")
+                            .orderByChild("roomname").equalTo(Global_room_name)
+                            .once("value") ;
+                    // i
+                    var uid_listi = list[i].uid
+                    if(Array.isArray(list[i].uid)) {
+                        snapshotL.forEach(childSnap => {
+                            var uid = childSnap.key    
+                            // 是否字串前面有"Group_buy_use_user"
+                            if( uid.startsWith("Group_buy_use_user")){ 
+                                uid_listi = uid
+                            }
+                        });
+                    }
+                    const el1 = document.getElementById("showItem_buttom_" + uid_listi + "_" + list[i].item);
+                    if (el1) {
+                        el1.style.backgroundColor = some_item_color;
+                    } else {
+                        alert("el1 有錯: ");
+                    }
+                    // j
+                    var uid_listj = list[j].uid
+                    if(Array.isArray(list[j].uid)) {
+                        snapshotL.forEach(childSnap => {
+                            var uid = childSnap.key    
+                            // 是否字串前面有"Group_buy_use_user"
+                            if( uid.startsWith("Group_buy_use_user")){ 
+                                uid_listj = uid
+                                return; // 退出當前 forEach，不用繼續跑
+                            }
+                        });
+                    }
+                    var el2no = false
+                    const el2 = document.getElementById("showItem_buttom_" + uid_listj + "_" + list[j].item);
+                    if (el2) {
+                        el2.style.backgroundColor = some_item_color;
+                    } else {
+                        el2no = true
+                    }
+                    if(el2no) alert("el2 有錯: ");
+                }
+            }
+        }
+    }
+
+    //--------------------_____+總和+_____----------------
+    var isrun_TestInSum = false 
+    let runId_TestInSum = 0;
+    async function test_in_sum() {try{
+        //-----------------之前呼叫過但還沒跑完，將之前的退出-------------------------------
+        const myId_TestInSum = ++runId_TestInSum; // => runId += 1 ; my = runid
+        if(myId_TestInSum !== runId_TestInSum) return;
+        //-----------------每人 合買 金額 計算-------------------------
+        await firebase.database().ref("groupsBuyMoney/").remove();
+            if(myId_TestInSum !== runId_TestInSum) return; //將之前的退出
+        //------------------------------------------------------------
+        group_name = document.getElementById("Together_button").textContent
+        if (group_name == "共同建立") group_name = Global_room_name
+        var SUM_text_id = document.getElementById("SUM_text")
+        SUM_text_id.textContent = "total: " + 0
+        var f_usernames =  await firebase.database().ref("groups/" + group_name + "/buys").once("value");
+            if(myId_TestInSum !== runId_TestInSum) return;  //將之前的退出
+        const data = f_usernames.val() || {};
+        
+        var name_button_ids = []
+        for (const [key, fi] of Object.entries(data)){ 
+            
+            if(myId_TestInSum !== runId_TestInSum) return;  //將之前的退出
+            var uid = fi.uid;
+            var quantity_sum_i = Number(fi.quantity)
+            var price_sum_i = Number(fi.price)
+            var quantity_add = 0
+            var discount_sum_i = fi.discount
+            if(discount_sum_i == "95折"){
+                price_sum_i = Number((price_sum_i * 0.95).toFixed(2))
+            }
+            if(discount_sum_i == "9折"){
+                price_sum_i = Number((price_sum_i * 0.9).toFixed(2))
+            }
+            if(discount_sum_i == "買一送一"){
+                while (quantity_sum_i >= 2) {
+                    quantity_sum_i -= 2 //quantity_sum_i 原本數量
+                    quantity_add += 1  
+                }
+            }
+            if(discount_sum_i == "買二送一"){
+                while (quantity_sum_i >= 3) {
+                    quantity_sum_i -= 3
+                    quantity_add += 2
+                }
+            }
+            quantity_add += quantity_sum_i //如果有 多出來的一杯
+            var currency_sum_i = fi.currency // 哪個國家的貨幣
+            var i_money = 0
+            if(old_vur != "r"){
+                if(old_vur){
+                    price_sum_i = document.getElementById('show_price_' + uid + '_' + fi.item).textContent
+                    price_sum_i = Number(price_sum_i)
+                    price_sum_i = Number((price_sum_i * rateTWD[old_vur]).toFixed(2))
+                    old_vur = ""
+                }
+                i_money = Number((price_sum_i / rateTWD[currency_sum_i]).toFixed(2))  
+                document.getElementById('show_price_' + uid + '_' + fi.item).textContent = i_money //算出來的顯示在這
+            }
+            i_money = Number(price_sum_i)
+            //商品的總金額
+            var i_sum = i_money * quantity_add   
+            
+            //-----------------每人 合買 金額 計算-------------------------
+            
+            var evsum_money = " ";
+            var show_SUM_cur_id = document.getElementById("show_SUM_cur")
+            var sum_cur = show_SUM_cur_id.value
+            if(typeof fi.username != "string"){
+                /*
+                */
+               try{
+                   var uids = fi.username
+                   var item = fi.item
+                    //alert("item  "+fi.item+" uids "+uids)
+                    for (var uidi of uids) {
+                        var GB_snapm = await firebase.database().ref("groupsBuyMoney/uid/" + uidi).once("value");
+                            if(myId_TestInSum !== runId_TestInSum) return;  //將之前的退出
+                        var GB_money = Number(GB_snapm.val()) || 0;
+                        var GB_ix_money = Number((i_sum / uids.length).toFixed(2))
+                        GB_money = GB_money + GB_ix_money;
+                        await firebase.database().ref("groupsBuyMoney/uid/" + uidi).set(GB_money) // 記錄每人額外要負的
+                            if(myId_TestInSum !== runId_TestInSum) return;  //將之前的退出
+                        await firebase.database().ref("groupsBuyMoney/items/" + item).set(GB_ix_money) //記錄每樣物品平均後的價錢
+                            if(myId_TestInSum !== runId_TestInSum) return;  //將之前的退出
+    
+                        var GB_sum_button_id = document.getElementById("Edit_sum_button_" + uidi)
+                        var GB_text = GB_sum_button_id.textContent;  // "total: 123.45(自己買的總和) + 0(合買分攤)"
+                        GB_text  = GB_text.split(":")[1].trim();
+                        var GB_person_total  = Number(GB_text.split("+")[0].trim());
+                        GB_sum_button_id.textContent = "total: " + GB_person_total + " + " + GB_money 
+
+                        
+                        var GB_test_id = "GBSow_money" + item ;
+                        var GB_test_id_ed = document.getElementById(GB_test_id)
+                        GB_test_id_ed.textContent = uids.length + " 人，每人: " + GB_ix_money
+                    }
+               }
+               catch(e){
+                    alert("計算合買分攤時，出現問題:\n" + e)
+               }
+            }
+            //------------------------------------------------------
+            // 運算每人總金額
+            else{
+                var evsum_snapm = await firebase.database().ref("groupsBuyMoney/uid/" + uid).once("value");
+                    if(myId_TestInSum !== runId_TestInSum) return;  //將之前的退出
+                var evsum_money_value = Number(evsum_snapm.val()) || 0;
+                evsum_money_value =  Number((evsum_money_value / rateTWD[sum_cur]).toFixed(2))
+                evsum_money = " + " + evsum_money_value;
+            }
+            var namei_id = document.getElementById('Edit_name_button_'+uid)
+            var namei = namei_id.textContent
+            let exists = name_button_ids.some(item => item.id === uid);
+            if (!exists) {
+                name_button_ids.push({ id: uid, name: namei });
+            }
+            var sum_button_id = document.getElementById("Edit_sum_button_" + uid)
+            /*
+            var text = sum_button_id.textContent;  // "total: 123.45"
+            text  = text.split(":")[1].trim();
+            */
+            var person_total  = isNaN(Number(namei)) ? 0 : Number(namei);
+            person_total += i_sum
+            var cur__total =  Number((Number(person_total) / rateTWD[sum_cur]).toFixed(2))
+            sum_button_id.textContent = "total: " + cur__total + evsum_money  
+            namei_id.textContent = person_total  
+            //     所有人
+            text = SUM_text_id.textContent;  // "total: 123.45"
+            person_total  = Number(text.split(":")[1].trim());
+            person_total  += i_sum
+            person_total =  Number((Number(person_total) / rateTWD[sum_cur]).toFixed(2))
+            SUM_text_id.textContent = "Total: " + person_total 
+        }
+        name_button_ids.forEach(element => {
+            document.getElementById('Edit_name_button_'+element.id).textContent = element.name
+        });
+    }
+    catch(e){
+        alert("計算，出現問題:\n" + e)
+    }
+        
+    }
+    //--------------------_____和買 名單  更換f_____--------------------
+    async function Group_buy_names_Ed(buid,bitem){
+        const checkedBoxes = document.querySelectorAll(".input3_checkbox"+buid+bitem+":checked");
+        const peopleS = [];
+        checkedBoxes.forEach(box => {
+            peopleS.push(box.value);
+        });
+        var f_usernames =  await firebase.database().ref("groups/" + Global_room_name + "/buys")
+                            .orderByChild("Group_buy").equalTo("T")
+                            .once("value");
+        f_usernames.forEach(fi => {
+            var item = fi.val().item
+            var key = fi.key
+            if(item == bitem){
+                firebase.database().ref("groups/" + Global_room_name + "/buys/" + key + "/username")
+                            .set(peopleS);
+            }
+        })
+    }
+    //------------------------和買 名單 更換 div 打開-------------------------
+    async function Group_buy_names_test(uidv,itemv,namesv){
+        //if(uidv != "") {return}
+        await inRoom_nameS()
+        var uid = uidv
+        var item = itemv
+        var test_id = 'Group_buy_show_' + uid + '_' + item+"div"
+        var test_div = document.getElementById(test_id)
+        test_div.innerHTML = ''
+        if(test_div){
+            if(test_div.style.display == "block"){
+                test_div.style.display = "none"
+            }
+            else{
+                test_div.style.display = "block"
+                var Group_buy_names = namesv
+                room_userNames.forEach(u => {
+                    const label = document.createElement("label");
+                    const checkbox = document.createElement("input");
+                    checkbox.type = "checkbox";
+                    checkbox.value = u.uid;
+                    checkbox.textContent = u.username
+                    if(Group_buy_names.includes(u.uid))  {
+                        checkbox.checked = true;
+                    }else{
+                        checkbox.checked = false;
+                    }
+                    checkbox.className  = "input3_checkbox" + uid+item
+                    label.appendChild(checkbox);
+                    label.append(" " + u.username);
+                    test_div.appendChild(label);
+                });
+                const br = document.createElement("br");
+                const button2 = document.createElement("button");
+                button2.textContent = "確定";
+                button2.onclick  = function() { Group_buy_names_Ed(uid,item); };;
+                test_div.appendChild(br);
+                test_div.appendChild(button2);
+            }
+        }
+    }
+    //----------------------和買 按鈕顯示-------------------------
+    async function Group_buy_div_button(uidv){
+        //if(uidv != "") {return}
+        if(!(uidv.startsWith("Group_buy_use_user"))) return
+        var f_usernames =  await firebase.database().ref("groups/" + Global_room_name + "/buys")
+                            .orderByChild("Group_buy").equalTo("T")
+                            .once("value");
+        for (const fi of Object.values(f_usernames.val() || {})) {
+            try{
+                let uid = uidv
+                let item = fi.item
+                var names = fi.username
+                var show_names = []
+                for (const namei of names) {
+                    var name = await getName(namei) 
+                    if (name == null||name == "") name = namei
+                    if(!show_names.includes(name))
+                        show_names.push(name)
+                }
+                var test_id = 'Group_buy_show_' + uid + '_' + item
+                var test_div = document.getElementById(test_id)
+                if(test_div){
+                    test_div.innerHTML = '';
+                    // 
+                    const button = document.createElement("button");
+                    button.textContent = show_names.join(", ");
+                    button.onclick = () => Group_buy_names_test(uid, item, names);
+                    button.style.display = "block";
+                    button.style.margin = "5px auto";
+                    // 
+                    const div = document.createElement("div");
+                    div.id = `Group_buy_show_${uid}_${item}div`;
+                    div.style.backgroundColor = "White";
+                    div.style.width = "80%";
+                    div.style.textAlign = "center";
+                    div.style.margin = "0 auto 5px";
+                    // 
+                    const hr = document.createElement("hr");
+                    // 
+                    const button_test = document.createElement("button");
+                    button_test.id = `GBSow_money${item}`;
+                    button_test.style.width = "80%";
+                    button_test.style.margin = "2px auto";
+                    button_test.textContent = "";
+                    // 加入 
+                    test_div.append(button, div, button_test);
+
+                }
+            }catch(e){
+                alert("執行合買按鈕編輯時出現錯誤:"+e)
+            }
+        }
+    }
+    //--------------------_____列印_____--------------------
+    async function test(){
+        if (!end_update) {
+            return
+        }
+        end_update = false
+        
+        if ($(".show_userx_name").length) {
+            $(".show_userx_name").remove();
+        }
+        group_name = Global_room_name
+        /*
+        var f_usernames =  await firebase.database().ref("groups/" + group_name + "/buys").once("value");
+            +++++++   合買  +++++++
+        */
+        var uid = ""
+        
+    var uid_to_GBButton = ""    
+    var name_to_fun = ""  
+    try{
+        var f_usernames =  await firebase.database().ref("groups/" + group_name + "/buys").once("value");
+        await f_usernames.forEach(fi => {
+            uid = fi.val().uid
+            var username = fi.val().username
+            var Group_buy_show_test = ""
+            if(fi.val().Group_buy == "T"){
+                username = "合買"//"Group_buy_show_'+uid+'_' + fi.val().item +'> </div>'
+                Group_buy_show_test = 
+                    '<div id="Group_buy_show_'+uid+'_' + fi.val().item +'"> </div>'
+                uid_to_GBButton = uid
+                name_to_fun = fi.val().username
+            }
+            var Btype = ["name","減","item","price","quantity","currency","加"];
+            if(document.getElementById("show_"+uid+"_buys") == null){
+                $("#show_buys").append(
+                    '<div class="show_userx_name">     '+
+                    '<button id="Edit_name_button_' + uid + '" onclick="Edit_name_button(\'' + uid + '\')">' + username + '</button>'+
+                    '<button id="Edit_sum_button_' + uid + '">' + 'total: 0' + '</button>'+
+
+                    '    <div id="show_'+uid+'_buys"> '+
+    
+                    '    </div>                     '+
+                    '</div>                         '
+                ).trigger("create"); // 使用 jQuery Mobile 增加東西
+            }
+            var cur_show_htmlt = "discount"
+            let discount_value = fi.val().discount || "無優惠"; // 取原本折扣或預設無優惠
+            let discount_text = '<select class="show_button" style="width:100px;font-size:15px;" ' +
+                                        'onchange="edit_onchange(this.value, \'' + group_name + '\', \'' + uid + '\', \'' + cur_show_htmlt + '\', \'' + (fi.val().item) +'\')"' +
+                                        'id="show_discount_' + uid + '_' + (fi.val().item) + '">'+
+                                    '<option value="無優惠"' + (discount_value==='無優惠' ? ' selected':'') + '>無優惠</option>' +
+                                    '<option value="95折"'    + (discount_value==='95折'    ? ' selected':'') + '>95折</option>' +
+                                    '<option value="9折"'     + (discount_value==='9折'     ? ' selected':'') + '>9折</option>' +
+                                    '<option value="買一送一"'+ (discount_value==='買一送一'? ' selected':'') + '>買一送一</option>' +
+                                    '<option value="買二送一"'+ (discount_value==='買二送一'? ' selected':'') + '>買二送一</option>' +
+                                '</select>';
+            cur_show_htmlt = "cur"
+            let cur_show_html = 
+                    '<select class="show_button" style="width:69px; font-size:15px; height:28px" ' +
+                            'onchange="edit_onchange(this.value, \'' + group_name + '\', \'' + uid + '\', \'' + cur_show_htmlt + '\', \'' + (fi.val().item) +'\')"' +
+                            'id="show_cur_' + uid + '_' + (fi.val().item) + '">'+
+                        '<option value="TWD"' + (fi.val().currency==='TWD' ? ' selected':'') + '>臺幣</option>' +
+                        '<option value="USD"' + (fi.val().currency==='USD' ? ' selected':'') + '>美元</option>' +
+                        '<option value="EUR"' + (fi.val().currency==='EUR' ? ' selected':'') + '>歐元</option>' +
+                        '<option value="GBP"' + (fi.val().currency==='GBP' ? ' selected':'') + '>英鎊</option>' +
+                        '<option value="AUD"' + (fi.val().currency==='AUD' ? ' selected':'') + '>澳幣</option>' +
+                        '<option value="JPY"' + (fi.val().currency==='JPY' ? ' selected':'') + '>日圓</option>' +
+                        '<option value="KRW"' + (fi.val().currency==='KRW' ? ' selected':'') + '>韓圓</option>' +
+                    '</select>';
+            
+            //alert("uid "+uid+" group_name "+group_name+" Btype[1] "+Btype[1]+" item "+(fi.val().item)+" price "+(fi.val().price))
+            $("#show_"+uid+"_buys").append(
+                '<p> </p>        '+
+                '<button class="show_button" style="width: 30px"                    '+
+                    ' onclick="Edit_onclick(\'' + group_name + '\',                 '+
+                    ' \'' + uid + '\', \'' + Btype[1] + '\', \'' + (fi.val().item) +
+                     '\')" > - </button>  '+
+
+                '<button class="show_button" style="width: 120px"                       '+
+                    'id="showItem_buttom_' + uid + '_' + fi.val().item + '" ' +
+                    ' onclick="Edit_onclick(\'' + group_name + '\',                     '+
+                    ' \'' + uid + '\', \'' + Btype[2] + '\', \'' + (fi.val().item) +
+                     '\')" >          '+
+                        (fi.val().item)+'</button>                                      '+
+
+                '<button class="show_button" style="width: 50px"                    '+
+                    ' id="show_price_' + uid + '_' + fi.val().item + '" ' +
+                    ' onclick="Edit_onclick(\'' + group_name + '\',                 '+
+                    ' \'' + uid + '\', \'' + Btype[3] + '\', \'' + (fi.val().item) +
+                     '\')" >                   '+
+                        (fi.val().price)+'</button>                                 '+
+                
+                cur_show_html+
+
+                '<button class="show_button" style="width: 69px"                    '+
+                    ' onclick="Edit_onclick(\'' + group_name + '\',                 '+
+                    ' \'' + uid + '\', \'' + Btype[4] + '\', \'' + (fi.val().item) +
+                     '\')" >          '+
+                        (fi.val().quantity)+' 個</button>                           '+
+
+                '<button class="show_button" style="width: 30px"                    '+
+                    ' onclick="Edit_onclick(\'' + group_name + '\',                 '+
+                    ' \'' + uid + '\', \'' + Btype[6] + '\', \'' + (fi.val().item) +
+                     '\')" > + </button>   '+
+                discount_text     +'<br>'+Group_buy_show_test+
+                '<br>         '
+            ).trigger("create"); // 使用 jQuery Mobile 增加東西
+            
+            /*
+            */
+        });
+        await show_name_inG_nobuy(name_to_fun,group_name)//合買有名字 但自己沒買東西
+        await Group_buy_div_button(uid_to_GBButton)
+        await test_in_sum()
+        await some_item_mark()
+    }catch(e){
+        alert("列印時出現錯誤:  "+e)
+    }
+        end_update = true
+    }
+    //------------------____合買有名字 但自己沒買東西_____------------------
+    async function show_name_inG_nobuy(name_to_fun,group_name){
+        try{
+
+        var names = name_to_fun
+        var show_names = []
+        //-----------------get shownames-------------------------
+        var snapshot = await firebase.database().ref("groups/"+group_name+ "/buys").once("value");
+        snapshot.forEach(childSnap => {
+            const data = childSnap.val();
+            if (!data || typeof data.username !== "string") return;
+            if (!show_names.some(n => n.username === data.username)) 
+            {
+                show_names.push(data.username);
+            }
+        })
+        //----------------------------------------------------------
+        for (const namei of names) {
+            if (!show_names.includes(namei)) {
+                var uid = namei
+                var username = namei
+                if(document.getElementById("show_"+uid+"_buys") == null){
+                    $("#show_buys").append(
+                        '<div class="show_userx_name">     '+
+                        '<button id="Edit_name_button_' + uid + '" onclick="Edit_name_button(\'' + uid + '\')">' + username + '</button>'+
+                        '<button id="Edit_sum_button_' + uid + '">' + 'total: 0' + '</button>'+
+
+                        '    <div id="show_'+uid+'_buys"> '+
+        
+                        '    </div>                     '+
+                        '</div>                         '
+                    ).trigger("create"); // 使用 jQuery Mobile 增加東西
+                }
+            }
+        }
+        }catch(e){
+            alert("show_name_inG_nobuy()，裡有錯誤"+e)
+        }
+    }
+        //------------------_____改 名字_____------------------
+    function Edit_name_button(uid){
+        var B_colr = document.getElementById("Together_button").style.backgroundColor
+        if(uid != Global_userid && B_colr != "orange"){
+            alert("你不是房組或本人，無法修改("+Global_userid+")")
+            return
+        }
+        if(uid == Global_userid || B_colr == "orange"){
+            let qty1 = prompt("請輸入名字: ") ;
+                qty1 = qty1 ? qty1.trim() : "";
+                if (qty1 == ""){
+                    alert("不能為空白")
+                    return ""
+                }
+                else{
+                    document.getElementById('Edit_name_button_'+uid).textContent = qty1
+                    firebase.database().ref("groups/" + group_name + "/buys")
+                        .orderByChild("uid").equalTo(uid)
+                        .once("value", snapshot => {
+                            snapshot.forEach(childSnap => {
+                                const key = childSnap.key;
+                                const data = childSnap.val();
+                                firebase.database().ref("groups/" + group_name + "/buys/" + key + "/username")
+                                .set(qty1) // 將數量加 1
+                                .then(() => {});
+                            })
+                        })
+                }
+        }
+        else{
+            alert("你不是房組或本人，無法修改")
+        }
+
+    }
+    async function edit_SUM_cur(changeValue){
+        test_in_sum()
+    }
+    var old_vur = ""
+        //------------------改 折價 或 貨幣種類-----------------------
+    async function edit_onchange(changeValue,group_name,uid,Btype,iname){
+        old_vur = ""
+        var B_colr = document.getElementById("Together_button").style.backgroundColor
+        if(uid != Global_userid && B_colr != "orange"){
+            var folds = await firebase.database().ref("groups/" + group_name + "/buys")
+                .orderByChild("uid").equalTo(uid )
+                .once("value")
+            var foldss = []
+            folds.forEach(fold => {
+                const data = fold.val();  // 取得物件
+                foldss.push(data);
+            });
+            for (const fold of foldss) {
+                if(fold.item == iname){
+                    if(Btype == "discount"){
+                        var d = document.getElementById("show_discount_" + uid + "_" + iname)
+                        d.value = fold.discount
+                    }
+                    else{
+                        var d2 = document.getElementById("show_cur_" + uid + "_" + iname)
+                        old_vur = fold.currency
+                    }
+                }
+            }
+            alert("你不是房組或本人，無法修改("+Global_userid+")")
+            return
+        }
+        firebase.database().ref("groups/" + group_name + "/buys")
+            .orderByChild("uid").equalTo(uid)
+            .once("value", snapshot => {
+                snapshot.forEach(childSnap => {
+                    const key = childSnap.key;
+                    const data = childSnap.val();
+                    if(data.item === iname){
+                        if(Btype == "discount"){
+                            firebase.database().ref("groups/" + group_name + "/buys/" + key + "/discount")
+                            .set(changeValue) // 將數量加 1
+                            .then(() => {});
+                        }
+                        else if(Btype == "cur"){
+                            old_vur = data.currency
+                            firebase.database().ref("groups/" + group_name + "/buys/" + key + "/currency")
+                            .set(changeValue) // 將數量加 1
+                            .then(() => {});
+                        }
+                    }
+                });
+            });
+        test_in_sum()
+    }
+    
+        //----------------------改 (其他)-----------------------
+    function edit_inputvv(Btype){
+        if(Btype == "item")
+        {
+            let qty1 = prompt("請輸入商品名: ") ;
+            qty1 = qty1 ? qty1.trim() : "";
+            if (qty1 == ""){
+                alert("不能為空白")
+                return ""
+            }
+            return qty1
+        }
+        else if(Btype == "price")
+        {
+            let qty1 = prompt("請輸入價格: ") ;
+            qty1 = qty1 ? qty1.trim() : "";
+            if (qty1 == "" || isNaN(qty1)){
+                alert("只能輸入數字。不能空白")
+            }
+            return qty1
+            /*
+            <select id="input1_cur" onchange="update()" style="font-size: 15px;">
+                <option value="TWD">臺幣</option>
+                <option value="USD">美元</option>
+                <option value="EUR">歐元</option>
+                <option value="GBP">英鎊</option>
+                <option value="AUD">澳幣</option>
+                <option value="JPY">日圓</option>
+                <option value="KRW">韓圓</option>
+            </select>
+            select id="input1_discount" onchange="update()" style="font-size: 15px;width: 120px;text-align: center;">
+                <option value="">無優惠</option>
+                <option value="95折">95折</option>
+                <option value="9折">9折</option>
+                <option value="買一送一">買一送一</option>
+                <option value="買二送一">買二送一</option>
+            </select>   
+             */
+        }
+        else if(Btype == "quantity")
+        {
+            let qty1 = prompt("請輸入數量: ");
+            qty1 = qty1 ? qty1.trim() : "";
+            if (qty1 == "" || isNaN(qty1)){
+                alert("只能輸入數字。不能空白")
+            }
+            return qty1
+        }
+    }
+    function Edit_onclick(group_name,uid,Btype,iname){
+        var B_colr = document.getElementById("Together_button").style.backgroundColor
+        if(uid != Global_userid && B_colr != "orange"){
+            if(!(uid.startsWith("Group_buy_use_user"))){
+                alert("你不是房組或本人，無法修改("+Global_userid+")")
+                return
+            }
+        }
+        firebase.database().ref("groups/" + group_name + "/buys")
+        .orderByChild("uid").equalTo(uid)
+        .once("value", snapshot => {
+            snapshot.forEach(childSnap => {
+                const key = childSnap.key;
+                const data = childSnap.val();
+                if(Btype == "加")
+                {
+                    if(data.item === iname){
+                        firebase.database().ref("groups/" + group_name + "/buys/" + key + "/quantity")
+                        .set(Number(data.quantity) + 1)
+                        .then(() => {});
+                    }
+                }
+                else if(Btype == "減")
+                {
+                    if(data.item === iname){
+                        if((Number(data.quantity) - 1) <= 0 ){
+                            firebase.database().ref("groups/" + group_name + "/buys/" + key).remove()
+                            .then(() => {
+                                console.log("資料已刪除");
+                            })
+                            .catch(error => {
+                                console.error("刪除失敗:", error);
+                            });
+                        }
+                        else{
+                            firebase.database().ref("groups/" + group_name + "/buys/" + key + "/quantity")
+                            .set(Number(data.quantity) - 1) // 將數量加 1
+                            .then(() => {});
+                        }
+                    }
+                }
+                else if(Btype == "item")
+                {
+                    if(data.item === iname){
+                        var n = edit_inputvv(Btype)
+                        if (n != ""){
+                            firebase.database().ref("groups/" + group_name + "/buys/" + key + "/item")
+                            .set(n) // 將數量加 1
+                            .then(() => {});
+                        }
+                    }
+                }
+                else if(Btype == "price")
+                {
+                    if(data.item === iname){
+                        var n = edit_inputvv(Btype)
+                        if (n != ""){
+                            old_vur = "r"
+                            firebase.database().ref("groups/" + group_name + "/buys/" + key + "/price")
+                            .set(n) // 將數量加 1
+                            .then(() => {});
+                        }
+                    }
+                }
+                else if(Btype == "quantity")
+                {
+                    if(data.item === iname){
+                        var n = edit_inputvv(Btype)
+                        if (n != "" && Number(n) > 0){
+                            firebase.database().ref("groups/" + group_name + "/buys/" + key + "/quantity")
+                            .set(n) // 將數量加 1
+                            .then(() => {});
+                        }
+                        else if (Number(n) <= 0){
+                            firebase.database().ref("groups/" + group_name + "/buys/" + key).remove()
+                            .then(() => {
+                                console.log("資料已刪除");
+                            })
+                            .catch(error => {
+                                console.error("刪除失敗:", error);
+                            });
+                        }
+                    }
+                }
+            });
+        });
+        test()
+    }
+    /*
+        return firebase.database().ref("usernames/" + uid).once("value")
+    }
+    */
+    //----------------------_____房間_____-------------------
+    document.getElementById("input2_backG").style.display = "none";
+    function Group_onclick(){
+        var Together_button = document.getElementById("Together_button")
+        if(Together_button.textContent != "共同建立")
+        {   
+            type = "together"
+            re_upbutton()
+            let el2 = document.getElementById("input2_backG");
+            if (el2.style.display === "none" || el2.style.display === "") {
+                el2.style.display = "block";
+            } 
+            else {
+                el2.style.display = "none";
+            }
+            edit_Permissions_username()
+            var B_colr = document.getElementById("Together_button").style.backgroundColor
+            if(B_colr != "orange"){
+                document.getElementById("input2_div_Permissions").style.display = "none"
+            }
+            else{
+                document.getElementById("input2_div_Permissions").style.display = "block"
+            }
+            document.getElementById("input1_backG").style.display = "none"
+        }
+        else{
+            type = "addroom_name"
+            re_upbutton()
+            document.getElementById("input1_text1").textContent = "房名"
+            document.getElementById("input1_text2").textContent = "房密碼"
+            document.getElementById("input1_button1").textContent = "進入"
+            document.getElementById("input1_button2").textContent = "新增"
+            document.getElementById("input1_pass").type = "text"
+        }
+    }
+    async function to_room_name(){
+        input_u = document.getElementById("input1_u").value.trim();
+        input2 = document.getElementById("input1_pass").value.trim();
+        if (input_u !== "" && input2 !== "") {
+            if(await fcheck_RoomName(input_u)){
+                let pass = await fcheck_RoomName_toPass(input_u);
+                if(pass === input2){
+                    document.getElementById("Together_button").textContent = input_u;
+                    Global_room_name = input_u
+                    Global_room_pass = input2
+                    firebase.database().ref("rooms/" + input_u).set(input2);
+                    firebase.database().ref("usernames/" + Global_userid + "/pass").set(Global_userpass);
+                    firebase.database().ref("usernames/" + Global_userid + "/Permissions").set("User") // 將數量加 1
+                    firebase.database().ref("usernames/" + Global_userid + "/roomname").set(Global_room_name) // 將數量加 1
+                    listenBuys(Global_room_name)
+                    await test()
+                    await Group_buy_names_test(uid)
+                    re_upbutton()
+                }
+                else {
+                    alert("密碼錯誤")
+                }
+            }
+            else {
+                alert("房間不存在")
+            }
+        }
+        else{
+            alert("帳號 和 密碼 不能是空白")
+        }
+    }
+    function fcheck_RoomName_toPass(uid){
+        return firebase.database().ref("rooms/" + uid)
+        .once("value")
+        .then(s => s.val());
+    }
+    
+    async function add_room_name(){
+        input_u = document.getElementById("input1_u").value.trim();
+        input2 = document.getElementById("input1_pass").value.trim();
+        if (input_u !== "" && input2 !== "") {
+            if(await fcheck_RoomName(input_u)){
+                alert("房間已存在，房名已被使用")
+                var newname = await RoomName_while(input_u)
+                document.getElementById("input1_u").value = newname
+            }
+            else {
+                document.getElementById("Together_button").textContent = input_u;
+                Global_room_name = input_u
+                Global_room_pass = input2
+                listenBuys(Global_room_name)
+                firebase.database().ref("rooms/" + Global_room_name).set(Global_room_pass);
+                firebase.database().ref("usernames/" + Global_userid + "/pass").set(Global_userpass);
+                firebase.database().ref("usernames/" + Global_userid + "/Permissions").set("Admin") // 將數量加 1
+                firebase.database().ref("usernames/" + Global_userid + "/roomname").set(Global_room_name) // 將數量加 1
+                document.getElementById("Together_button").backgroundColor = "orange"
+                alert("房間創建成功")
+                test()
+                re_upbutton()
+            }
+        }
+        else{
+            alert("帳號 和 密碼 不能是空白")
+        }
+    }
+    async function RoomName_while(room_name){
+        var i = 1
+        let baseName = room_name;
+        input_u = room_name 
+        while(await fcheck_RoomName(input_u)){
+            i = Number(i) + 1
+            input_u = baseName + i;
+        }
+        return input_u
+    }
+    function fcheck_RoomName(room_name){
+        return firebase.database().ref("rooms/" + room_name).once("value")
+        .then(s => s.exists());  // 回傳 true 或 false
+    }
+    async function add_room_name_new() {
+        Global_room_name = await RoomName_while("room");
+    }
+    
+    //---------------------------帳號-------------------------------
+    // 年份直接更改 
+    function logIn_onclick() {
+        type = "login"
+        re_upbutton()
+        document.getElementById("input1_text1").textContent = "帳號"
+        document.getElementById("input1_text2").textContent = "密碼"
+        document.getElementById("input1_button1").textContent = "登入"
+        document.getElementById("input1_button2").textContent = "註冊"
+        document.getElementById("input1_pass").type = "text"
+    }
+        //------------------------登入後 更新原資料的uid------------------------------
+        async function login_Support(){
+                    // 先抓原本的 Permissions
+            const snapshot = await firebase.database().ref("usernames/" + Global_userid + "/Permissions").once("value");
+            const originalPermission = snapshot.val();  // 取得原資料
+
+            // 再寫回去（如果需要修改可以先處理 originalPermission）
+            await firebase.database().ref("usernames/" + input_u + "/Permissions").set(originalPermission);
+            await firebase.database().ref("usernames/" + Global_userid).remove()
+        //這樣寫 不會等裡面的 set() 完成++++++++++++
+            await firebase.database().ref("groups/" + Global_room_name + "/buys")
+                .orderByChild("uid").equalTo(Global_userid)
+                .once("value", snapshot => {
+                    snapshot.forEach(childSnap => {
+                        const key = childSnap.key;
+                        const data = childSnap.val();
+                        if(data.uid === Global_userid){
+                            firebase.database().ref("groups/" + Global_room_name + "/buys/" + key + "/uid")
+                            .set(input_u) // 將數量加 1
+                            .then(() => {});
+                        }
+                    })
+                })
+                /*++++++++++++
+                const snapshot = await firebase.database().ref("groups/" + Global_room_name + "/buys")
+                    .orderByChild("uid").equalTo(Global_userid)
+                    .once("value");
+
+                for (const childSnap of snapshot) {
+                    const key = childSnap.key;
+                    const data = childSnap.val();
+                    if (data.uid === Global_userid) {
+                        await firebase.database().ref("groups/" + Global_room_name + "/buys/" + key + "/uid")
+                            .set(input_u);
+                    }
+                */
+        }
+    //--------------------------登入------------------------------
+    async function login(){
+        input_u = document.getElementById("input1_u").value.trim();
+        input2 = document.getElementById("input1_pass").value.trim();
+        if (input_u !== "" && input2 !== "") {
+            if( await fcheck_UidExists(input_u) ){
+                let pass = await fcheck_Uid_toPass(input_u);
+                if(pass === input2){
+                    document.getElementById("logIn_button").textContent = input_u;
+                    if(await fcheck_UidExists(Global_userid)){
+                         await login_Support()
+                    }
+                    else{
+                        firebase.database().ref("usernames/" + input_u + "/Permissions").set("User")
+                    }
+                    Global_userid = input_u
+                    Global_room_pass = input2
+                    firebase.database().ref("usernames/" + Global_userid + "/pass").set(Global_userpass);
+                    await listen_users()
+                    if (Vlogout != null){
+                        await Vlogout.cancel(); // 取消訪客模式自動刪除
+                        Vlogout = null;
+                    }
+                    alert("登入成功")
+                    re_upbutton()
+                }
+                else {
+                    alert("密碼錯誤")
+                }
+            }
+            else{
+                alert("帳號不存在")
+            }
+        }
+        else{
+            alert("帳號 和 密碼不能空白")
+        }
+    }
+         //------------------------到 f 裡看，找密碼----------------------------
+    function fcheck_Uid_toPass(uid){
+        return firebase.database().ref("usernames/" + uid + "/pass")
+        .once("value")
+        .then(s => s.val());
+    }
+    
+
+    //--------------------------註冊-------------------------------
+        //--------------------------註冊-------------------------------
+    async function register(){
+        input_u = document.getElementById("input1_u").value.trim();
+        input2 = document.getElementById("input1_pass").value.trim();
+        if (input_u !== "" && input2 !== "") {
+            if( await fcheck_UidExists(input_u) ){
+                alert("帳號已存在")
+            }
+            else if(input_u.startsWith("Group_buy_use_user")){
+                alert("不能以(Group_buy_use_user)開頭命名")
+            }
+            else{
+                document.getElementById("logIn_button").textContent = input_u;
+                if(await fcheck_UidExists(Global_userid)){
+                     await login_Support()
+                }
+                else{
+                    firebase.database().ref("usernames/" + input_u + "/Permissions").set("User")
+                }
+                Global_userid = input_u
+                Global_userpass = input2
+                await listen_users()
+                if (Vlogout != null){
+                    await Vlogout.cancel(); // 取消訪客模式自動刪除
+                    Vlogout = null;
+                }
+                alert("註冊成功")
+                re_upbutton()
+            }
+        }
+        else{
+            alert("帳號 和 密碼 不能是空白")
+        }
+    }
+        //-------------------開啟時，每人自動產生一個uid-------------------------------
+    add_id(Global_userid)
+    async function add_id(userid){
+        let local_account = localStorage.getItem("account");
+        let local_password = localStorage.getItem("password");
+        if(!local_account || !local_password)
+        {
+            var n = userid
+            while(await fcheck_UidExists("user" + n)){
+                n += 1
+            }
+            Global_userid = "user" + n
+            Global_userpass = "user" + n
+        }
+        else{
+            Global_userid = local_account
+            Global_userpass = local_password
+        }
+        await listen_users()
+        //--------------------------自動刪除 訪客-------------------------------    
+        // 先檢查是否需要註冊 onDisconnect
+        if (Vlogout) {
+            await Vlogout.cancel(); // 取消訪客模式自動刪除
+            Vlogout = null;
+        }
+        Vlogout = firebase.database().ref("usernames/" + Global_userid).onDisconnect();
+        Vlogout.remove(); // 註冊斷線刪除
+        //-----------------------自動加入房間------------------------
+        var params = new URLSearchParams(window.location.search);
+        let roomName = localStorage.getItem("local_roomName");
+        let roomPass = localStorage.getItem("local_roomPass");
+        var link_roomName = params.get("room");
+        var link_roomPass = params.get("pass");
+        if (link_roomName && link_roomPass) {
+            roomName = link_roomName
+            roomPass = link_roomPass
+        }
+        if (roomName && roomPass) {
+            Group_onclick()
+            document.getElementById("input1_u").value = roomName
+            document.getElementById("input1_pass").value = roomPass
+            input1_button1_onclick()
+            document.getElementById("input1_u").value = ""
+            document.getElementById("input1_pass").value = ""
+            Group_onclick()
+        }else{
+            await add_room_name_new();
+        }
+        //----------------------------------------------------------
+    }
+        //------------------------到 f 裡看，有無相同 帳號----------------------------
+    function fcheck_UidExists(uid){
+        return firebase.database().ref("usernames/" + uid + "/pass").once("value")
+        .then(s => s.exists());  // 回傳 true 或 false
+    }
+</script>
+
+</body>
+</html>

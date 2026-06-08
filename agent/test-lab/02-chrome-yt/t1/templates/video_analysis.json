@@ -1,0 +1,30 @@
+{
+  "win_search": {
+    "x": 84,
+    "y": 1031,
+    "second": 5,
+    "frame_w": 1920,
+    "frame_h": 1080
+  },
+  "chrome_app": {
+    "x": 104,
+    "y": 262,
+    "second": 9,
+    "frame_w": 1920,
+    "frame_h": 1080
+  },
+  "yahoo_bar": {
+    "x": 682,
+    "y": 385,
+    "second": 15,
+    "frame_w": 1920,
+    "frame_h": 1080
+  },
+  "yt_search": {
+    "x": 683,
+    "y": 74,
+    "second": 28,
+    "frame_w": 1920,
+    "frame_h": 1080
+  }
+}

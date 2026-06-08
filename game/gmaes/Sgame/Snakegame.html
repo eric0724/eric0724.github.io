@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Snakegame</title>
+    <style>
+        @import url(../../css/css.css);
+        .circle {
+            width: 50px;
+            height: 50px;
+            background-color: green;
+            border-radius: 50%;
+            position: absolute;
+        }
+        .shows{
+            font-size: xx-large;
+            text-align: center;
+        }
+        body {
+            -webkit-user-select: none;  /* Chrome/Safari */
+            -moz-user-select: none;     /* Firefox */
+            -ms-user-select: none;      /* IE/Edge */
+            user-select: none;          /* 標準 */
+            touch-action: manipulation;         /* 禁止預設觸控手勢，例如雙指縮放、滑動捲動 */
+        }
+        
+        #wrapper {
+            transform: scale(0.5);         /* 縮小 50% */
+            transform-origin: top left;    /* 從左上角開始縮放 */
+            width: 200%;                  /* 調整寬度，避免被裁切 */
+            height: 200%;
+        }
+    </style>
+</head>
+<body align="center">
+<div id="wrapper">
+<div id="circles-container"></div>
+
+<input type="button" value="返回" class="buttonGames" onclick="window.location='../../games.html'"></button>
+<input type="button" value="" style="float: right;" class="buttonGames" onclick="window.location='../../games.html'"></button>     
+<input type="button" id="buttonS" value="分數" onclick="changeColor('buttonS')" class="buttonR" style="background-color: #00eeffab; width: 150px; height: 69px;" />
+<input type="button" id="buttonR" value="開始" onclick="changeColor('buttonR')" class="buttonR" style="background-color: #55ff00ab; width: 180px; height: 87px;" />
+<input type="button" id="buttonT" value="時間" onclick="changeColor('buttonT')" class="buttonR" style="background-color: #ff0000ab; width: 150px; height: 69px;" />
+<br/>
+<input type="button" id="ranking_button" value="顯示排行" onclick="ranking_button()" style="font-size: 30px; width: 500px;" />
+                
+<script>
+    var posX = 250   , posY = 200;
+    var appleX = 250 , appleY = 250;
+    var poslength = 4, s = 0;
+    var direction = 0;
+    var circles = [];
+    var circlesx = [];
+    var circlesy = [];
+    var htmlwidth = window.innerWidth*2-50;
+    while (htmlwidth % 50 != 0) htmlwidth --;
+    var htmlheigh = window.innerHeight*2-50;
+    while (htmlheigh % 50 != 0) htmlheigh --;
+    var time = 0,T = null,circleMove = null;
+    
+    function changeColor(playx) {
+        var button = document.getElementById(playx);
+        button.value = "重新";
+        location.reload()
+    }
+    var time_move=0;
+    function myTimer() {
+        time+=0.01;
+        playx = "button" + 'T';
+        button = document.getElementById(playx);
+        button.value = time.toFixed(1); //顯示小數點一位
+        playx = "button" + 'S';
+        button = document.getElementById(playx);
+        button.value = s + "分";
+        time_move += 0.01;
+        if(time_move>=0.2-time/2000){
+            movesnakeset();
+            time_move = 0;
+        }
+        /*
+        if(time.toFixed(0) % 2 == 0 && time.toFixed(0)/2 < 200){
+            circleMove = setInterval(function () {movesnakeset()},1);
+        }*/
+        var end
+        for (var i = 1; i < poslength; i++) {
+            if(circlesx[i] == circlesx[0] && circlesy[i] == circlesy[0])
+            {   
+                end = "結束~ \n"
+                end += "恭喜獲得(分) :  " + s + "\n";
+                end += "總共花了(秒) :  " + time.toFixed(1) +"\n"
+                var wh = (htmlwidth/50+1) + (htmlheigh/50+1)/5
+                var ts = (((wh*s)-time)).toFixed(1);
+                end += "    總得分    :   " + ts +"\n(不要太在意這個評分系統)";//+ "   (網頁面積/每一分花幾秒)"
+                addfirebase(ts);
+                confirm(end);
+                rTimer();
+            }
+        }
+    }
+    function rTimer() {
+        clearInterval(T);
+        T = null;
+        clearInterval(circleMove);
+        circleMove = null;
+    }
+    rTimer();
+    //circleMove = setInterval(function () {movesnakeset()},200);
+    T = setInterval(function () { myTimer() }, 10);
+    time = 0;
+    s = 0;
+    playx = "button" + "R";
+    function createCircle() {
+        var circle = document.createElement('div');
+        circle.className = 'circle';
+        return circle;
+    }
+    for (var i = 0; i < poslength; i++) {
+        var circle = createCircle();
+        document.getElementById('circles-container').appendChild(circle);
+        circles.push(circle);
+        circle.style.left = (posX - (i * 50)) + 'px';
+        circle.style.top = posY + 'px';
+        circlesx.push((posX - (i * 50))+'px');
+        circlesy.push(posY+'px');
+    }
+    for (var a = 0; a < 2; a++) {
+        for (var i = 0; i < (htmlwidth/50-1); i++) {
+            var circle = createCircle();
+            document.getElementById('circles-container').appendChild(circle);
+            circle.style.left = i*50 + 'px';
+            if(a==0) circle.style.top = 150 + 'px';
+            else     circle.style.top = htmlheigh-50 + 'px';
+            circle.style.backgroundColor = "black"
+        }
+    }
+    for (var a = 0; a < 2; a++) {
+        for (var i = 2; i < (htmlheigh/50-1); i++) {
+            var circle = createCircle();
+            document.getElementById('circles-container').appendChild(circle);
+            circle.style.top = i*50+50 + 'px';
+            if(a==0) circle.style.left = htmlwidth-50 + 'px';
+            else     circle.style.left = 0 + 'px';
+            circle.style.backgroundColor = "black";
+        }
+    }
+
+    function movesnakeset(){
+        if (direction == 0) {   // 右 (d)
+            if ((posX + 50) <= htmlwidth-100) posX += 50;
+            else posX = 50;
+        }
+        if (direction == 1) {   // 左 (a)
+            if ((posX - 50) >= 50) posX -= 50;
+            else posX = (window.htmlwidth-100);
+        }
+        if (direction == 2) {   // 上 (w)
+            if ((posY - 50) >= 200) posY -= 50;
+            else posY = (htmlheigh-100);
+        }
+        if (direction == 3) {   // 下 (s)
+            if ((posY + 50) <= htmlheigh-100) posY += 50;
+            else posY = 200;
+        }
+        // 移動圓圈
+        for (var i = poslength - 1; i > 0; i--) {
+            circles[i].style = "background-color: green;";
+            circles[i].style.left = circles[i - 1].style.left;
+            circles[i].style.top = circles[i - 1].style.top;
+            circlesx[i] = circles[i - 1].style.left;
+            circlesy[i] = circles[i - 1].style.top;
+        }
+        circles[0].style.left = posX + 'px';
+        circles[0].style.top = posY + 'px';
+        circles[0].style.backgroundColor = "greenyellow";
+        circlesx[0] = circles[0].style.left;
+        circlesy[0] = circles[0].style.top;
+        //apple事件
+        if(circles[0].style.left == circles[poslength].style.left)
+        if(circles[0].style.top == circles[poslength].style.top)
+        {
+            poslength++;
+            s++;
+            applecreeate();
+        }
+    } // 100 毫秒
+    applecreeate();
+    function applecreeate(){
+        var circle = createCircle();
+        document.getElementById('circles-container').appendChild(circle);
+        circles.push(circle);
+        while(true)
+        {   
+            var test = 0;
+            appleX =  Math.floor( Math.random() * htmlwidth);
+            appleY =  Math.floor( Math.random() * htmlheigh);
+            //appleX =  300;
+            if (appleX%50 == 0 && appleY%50 == 0 && appleX <= htmlwidth-100 && appleX >= 50 && appleY >= 200 && appleY <= htmlheigh-100)
+            {
+                 for (var i = 0; i < poslength; i++) {
+                    if(circlesx[i] == (appleX+"px") && circlesy[i] == (appleY+"px"))
+                        test++;
+                 }
+                 if(test==0)break;
+                 
+            }
+        }
+        circles[poslength].style = "background-color: red;"
+        circles[poslength].style.left = appleX + 'px';
+        circles[poslength].style.top  = appleY + 'px';
+        
+    }
+    var startX = 0;
+    var startY = 0;
+    var endX   = 0;
+    var endY   = 0;
+    document.addEventListener('keydown', keyFunction);
+    function keyFunction(event) {
+            if ((event.keyCode == 87 || event.keyCode == 38) && direction != 3) {          // w
+                direction = 2;
+            } else if ((event.keyCode == 83 || event.keyCode == 40) && direction != 2) {   // s
+                direction = 3;
+            } else if ((event.keyCode == 65 || event.keyCode == 37 )&& direction != 0) {   // a
+                direction = 1;
+            } else if ((event.keyCode == 68 || event.keyCode == 39) && direction != 1) {   // d
+                direction = 0;
+            }
+    }
+    document.addEventListener("mousedown",function(e){
+        startX = e.clientX;
+        startY = e.clientY;
+    })
+    // 觸控事件（手機）
+    document.addEventListener("touchstart", function(e) {
+        startX = e.touches[0].clientX;
+        startY = e.touches[0].clientY;
+    });
+    document.addEventListener("touchend", function(e) {
+        // 有些裝置可能用 changedTouches
+        endX = e.changedTouches[0].clientX;
+        endY = e.changedTouches[0].clientY;
+        handleSwipe();
+    });
+    document.addEventListener("mouseup",function(e){  
+        endX = e.clientX;
+        endY = e.clientY;
+        handleSwipe();
+    })
+    document.addEventListener('touchmove', function (e) {
+        // 若是往下滑時觸發，就阻止預設行為
+        if (e.touches.length === 1 && e.touches[0].clientY > 0) {
+            e.preventDefault();
+        }
+    }, { passive: false });
+
+    function handleSwipe(){
+        const deltaX = endX - startX;
+        const deltaY = endY - startY;
+        if(deltaX > 50 || deltaX < -50){  
+            if( deltaX <= 0 && direction != 0){ // a
+                direction = 1;
+            }  
+            else if (direction != 1){       // d
+                direction = 0;
+            }
+        }
+        else{
+            if ( deltaY <= 0 && direction != 3) {  // w
+                direction = 2;
+            } else if (direction != 2) {   // s
+                direction = 3;
+            }
+        }
+    }
+    function ranking_button(){
+        document.getElementById("ranking").hidden = !document.getElementById("ranking").hidden/*
+        var showUI = document.getElementById("ranking").hidden = !hidden
+        if(showUI == "display: inline;") 
+            document.getElementById("ranking").style = "display: none;"
+        else
+            document.getElementById("ranking").style= "display: block;"*/
+    }
+</script>
+
+
+</div>
+<!--排行-->
+<h1 id="ranking" hidden="!hidden">hi</h1>
+<script type="module" src="../../css/js/ranking.js"></script>
+
+
+</body>
+</html>

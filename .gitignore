@@ -1,0 +1,6 @@
+# 憑證與金鑰 - 不上傳 GitHub
+agent/miniclaw/miniclaw-executor/app/credentials/auth-profiles.json
+agent/miniclaw/miniclaw-executor/app/server.js.bak
+
+# Node
+node_modules/
