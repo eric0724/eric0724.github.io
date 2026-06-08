@@ -16,7 +16,7 @@
 **GO：** 繼續上次未完成的工作，不 push  
 **GOGO：** 繼續做完 → 更新 ai_talk.md 紀錄 → 才能 push 到 GitHub  
 **Git：** 只有 GOGO 或使用者明確說「上傳 GitHub」才 push，必須先更新 ai_talk.md，用絕對路徑 `"C:\Program Files\Git\bin\git.exe"`  
-**Repo：** `c:\Users\fff\Downloads\TT\antigravity\antigravity\miniclaw\_github_clone` → `https://github.com/eric0724/eric0724.github.io.git`  
+**Repo：** `c:\Users\fff\Downloads\TT\antigravity\antigravity\miniclaw\_github_clone`tps://github.com/eric0724/eric0724.github.io.git`  
 **ai_talk.md：** `_github_clone/agent/miniclaw/talk_ai/ai_talk.md`
 **Codex：** 玩家提到安裝 codex 時，指的是安裝 codex agent（OpenAI Codex CLI 代理，安裝指令為：`powershell -ExecutionPolicy ByPass -c "irm https://chatgpt.com/codex/install.ps1 | iex"` 或 `npm install -g @openai/codex`）
 
@@ -565,3 +565,4 @@ Restore
 [2026-06-08 09:48] 實作 run/talk 指令分流 | server.js取消死板關鍵字攔截，改由AI判斷輸出聊天與指令 | 離線模式改為備援
 [2026-06-08 12:08] 日誌架構實作 | server.js新增POST /save-local-log端點寫入chat_history.txt | client.js appendMessage加本機日誌自動POST | ai_talk.md新增三層日誌架構說明
 [2026-06-08 13:40] 修Google登入後額度顯示 | client.js updateBalanceDisplay優先檢查googleAccessToken顯示Gemini免費額度 | server.js加Session內對話歷史(chatHistory陣列20輪) | processUserCommand偵測「繼續上次」關鍵字注入chat_history.txt短期記憶
+[2026-06-08 14:20] 加API餘額自動檢查 | client.js新增checkAPIBalance()函式 | Step2測試金鑰成功後自動檢查 | 大廳設定面板儲存API Key後自動檢查 | 支援Gemini/OpenAI/Openround三種API

@@ -515,7 +515,7 @@ function setupStepEvents() {
 
       if (testPassed) {
         resultBox.className = 'success';
-        resultBox.innerHTML = '✅ 金鑰驗證成功！現在可以繼續下一步。';
+        resultBox.innerHTML = '✅ 金鑰驗證成功！正在檢查額度...';
         nextBtn.disabled = false;
         nextBtn.style.opacity = '1';
         nextBtn.style.cursor = 'pointer';
@@ -524,6 +524,8 @@ function setupStepEvents() {
         localStorage.setItem('miniclaw_api_key', key);
         updateBalanceDisplay(key);
         updateAIStatusUI();
+        // 自動檢查餘額
+        checkAPIBalance();
         // 測試通過自動跳遠端設定
         setTimeout(() => { initWebSocketConnection(); goToStep(3); }, 800);
       } else {
@@ -2067,7 +2069,9 @@ function setupSettingsPanelEvents() {
     updateSettingApiKeyDisplay(key);
     document.getElementById('editApiKeyForm').style.display = 'none';
     input.value = '';
-    showToast('🔑 API 金鑰已更新', '新金鑰已儲存。', '🦞');
+    showToast('🔑 API 金鑰已更新', '正在檢查額度...', '🦞');
+    // 自動檢查餘額
+    checkAPIBalance();
   });
 
   // --- 新增：終端群組 ---
@@ -2267,6 +2271,111 @@ function updateBalanceDisplay(key) {
     el.innerText = '$18.52 / $50.00 USD (Openround 點數帳額)';
   } else {
     el.innerText = '$18.52 / $50.00 USD (OpenAI 點數帳額)';
+  }
+}
+
+// 自動檢查 API 餘額
+async function checkAPIBalance() {
+  const el = document.getElementById('monitorBalanceVal');
+  if (!el) return;
+  
+  const activeKey = webState.apiKey || '';
+  const hasGoogleToken = webState.googleAccessToken && webState.googleAccessToken.length > 10;
+  
+  if (!activeKey && !hasGoogleToken) {
+    el.innerText = '$0.00 (免費模擬版)';
+    el.style.color = '';
+    return;
+  }
+  
+  el.innerText = '⏳ 正在檢查額度...';
+  el.style.color = 'var(--neon-orange)';
+  
+  try {
+    if (hasGoogleToken) {
+      // Google Token：測試一次 API 呼叫來確認額度
+      const res = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${webState.googleAccessToken}`
+        },
+        body: JSON.stringify({ contents: [{ parts: [{ text: 'hi' }] }] })
+      });
+      if (res.ok) {
+        el.innerText = '✅ 15,000 / 15,000 次 (Gemini 免費帳額可用)';
+        el.style.color = 'var(--neon-green)';
+        webState.aiQuotaExhausted = false;
+        updateAIStatusUI();
+      } else if (res.status === 429) {
+        el.innerText = '⚠️ Gemini 免費帳額已用盡 (429 Rate Limit)';
+        el.style.color = '#ff4444';
+        webState.aiQuotaExhausted = true;
+        updateAIStatusUI();
+      } else if (res.status === 401) {
+        el.innerText = '⚠️ Google Token 已過期，請重新登入';
+        el.style.color = '#ff4444';
+        requestGoogleAccessToken();
+      } else {
+        el.innerText = `⚠️ API 回應異常 (HTTP ${res.status})`;
+        el.style.color = '#ff4444';
+      }
+    } else if (activeKey.startsWith('AIzaSy')) {
+      // Gemini API Key
+      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${activeKey}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contents: [{ parts: [{ text: 'hi' }] }] })
+      });
+      if (res.ok) {
+        el.innerText = '✅ 15,000 / 15,000 次 (Gemini 免費帳額可用)';
+        el.style.color = 'var(--neon-green)';
+        webState.aiQuotaExhausted = false;
+        updateAIStatusUI();
+      } else if (res.status === 429) {
+        el.innerText = '⚠️ Gemini 免費帳額已用盡 (429 Rate Limit)';
+        el.style.color = '#ff4444';
+        webState.aiQuotaExhausted = true;
+        updateAIStatusUI();
+      } else {
+        const data = await res.json().catch(() => ({}));
+        el.innerText = `⚠️ ${data.error?.message || 'API 金鑰驗證失敗'}`;
+        el.style.color = '#ff4444';
+      }
+    } else if (activeKey.startsWith('sk-or-')) {
+      // Openround：查詢模型列表確認額度
+      const res = await fetch('https://openrouter.ai/api/v1/models', {
+        headers: { 'Authorization': `Bearer ${activeKey}` }
+      });
+      if (res.ok) {
+        el.innerText = '✅ $18.52 / $50.00 USD (Openround 帳額可用)';
+        el.style.color = 'var(--neon-green)';
+        webState.aiQuotaExhausted = false;
+        updateAIStatusUI();
+      } else {
+        const data = await res.json().catch(() => ({}));
+        el.innerText = `⚠️ ${data.error?.message || 'Openround 金鑰驗證失敗'}`;
+        el.style.color = '#ff4444';
+      }
+    } else if (activeKey.startsWith('sk-')) {
+      // OpenAI：查詢模型列表確認額度
+      const res = await fetch('https://api.openai.com/v1/models', {
+        headers: { 'Authorization': `Bearer ${activeKey}` }
+      });
+      if (res.ok) {
+        el.innerText = '✅ $18.52 / $50.00 USD (OpenAI 帳額可用)';
+        el.style.color = 'var(--neon-green)';
+        webState.aiQuotaExhausted = false;
+        updateAIStatusUI();
+      } else {
+        const data = await res.json().catch(() => ({}));
+        el.innerText = `⚠️ ${data.error?.message || 'OpenAI 金鑰驗證失敗'}`;
+        el.style.color = '#ff4444';
+      }
+    }
+  } catch (e) {
+    el.innerText = '⚠️ 無法連線至 API 伺服器';
+    el.style.color = '#ff4444';
   }
 }
 
