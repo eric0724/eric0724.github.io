@@ -7,6 +7,7 @@ const webState = {
   platform: 'windows',
   apiMode: 'complete',
   apiKey: '',
+  apiType: 'auto',  // gemini | openrouter | openai | auto
   googleAccessToken: '',
   googleUser: null,
   remoteType: 'line',
@@ -19,6 +20,54 @@ const webState = {
   aiQuotaExhausted: false,
   ngrokUrl: localStorage.getItem('miniclaw_ngrok_url') || ''
 };
+
+// --- API 金鑰跳測 (根據選中類型) ---
+async function testAPIKeyByType(key, selectedType) {
+  // 根據選擇類型定義跳測順序
+  const typeToEndpoint = {
+    'gemini': [{ name: 'Gemini', url: `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`, method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ contents: [{ parts: [{ text: 'hi' }] }] }), type: 'gemini' }],
+    'openrouter': [{ name: 'OpenRouter', url: 'https://openrouter.ai/api/v1/models', method: 'GET', headers: { 'Authorization': `Bearer ${key}` }, type: 'openrouter' }],
+    'openai': [{ name: 'OpenAI', url: 'https://api.openai.com/v1/models', method: 'GET', headers: { 'Authorization': `Bearer ${key}` }, type: 'openai' }],
+    'auto': []
+  };
+
+  // 自動模式：根據金鑰開頭判斷類型，加入跳測順序
+  let endpoints = typeToEndpoint[selectedType] || [];
+  if (selectedType === 'auto') {
+    if (key.startsWith('AIzaSy') || key.startsWith('AIza')) {
+      endpoints = typeToEndpoint.gemini;
+    } else if (key.startsWith('sk-or-')) {
+      endpoints = typeToEndpoint.openrouter;
+    } else if (key.startsWith('sk-')) {
+      endpoints = typeToEndpoint.openai;
+    } else {
+      return { passed: false, detectedType: null, message: '❌ 金鑰格式無法識別。Gemini 以 AIzaSy 開頭，OpenAI 以 sk- 開頭，OpenRouter 以 sk-or- 開頭。' };
+    }
+  }
+
+  if (endpoints.length === 0) {
+    return { passed: false, detectedType: null, message: '❌ 未選擇 API 類型。' };
+  }
+
+  for (const ep of endpoints) {
+    try {
+      const res = await fetch(ep.url, { method: ep.method, headers: ep.headers, body: ep.body });
+      if (res.ok) {
+        const typeLabel = { gemini: 'Gemini', openrouter: 'OpenRouter', openai: 'OpenAI' }[ep.type];
+        return { passed: true, detectedType: ep.type, message: `✅ ${typeLabel} 金鑰驗證成功！` };
+      }
+      if (res.status === 429) {
+        return { passed: false, detectedType: ep.type, message: '⚠️ 該 API 額度已用盡 (429)，請切換到其他服務或更新金鑰。' };
+      }
+      if (res.status === 401 || res.status === 403) {
+        return { passed: false, detectedType: ep.type, message: '⚠️ 金鑰無效或已過期，請檢查後再試。' };
+      }
+    } catch (e) {
+      return { passed: false, detectedType: ep.type, message: '❌ 網路錯誤，無法連接至 API 伺服器。' };
+    }
+  }
+  return { passed: false, detectedType: null, message: '❌ 跳測失敗。' };
+}
 
 // --- 初始化處理 ---
 window.addEventListener('DOMContentLoaded', () => {
@@ -455,9 +504,11 @@ function setupStepEvents() {
     }
   });
 
-  // Step 2: 測試 API 金鑰
+  // Step 2: 測試 API 金鑰 (根據選中類型)
   document.getElementById('btnTestApiKey').addEventListener('click', async () => {
     const key = document.getElementById('apiKeyInput').value.trim();
+    const typeSelect = document.getElementById('apiKeyTypeSelect');
+    const selectedType = typeSelect ? typeSelect.value : 'auto';
     const resultBox = document.getElementById('apiTestResult');
     const nextBtn = document.getElementById('btnGoToStep2');
 
@@ -468,73 +519,25 @@ function setupStepEvents() {
       return;
     }
 
-    // 顯示測試中狀態
-    resultBox.className = 'testing';
+    // 根據選擇類型決定跳測哪個 API
+    const result = await testAPIKeyByType(key, selectedType);
+    resultBox.className = result.passed ? 'success' : 'error';
     resultBox.style.display = 'block';
-    resultBox.innerHTML = '⏳ 正在測試金鑰可用性，請稍候...';
-    nextBtn.disabled = true;
-    nextBtn.style.opacity = '0.4';
-    nextBtn.style.cursor = 'not-allowed';
+    resultBox.innerHTML = result.message;
 
-    try {
-      let testPassed = false;
-      let errorMsg = '';
-
-      if (key.startsWith('AIzaSy') || key.startsWith('AIza')) {
-        // Gemini API 測試
-        const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`;
-        const res = await fetch(endpoint, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: 'hi' }] }]
-          })
-        });
-        const data = await res.json();
-        if (res.ok && data.candidates) {
-          testPassed = true;
-        } else {
-          errorMsg = data.error?.message || '金鑰驗證失敗';
-        }
-      } else if (key.startsWith('sk-')) {
-        // OpenAI / Openround API 測試
-        const isOpenround = key.startsWith('sk-or-');
-        const url = isOpenround ? 'https://api.openround.co/v1/models' : 'https://api.openai.com/v1/models';
-        const res = await fetch(url, {
-          headers: { 'Authorization': `Bearer ${key}` }
-        });
-        if (res.ok) {
-          testPassed = true;
-        } else {
-          const data = await res.json();
-          errorMsg = data.error?.message || '金鑰驗證失敗';
-        }
-      } else {
-        errorMsg = '金鑰格式無法識別。Gemini金鑰以 AIzaSy 開頭，OpenAI金鑰以 sk- 開頭，Openround金鑰以 sk-or- 開頭。';
-      }
-
-      if (testPassed) {
-        resultBox.className = 'success';
-        resultBox.innerHTML = '✅ 金鑰驗證成功！正在檢查額度...';
-        nextBtn.disabled = false;
-        nextBtn.style.opacity = '1';
-        nextBtn.style.cursor = 'pointer';
-        nextBtn.title = '';
-        webState.apiKey = key;
-        localStorage.setItem('miniclaw_api_key', key);
-        updateBalanceDisplay(key);
-        updateAIStatusUI();
-        // 自動檢查餘額
-        checkAPIBalance();
-        // 測試通過自動跳遠端設定
-        setTimeout(() => { initWebSocketConnection(); goToStep(3); }, 800);
-      } else {
-        resultBox.className = 'error';
-        resultBox.innerHTML = `❌ 驗證失敗：${errorMsg}`;
-      }
-    } catch (err) {
-      resultBox.className = 'error';
-      resultBox.innerHTML = `❌ 網路錯誤，無法連接至 API 伺服器。請確認網路連線後再試。`;
+    if (result.passed) {
+      nextBtn.disabled = false;
+      nextBtn.style.opacity = '1';
+      nextBtn.style.cursor = 'pointer';
+      nextBtn.title = '';
+      webState.apiKey = key;
+      webState.apiType = result.detectedType;
+      localStorage.setItem('miniclaw_api_key', key);
+      localStorage.setItem('miniclaw_api_type', result.detectedType);
+      updateBalanceDisplay(key);
+      updateAIStatusUI();
+      checkAPIBalance();
+      setTimeout(() => { initWebSocketConnection(); goToStep(3); }, 800);
     }
   });
 

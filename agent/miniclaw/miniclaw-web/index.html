@@ -142,9 +142,15 @@
             </div>
 
             <div class="input-group">
-              <label class="input-label" for="apiKeyInput">貼上您的 Gemini API 金鑰</label>
+              <label class="input-label" for="apiKeyTypeSelect">選擇 API 服務</label>
               <div style="display:flex;gap:10px;align-items:center;">
-                <input type="password" class="cyber-input" id="apiKeyInput" placeholder="AIzaSy..." style="flex:1;">
+                <select id="apiKeyTypeSelect" class="cyber-input" style="flex:0 0 130px;padding:10px;">
+                  <option value="auto">🔮 自動跳測</option>
+                  <option value="gemini">🟦 Gemini</option>
+                  <option value="openrouter">🟧 OpenRouter</option>
+                  <option value="openai">🟩 OpenAI</option>
+                </select>
+                <input type="password" class="cyber-input" id="apiKeyInput" placeholder="AIzaSy... / sk-or-... / sk-..." style="flex:1;">
                 <button class="cyber-btn orange" id="btnTestApiKey" style="white-space:nowrap;padding:10px 18px;">🔍 測試</button>
               </div>
               <div id="apiTestResult" style="display:none;margin-top:12px;padding:10px 14px;border-radius:8px;font-size:0.85rem;font-family:var(--font-mono);"></div>
