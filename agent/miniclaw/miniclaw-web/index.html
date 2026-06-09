@@ -514,10 +514,41 @@
 
         </div>
 
+        <!-- 手動轉接複製框（手動模式時顯示） -->
+        <div id="manualModeCopyBox" style="display:none;background:rgba(0,240,255,0.06);border:1px solid rgba(0,240,255,0.25);border-radius:12px;padding:16px;margin:0 12px 8px;">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+            <span style="font-size:1.2rem;">📋</span>
+            <strong style="color:var(--neon-cyan);">請複製以下內容貼給網頁版 AI</strong>
+          </div>
+          <div id="manualModeCopyContent" style="background:rgba(0,0,0,0.4);border-radius:8px;padding:12px;font-size:0.78rem;font-family:var(--font-mono);color:var(--neon-green);max-height:200px;overflow-y:auto;white-space:pre-wrap;word-break:break-all;margin-bottom:10px;"></div>
+          <button class="cyber-btn orange" id="btnCopyManualPrompt" style="width:100%;padding:8px;font-size:0.82rem;">📋 一鍵複製提示詞</button>
+        </div>
+
+        <!-- 功能長條區 -->
+        <div id="inputToolbar" style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-top:1px solid rgba(255,255,255,0.06);background:rgba(0,0,0,0.15);">
+          <!-- + 號上傳按鈕 -->
+          <button type="button" id="btnUpload" class="cyber-btn muted" style="padding:6px 10px;font-size:1rem;flex-shrink:0;" title="上傳檔案/圖片">+</button>
+          <input type="file" id="fileUploadInput" style="display:none;" accept="image/*,.txt,.json,.py,.md">
+          <!-- AI 廠商下拉 -->
+          <select id="selectAIProvider" class="cyber-select" style="flex:1;padding:6px 8px;font-size:0.78rem;">
+            <option value="auto">🤖 自動</option>
+            <option value="gemini">🟦 Gemini</option>
+            <option value="openrouter">🟧 OpenRouter</option>
+            <option value="openai">🟩 OpenAI</option>
+            <option value="ollama">🖥️ 本地 Ollama</option>
+            <option value="manual">🔗 自行傳給網路上的 AI</option>
+          </select>
+          <!-- 模型版本下拉 -->
+          <select id="selectModelVersion" class="cyber-select" style="flex:1;padding:6px 8px;font-size:0.78rem;">
+            <option value="auto">自動選擇</option>
+          </select>
+        </div>
+
         <!-- 輸入欄 -->
         <form class="chat-input-bar" id="chatForm">
           <input type="text" id="chatInput" placeholder="輸入指令，例如「幫我螢幕截圖」..." autocomplete="off">
-          <button type="submit" class="cyber-btn orange" style="padding: 10px 22px;">傳送</button>
+          <button type="submit" class="cyber-btn orange" id="btnSend" style="padding: 10px 22px;">傳送</button>
+          <button type="button" class="cyber-btn muted" id="btnResend" style="display:none;padding: 10px 22px;font-size:0.82rem;">重新傳送</button>
         </form>
 
       </section>
@@ -706,7 +737,7 @@
   <!-- 固定底部資訊列 -->
   <div style="position:fixed;bottom:0;left:0;right:0;z-index:1001;background:rgba(6,5,11,0.92);backdrop-filter:blur(10px);border-top:1px solid rgba(255,102,0,0.2);padding:8px 20px;display:flex;justify-content:space-between;align-items:center;font-size:0.75rem;font-family:var(--font-mono);">
     <span style="color:var(--text-muted);">💬 有任何問題或意見，歡迎聯絡：<a href="mailto:eric940724@gmail.com" style="color:var(--neon-cyan);text-decoration:none;">eric940724@gmail.com</a></span>
-    <span style="color:#ffffff;">上次更新：2026-06-08 09:48</span>
+    <span style="color:#ffffff;">上次更新：2026-06-09 12:13</span>
   </div>
 
   <!-- 前端引導邏輯與通訊協定 -->

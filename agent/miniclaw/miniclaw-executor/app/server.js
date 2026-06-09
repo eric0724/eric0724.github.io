@@ -595,27 +595,30 @@ async function callAIModelWithFailover(prompt, socket, clientPlatform) {
     } catch (e) {}
   }
   
-  const providers = ['gemini', 'openai', 'ollama'];
+  const providers = ['openrouter', 'gemini', 'openai', 'ollama'];
   const priority = credentials.aiPriority || 'gemini';
-  
+
   // 重新調整順序，將優先的放最前面
   const order = [priority, ...providers.filter(p => p !== priority)];
-  
+
   let success = false;
   let replyContent = '';
-  
+
   // 取得 Google Access Token（前端 OAuth 同步過來的）
   const googleToken = credentials.googleAccessToken || '';
-  
+
   for (const provider of order) {
     if (success) break;
-    
+
     // apiKey 可能直接在根層或包在 data 裡
     const key = credentials.apiKey || (credentials.data && credentials.data.apiKey);
-    if (!key && !googleToken && provider !== 'ollama') continue;
-    
+    const openrouterKey = credentials.openrouterApiKey || (credentials.data && credentials.data.openrouterApiKey);
+    const openrouterModel = credentials.openrouterModel || 'deepseek/deepseek-r1:free';
+    if (!key && !googleToken && provider !== 'ollama' && provider !== 'openrouter') continue;
+    if (provider === 'openrouter' && !openrouterKey) continue;
+
     console.log(`📡 正在嘗試呼叫 AI 模組 [${provider.toUpperCase()}] ...`);
-    
+
     try {
       if (provider === 'gemini') {
         replyContent = await fetchGeminiAPI(prompt, key, googleToken);
@@ -626,6 +629,10 @@ async function callAIModelWithFailover(prompt, socket, clientPlatform) {
       } else if (provider === 'ollama') {
         // Ollama 不需要 key，直接嘗試
         replyContent = await fetchOllamaAPI(prompt);
+        success = true;
+      } else if (provider === 'openrouter') {
+        // OpenRouter 免費模型（支援 deepseek-r1 / llama-3.3-70b / qwen-2.5-72b 等）
+        replyContent = await fetchOpenRouterAPI(prompt, openrouterKey, openrouterModel);
         success = true;
       }
     } catch (err) {
@@ -743,7 +750,7 @@ async function fetchOpenAIAPI(prompt, key) {
   const isOpenround = key && key.startsWith('sk-or-');
   const url = isOpenround ? 'https://openrouter.ai/api/v1/chat/completions' : 'https://api.openai.com/v1/chat/completions';
   const modelName = isOpenround ? 'gpt-4o-mini' : 'gpt-3.5-turbo';
-  
+
   const response = await fetchWithTimeout(url, {
     method: 'POST',
     headers: {
@@ -758,9 +765,43 @@ async function fetchOpenAIAPI(prompt, key) {
       ]
     })
   }, 5000);
-  
+
   if (!response.ok) throw new Error(response.status);
   const data = await response.json();
+  return data.choices[0].message.content;
+}
+
+// OpenRouter 免費模型獨立接口
+// 支援：deepseek/deepseek-r1:free、meta-llama/llama-3.3-70b-instruct:free、qwen/qwen-2.5-72b-instruct:free
+async function fetchOpenRouterAPI(prompt, key, model) {
+  const url = 'https://openrouter.ai/api/v1/chat/completions';
+  const useModel = model || 'deepseek/deepseek-r1:free';
+
+  const response = await fetchWithTimeout(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${key}`,
+      'HTTP-Referer': 'https://miniclaw.local',
+      'X-Title': 'Miniclaw'
+    },
+    body: JSON.stringify({
+      model: useModel,
+      messages: [
+        { role: 'system', content: SYSTEM_PROMPT },
+        { role: 'user', content: `${prompt} (限制 100 字內)` }
+      ]
+    })
+  }, 8000);  // 免費模型 RPM 限制，給 8s timeout
+
+  if (!response.ok) {
+    const errText = await response.text().catch(() => '');
+    throw new Error(`${response.status}${errText ? ': ' + errText.slice(0, 100) : ''}`);
+  }
+  const data = await response.json();
+  if (!data.choices || data.choices.length === 0) {
+    throw new Error('openrouter_no_choices');
+  }
   return data.choices[0].message.content;
 }
 

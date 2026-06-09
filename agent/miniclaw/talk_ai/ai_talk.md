@@ -569,3 +569,5 @@ Restore
 [2026-06-08 14:28] 大廳傳訊息時檢查餘額 | handleOutboundMessage加aiQuotaExhausted檢查 | 無餘額時提示更新金鑰或重新登入 | 終端指令不受影響
 [2026-06-08 14:40] 修第一步驟壞掉問題 | client.js開頭多出亂碼`額`導致JS解析錯誤 | 移除亂碼恢復正常
 [2026-06-08 15:00] 加API類型下拉選單+手動跳測 | index.html加apiKeyTypeSelect下拉(自動/Gemini/OpenRouter/OpenAI) | client.js加testAPIKeyByType函式根據選中類型跳測 | 玩家手動選擇最可能的API避免浪費時間
+[2026-06-09 10:00] 補上auto_run.py+safe_locate防崩潰模組 | auto_run.py複製自template | 新建safe_locate.py共用3輪重試+FAILSAFE角落保護 | auto_run.py改用safe_locate取代do_locate | server.js加OpenRouter獨立provider(free模型deepseek-r1/llama-3.3-70b/qwen-2.5-72b)
+[2026-06-09 12:13] index.html加功能長條區+手動轉接DOM | 底部長條含+號上傳/AI廠商下拉/模型版本下拉 | 新增manualModeCopyBox手動轉接複製框 | 輸入欄加btnResend重新傳送按鈕 | 時間戳更新 | GOGO push
