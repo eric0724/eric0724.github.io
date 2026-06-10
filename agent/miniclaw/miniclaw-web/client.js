@@ -18,12 +18,12 @@ const webState = {
   localPort: 3000,
   balance: 50.00,
   aiQuotaExhausted: false,
-  ngrokUrl: localStorage.getItem('miniclaw_ngrok_url') || ''
+  ngrokUrl: localStorage.getItem('miniclaw_ngrok_url') || '',
+  manualModeEnabled: false
 };
 
 // --- API 金鑰跳測 (根據選中類型) ---
 async function testAPIKeyByType(key, selectedType) {
-  // 根據選擇類型定義跳測順序
   const typeToEndpoint = {
     'gemini': [{ name: 'Gemini', url: `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`, method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ contents: [{ parts: [{ text: 'hi' }] }] }), type: 'gemini' }],
     'openrouter': [{ name: 'OpenRouter', url: 'https://openrouter.ai/api/v1/models', method: 'GET', headers: { 'Authorization': `Bearer ${key}` }, type: 'openrouter' }],
@@ -31,7 +31,6 @@ async function testAPIKeyByType(key, selectedType) {
     'auto': []
   };
 
-  // 自動模式：根據金鑰開頭判斷類型，加入跳測順序
   let endpoints = typeToEndpoint[selectedType] || [];
   if (selectedType === 'auto') {
     if (key.startsWith('AIzaSy') || key.startsWith('AIza')) {
@@ -85,7 +84,6 @@ window.addEventListener('DOMContentLoaded', () => {
 // --- Google OAuth 初始化 ---
 function initGoogleSignIn() {
   if (typeof google === 'undefined') {
-    // GIS 腳本還沒載入，稍後重試
     setTimeout(initGoogleSignIn, 500);
     return;
   }
@@ -96,7 +94,6 @@ function initGoogleSignIn() {
     callback: handleGoogleTokenResponse,
   });
 
-  // 渲染 Google 登入按鈕
   google.accounts.id.initialize({
     client_id: GOOGLE_CLIENT_ID,
     callback: handleGoogleIdToken,
@@ -114,16 +111,13 @@ function initGoogleSignIn() {
     }
   );
 
-  // 每次刷新/重開都清除登入狀態，讓使用者重新登入
   localStorage.removeItem('miniclaw_google_user');
   localStorage.removeItem('miniclaw_google_token');
   webState.googleUser = null;
   webState.googleAccessToken = '';
 }
 
-// 處理 Google ID Token（登入後取得使用者資訊）
 function handleGoogleIdToken(response) {
-  // 解析 JWT payload 取得使用者資訊
   const payload = JSON.parse(atob(response.credential.split('.')[1]));
   webState.googleUser = {
     name: payload.name,
@@ -131,29 +125,21 @@ function handleGoogleIdToken(response) {
     picture: payload.picture,
   };
   localStorage.setItem('miniclaw_google_user', JSON.stringify(webState.googleUser));
-
-  // 取得 Access Token 以呼叫 Gemini API
   requestGoogleAccessToken();
 }
 
-// 請求 Access Token
 function requestGoogleAccessToken() {
   if (typeof google === 'undefined') return;
-  // 若已取得 token，直接返回，不再重複請求
   if (webState.googleAccessToken) return;
   const tokenClient = google.accounts.oauth2.initTokenClient({
     client_id: GOOGLE_CLIENT_ID,
     scope: 'https://www.googleapis.com/auth/generative-language.retriever https://www.googleapis.com/auth/drive.file',
-    // 第一次登入需要顯示授權畫面，之後使用空字串進行靜默刷新
     callback: handleGoogleTokenResponse,
   });
-  // 第一次授權使用空字串（會顯示選擇帳號），後續刷新用 'none'
   const promptMode = webState.googleAccessToken ? 'none' : '';
   tokenClient.requestAccessToken({ prompt: promptMode });
 }
 
-
-// 處理 Access Token 回應
 function handleGoogleTokenResponse(tokenResponse) {
   if (tokenResponse.error) {
     const resultBox = document.getElementById('googleLoginResult');
@@ -173,14 +159,12 @@ function handleGoogleTokenResponse(tokenResponse) {
     showGoogleLoggedIn(webState.googleUser);
   }
 
-  // Access Token 取得成功 = 確定可用，自動跳遠端設定
   setTimeout(() => {
     initWebSocketConnection();
     goToStep(3);
   }, 800);
 }
 
-// 顯示已登入狀態
 function showGoogleLoggedIn(user) {
   const btn = document.getElementById('googleSignInBtn');
   const resultBox = document.getElementById('googleLoginResult');
@@ -206,22 +190,13 @@ function showGoogleLoggedIn(user) {
     resultBox.innerHTML = '✅ Google 登入成功！已取得 Gemini 使用權限，可以繼續下一步。';
   }
 
-  // 啟用下一步按鈕
-  const nextBtn = document.getElementById('btnGoToStep2');
-  if (nextBtn) {
-    nextBtn.disabled = false;
-    nextBtn.style.opacity = '1';
-    nextBtn.style.cursor = 'pointer';
-    nextBtn.title = '';
-  }
+  updatePanelBadge('google', true, '✅ 已登入');
+  updateStep2NextButton();
 
   showToast('🔵 Google 登入成功', `歡迎，${user.name}！`, '🦞');
-  // 同步更新設定面板
   updateSettingGoogleDisplay();
-  // 登入成功自動跳到 Step 3（等 Access Token 後在 handleGoogleTokenResponse 跳）
 }
 
-// Google 登出
 function handleGoogleLogout() {
   webState.googleUser = null;
   webState.googleAccessToken = '';
@@ -232,7 +207,6 @@ function handleGoogleLogout() {
     google.accounts.id.disableAutoSelect();
   }
 
-  // 重新渲染登入按鈕
   const btn = document.getElementById('googleSignInBtn');
   if (btn) btn.innerHTML = '';
   setTimeout(initGoogleSignIn, 100);
@@ -240,15 +214,8 @@ function handleGoogleLogout() {
   const resultBox = document.getElementById('googleLoginResult');
   if (resultBox) resultBox.style.display = 'none';
 
-  // 停用下一步（除非有 API Key）
-  if (!webState.apiKey) {
-    const nextBtn = document.getElementById('btnGoToStep2');
-    if (nextBtn) {
-      nextBtn.disabled = true;
-      nextBtn.style.opacity = '0.4';
-      nextBtn.style.cursor = 'not-allowed';
-    }
-  }
+  updatePanelBadge('google', false, '未驗證');
+  updateStep2NextButton();
 }
 
 // --- 1. 平台與環境自檢偵測 ---
@@ -280,7 +247,6 @@ function detectUserPlatform() {
   generateBootstrapCommands(os);
 }
 
-// 根據平台生成「自檢安裝 Node.js 一鍵命令」
 function generateBootstrapCommands(os) {
   const cmdEl = document.getElementById('bootstrapCommandText');
   if (!cmdEl) return;
@@ -300,7 +266,6 @@ function generateBootstrapCommands(os) {
   cmdEl.innerText = command;
 }
 
-// 終端模式步驟顯示時才套用平台專屬 UI（解決時序問題）
 function applyPlatformStep2UI() {
   const os = webState.platform;
 
@@ -321,13 +286,11 @@ function applyPlatformStep2UI() {
   }
 
   if (os === 'android') {
-    // 隱藏 Windows 專用區塊
     const dlBlock = document.getElementById('step2DownloadBlock');
     if (dlBlock) dlBlock.style.display = 'none';
     const batBlock = document.getElementById('step2BatBlock');
     if (batBlock) batBlock.style.display = 'none';
 
-    // 插入 Termux 說明
     const guideContent = document.getElementById('terminalGuideContent');
     if (guideContent && !document.getElementById('androidTermuxGuide')) {
       const androidGuide = document.createElement('div');
@@ -356,7 +319,6 @@ function applyPlatformStep2UI() {
   }
 
   if (os === 'mac' || os === 'linux') {
-    // 只隱藏 .bat 啟動區塊，下載 zip 連結 Mac/Linux 都能用，保留
     const batBlock = document.getElementById('step2BatBlock');
     if (batBlock) batBlock.style.display = 'none';
 
@@ -368,11 +330,6 @@ function applyPlatformStep2UI() {
       guide.style.cssText = 'background:rgba(57,255,20,0.05);border:1px solid rgba(57,255,20,0.25);border-radius:12px;padding:16px;margin-bottom:14px;';
       const icon = os === 'mac' ? '🍎' : '🐧';
       const label = os === 'mac' ? 'macOS 啟動方式' : 'Linux 啟動方式';
-      const installCmd = os === 'mac'
-        ? 'brew install node ngrok'
-        : 'sudo apt-get install -y nodejs && curl -s https://ngrok-agent.s3.amazonaws.com/ngrok.asc | sudo tee /etc/apt/trusted.gpg.d/ngrok.asc && echo "deb https://ngrok-agent.s3.amazonaws.com buster main" | sudo tee /etc/apt/sources.list.d/ngrok.list && sudo apt-get update && sudo apt-get install ngrok';
-      const startCmd = 'bash start.sh';
-      const ngrokCmd = 'ngrok http 3000';
       guide.innerHTML = `
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
           <span style="font-size:1.3rem;">${icon}</span>
@@ -391,7 +348,6 @@ function applyPlatformStep2UI() {
     }
     return;
   }
-  // Windows：保持預設顯示，不做任何修改
 }
 
 // --- 2. 恢復持久化儲存設定 ---
@@ -403,7 +359,6 @@ function restoreSavedSettings() {
     updateBalanceDisplay(savedKey);
   }
   
-  // 恢復 ngrok 網址
   const savedNgrok = localStorage.getItem('miniclaw_ngrok_url');
   if (savedNgrok) {
     webState.ngrokUrl = savedNgrok;
@@ -429,12 +384,68 @@ function restoreSavedSettings() {
   }
 }
 
-// --- 3. 步驟引導頁面切換與按鈕監聽 (Step 1 - 5) ---
+// --- 3. 折疊面板開關邏輯 ---
+function setupCollapsiblePanels() {
+  document.querySelectorAll('.panel-header').forEach(header => {
+    header.addEventListener('click', function(e) {
+      if (e.target.classList.contains('panel-badge')) return;
+      const bodyId = 'panelBody' + this.dataset.panel.charAt(0).toUpperCase() + this.dataset.panel.slice(1);
+      const body = document.getElementById(bodyId);
+      const arrow = this.querySelector('.panel-arrow');
+      if (!body) return;
+      const isOpen = body.classList.contains('open');
+      if (isOpen) {
+        body.classList.remove('open');
+        body.style.display = 'none';
+        arrow.classList.remove('open');
+      } else {
+        body.classList.add('open');
+        body.style.display = 'block';
+        arrow.classList.add('open');
+      }
+    });
+  });
+}
+
+function updateStep2NextButton() {
+  const nextBtn = document.getElementById('btnGoToStep2');
+  if (!nextBtn) return;
+  const isVerified =
+    webState.googleAccessToken ||
+    webState.apiKey ||
+    localStorage.getItem('miniclaw_ollama_ready') === 'true' ||
+    webState.manualModeEnabled;
+  if (isVerified) {
+    nextBtn.disabled = false;
+    nextBtn.style.opacity = '1';
+    nextBtn.style.cursor = 'pointer';
+    nextBtn.title = '';
+  } else {
+    nextBtn.disabled = true;
+    nextBtn.style.opacity = '0.4';
+    nextBtn.style.cursor = 'not-allowed';
+    nextBtn.title = '請先完成任一方式驗證';
+  }
+}
+
+function updatePanelBadge(panelName, verified, label) {
+  const badge = document.getElementById('badge' + panelName.charAt(0).toUpperCase() + panelName.slice(1));
+  if (!badge) return;
+  if (verified) {
+    badge.className = 'panel-badge verified';
+    badge.textContent = label || '已驗證';
+  } else {
+    badge.className = 'panel-badge unverified';
+    badge.textContent = label || '未驗證';
+  }
+}
+
+// --- 4. 步驟引導頁面切換與按鈕監聽 ---
 function setupStepEvents() {
-  // Step 2: 偵測本地 AI（Ollama）
+  setupCollapsiblePanels();
+
   document.getElementById('btnDetectOllama').addEventListener('click', async () => {
     const resultBox = document.getElementById('ollamaDetectResult');
-    const nextBtn = document.getElementById('btnGoToStep2');
 
     resultBox.style.display = 'block';
     resultBox.style.background = 'rgba(255,102,0,0.1)';
@@ -445,7 +456,6 @@ function setupStepEvents() {
     let ollamaReady = false;
     let modelList = [];
 
-    // 方法 1：透過 server.js /ollama-status（有終端時）
     if (webState.ngrokUrl && webState.isTerminalConnected) {
       try {
         const res = await fetch(`${webState.ngrokUrl}/ollama-status`, {
@@ -457,7 +467,6 @@ function setupStepEvents() {
       } catch (e) {}
     }
 
-    // 方法 2：直接查 Ollama API（本機開啟 index.html 時可用）
     if (!ollamaReady) {
       try {
         const res = await fetch('http://127.0.0.1:11434/api/tags');
@@ -478,12 +487,9 @@ function setupStepEvents() {
       localStorage.setItem('miniclaw_api_mode', 'ollama');
       localStorage.setItem('miniclaw_ollama_ready', 'true');
       updateAIStatusUI();
-      nextBtn.disabled = false;
-      nextBtn.style.opacity = '1';
-      nextBtn.style.cursor = 'pointer';
-      nextBtn.title = '';
+      updatePanelBadge('ollama', true, '✅ 已驗證');
+      updateStep2NextButton();
       showToast('🖥️ 本地 AI 已綁定', '小龍蝦將優先使用本地 AI，不消耗任何點數！', '🦞');
-      // 偵測成功自動跳遠端設定
       setTimeout(() => { initWebSocketConnection(); goToStep(3); }, 800);
     } else if (modelList.length > 0) {
       resultBox.style.background = 'rgba(255,102,0,0.1)';
@@ -504,13 +510,11 @@ function setupStepEvents() {
     }
   });
 
-  // Step 2: 測試 API 金鑰 (根據選中類型)
   document.getElementById('btnTestApiKey').addEventListener('click', async () => {
     const key = document.getElementById('apiKeyInput').value.trim();
     const typeSelect = document.getElementById('apiKeyTypeSelect');
     const selectedType = typeSelect ? typeSelect.value : 'auto';
     const resultBox = document.getElementById('apiTestResult');
-    const nextBtn = document.getElementById('btnGoToStep2');
 
     if (!key) {
       resultBox.className = 'error';
@@ -519,17 +523,12 @@ function setupStepEvents() {
       return;
     }
 
-    // 根據選擇類型決定跳測哪個 API
     const result = await testAPIKeyByType(key, selectedType);
     resultBox.className = result.passed ? 'success' : 'error';
     resultBox.style.display = 'block';
     resultBox.innerHTML = result.message;
 
     if (result.passed) {
-      nextBtn.disabled = false;
-      nextBtn.style.opacity = '1';
-      nextBtn.style.cursor = 'pointer';
-      nextBtn.title = '';
       webState.apiKey = key;
       webState.apiType = result.detectedType;
       localStorage.setItem('miniclaw_api_key', key);
@@ -537,72 +536,82 @@ function setupStepEvents() {
       updateBalanceDisplay(key);
       updateAIStatusUI();
       checkAPIBalance();
+      updatePanelBadge('apikey', true, '✅ 已驗證');
+      updateStep2NextButton();
       setTimeout(() => { initWebSocketConnection(); goToStep(3); }, 800);
     }
   });
 
-  // Step 2: 點擊前往 Step 3（金鑰已通過測試才可按）
   document.getElementById('btnGoToStep2').addEventListener('click', () => {
-    if (!webState.apiKey && !webState.googleAccessToken && localStorage.getItem('miniclaw_ollama_ready') !== 'true') return;
-    showToast('🔑 API 鎖定成功', '您的金鑰已加密存於 localStorage，稍後同步至本地！', '🦞');
+    const isVerified =
+      webState.apiKey ||
+      webState.googleAccessToken ||
+      localStorage.getItem('miniclaw_ollama_ready') === 'true' ||
+      webState.manualModeEnabled;
+    if (!isVerified) return;
+    showToast('🔑 AI 權限鎖定成功', '已取得 AI 使用權限，準備遠端設定！', '🦞');
     initWebSocketConnection();
     goToStep(3);
   });
 
-
-  // Step 2: 跳過金鑰 (進入輕量模式，跳到遠端設定)
   document.getElementById('btnSkipToStep3').addEventListener('click', () => {
     webState.apiMode = 'lightweight';
     localStorage.setItem('miniclaw_api_mode', 'lightweight');
     document.getElementById('toggleCompleteExecution').checked = false;
     updateBalanceDisplay('');
     updateAIStatusUI();
-    
     showToast('🛡️ 啟動輕量隧道模式', '已為您跳過金鑰驗證，請繼續遠端設定！', '🦞');
     goToStep(3);
   });
 
-  // Step 1: 要終端按鈕
+  document.getElementById('btnEnableManualMode').addEventListener('click', () => {
+    webState.manualModeEnabled = true;
+    const resultBox = document.getElementById('manualModeResult');
+    resultBox.style.display = 'block';
+    resultBox.style.background = 'rgba(0,255,100,0.08)';
+    resultBox.style.border = '1px solid rgba(0,255,100,0.3)';
+    resultBox.style.color = 'var(--neon-green)';
+    resultBox.innerHTML = '✅ 手動模式已啟用！你可以自行將對話複製到網頁 AI 取得回覆。<br>進入大廳後會顯示複製提示框。';
+    updatePanelBadge('manual', true, '✅ 已啟用');
+    updateStep2NextButton();
+    showToast('🔗 手動模式已啟用', '進入大廳後將顯示複製提示框，方便你手動貼給網頁 AI。', '🦞');
+    setTimeout(() => { goToStep(3); }, 800);
+  });
+
   document.getElementById('btnWantTerminal').addEventListener('click', () => {
     webState.hasTerminal = true;
     webState.apiMode = 'complete';
     localStorage.setItem('miniclaw_api_mode', 'complete');
     document.getElementById('toggleCompleteExecution').checked = true;
 
-    // 切換 UI 狀態
     document.getElementById('btnWantTerminal').className = 'cyber-btn orange';
     document.getElementById('btnNoTerminal').className = 'cyber-btn muted';
     document.getElementById('noTerminalMsg').style.display = 'none';
     document.getElementById('terminalGuideContent').style.display = 'block';
 
-    // 啟用下一步（需測試連線後才能按）
     const nextBtn = document.getElementById('btnGoToStep3');
     nextBtn.disabled = true;
     nextBtn.style.opacity = '0.4';
     nextBtn.style.cursor = 'not-allowed';
     nextBtn.title = '請先測試並通過執行端驗證';
 
-    // 若 ngrok 網址已偵測到，自動觸發測試
     const ngrokInput = document.getElementById('ngrokUrlInput');
     if (ngrokInput && ngrokInput.value.trim().startsWith('https://')) {
       setTimeout(() => document.getElementById('btnTestExecutor').click(), 400);
     }
   });
 
-  // Step 1: 不要終端按鈕
   document.getElementById('btnNoTerminal').addEventListener('click', () => {
     webState.hasTerminal = false;
     webState.apiMode = 'lightweight';
     localStorage.setItem('miniclaw_api_mode', 'lightweight');
     document.getElementById('toggleCompleteExecution').checked = false;
 
-    // 切換 UI 狀態
     document.getElementById('btnNoTerminal').className = 'cyber-btn orange';
     document.getElementById('btnWantTerminal').className = 'cyber-btn muted';
     document.getElementById('terminalGuideContent').style.display = 'none';
     document.getElementById('noTerminalMsg').style.display = 'block';
 
-    // 直接啟用下一步
     const nextBtn = document.getElementById('btnGoToStep3');
     nextBtn.disabled = false;
     nextBtn.style.opacity = '1';
@@ -612,13 +621,12 @@ function setupStepEvents() {
     showToast('💬 純 AI 對話模式', '已選擇不使用終端，直接進入下一步！', '🦞');
   });
 
-  // Step 1: 測試執行端連線 (透過 ngrok 網址)
   document.getElementById('btnTestExecutor').addEventListener('click', async () => {
     const resultBox = document.getElementById('executorTestResult');
     const nextBtn = document.getElementById('btnGoToStep3');
     const ngrokInput = document.getElementById('ngrokUrlInput');
     
-    let ngrokUrl = ngrokInput.value.trim().replace(/\/$/, ''); // 移除結尾斜線
+    let ngrokUrl = ngrokInput.value.trim().replace(/\/$/, '');
     
     if (!ngrokUrl) {
       resultBox.style.display = 'block';
@@ -658,10 +666,8 @@ function setupStepEvents() {
         resultBox.style.color = 'var(--neon-orange)';
         resultBox.innerHTML = '⏳ HTTP 通道正常，正在建立 WebSocket 終端連線...';
         
-        // 建立 WebSocket，等待結果再更新 UI
         initWebSocketConnection();
 
-        // 等待最多 10 秒確認 WebSocket 是否連上
         let waited = 0;
         const wsCheckInterval = setInterval(() => {
           waited += 500;
@@ -675,14 +681,13 @@ function setupStepEvents() {
             nextBtn.style.opacity = '1';
             nextBtn.style.cursor = 'pointer';
             nextBtn.title = '';
-            // 連線成功自動跳 AI 綁定
             setTimeout(() => goToStep(2), 800);
           } else if (waited >= 10000) {
             clearInterval(wsCheckInterval);
             resultBox.style.background = 'rgba(255,102,0,0.1)';
             resultBox.style.border = '1px solid rgba(255,102,0,0.3)';
             resultBox.style.color = 'var(--neon-orange)';
-            resultBox.innerHTML = '⚠️ HTTP 通道正常，但 WebSocket 連線失敗。終端功能無法使用，可能是 ngrok 攔截了升級請求。請重新啟動 ngrok 後再試，或點「下一步」以沙盒模式繼續。';
+            resultBox.innerHTML = '⚠️ HTTP 通道正常，但 WebSocket 連線失敗。';
             nextBtn.disabled = false;
             nextBtn.style.opacity = '1';
             nextBtn.style.cursor = 'pointer';
@@ -695,7 +700,7 @@ function setupStepEvents() {
       resultBox.style.background = 'rgba(255,0,0,0.1)';
       resultBox.style.border = '1px solid rgba(255,0,0,0.3)';
       resultBox.style.color = '#ff4d4d';
-      resultBox.innerHTML = '❌ 連線失敗！請確認：<br>1. <code>openminiclaw.bat</code> 還在執行中（黑色視窗還開著）<br>2. 網址有正確複製（包含 https://）<br>3. 若手動啟動，確認 ngrok 視窗也還開著';
+      resultBox.innerHTML = '❌ 連線失敗！請確認：<br>1. <code>openminiclaw.bat</code> 還在執行中<br>2. 網址有正確複製（包含 https://）<br>3. 若手動啟動，確認 ngrok 視窗也還開著';
       
       nextBtn.disabled = true;
       nextBtn.style.opacity = '0.4';
@@ -703,30 +708,23 @@ function setupStepEvents() {
     }
   });
 
-  // 步驟導覽退回/前進
   document.getElementById('btnBackToStep1').addEventListener('click', () => goToStep(1));
   document.getElementById('btnBackToTerminalStep').addEventListener('click', () => goToStep(1));
   document.getElementById('btnGoToStep3').addEventListener('click', () => {
-    if (webState.hasTerminal) {
-      // 有終端：需要測試通過才能到這裡，直接跳 AI 綁定
-    }
     goToStep(2);
   });
   
-  // Step 3: 要連接 LINE/DC
   document.getElementById('btnWantLineDC').addEventListener('click', () => {
     document.getElementById('btnWantLineDC').className = 'cyber-btn orange';
     document.getElementById('btnNoLineDC').className = 'cyber-btn muted';
     document.getElementById('lineDCFormSection').style.display = 'block';
 
-    // 無終端時顯示警告
     if (!webState.hasTerminal) {
       document.getElementById('noTerminalLineDCWarning').style.display = 'block';
     } else {
       document.getElementById('noTerminalLineDCWarning').style.display = 'none';
     }
 
-    // 重置下一步按鈕（需測試通過）
     const nextBtn = document.getElementById('btnGoToStep4');
     nextBtn.disabled = true;
     nextBtn.style.opacity = '0.4';
@@ -734,18 +732,15 @@ function setupStepEvents() {
     nextBtn.title = '請先測試並通過機器人驗證';
     nextBtn.style.display = '';
 
-    // 更新 Webhook URL 顯示
     updateLineWebhookUrlDisplay();
   });
 
-  // Step 3: 不要連接 LINE/DC，直接進大廳
   document.getElementById('btnNoLineDC').addEventListener('click', () => {
     document.getElementById('btnNoLineDC').className = 'cyber-btn orange';
     document.getElementById('btnWantLineDC').className = 'cyber-btn muted';
     document.getElementById('lineDCFormSection').style.display = 'none';
     document.getElementById('noTerminalLineDCWarning').style.display = 'none';
 
-    // 直接進大廳
     document.getElementById('onboardingModal').style.display = 'none';
     document.getElementById('mainWorkspace').style.display = 'grid';
 
@@ -766,19 +761,17 @@ function setupStepEvents() {
     }
     renderShortcutChips();
   });
-  // Step 3: 控制方式切換
+
   document.getElementById('btnCtrlModeWeb').addEventListener('click', () => {
     document.getElementById('btnCtrlModeWeb').className = 'cyber-btn orange';
     document.getElementById('btnCtrlModeLine').className = 'cyber-btn muted';
     document.getElementById('ctrlModeWebGuide').style.display = 'block';
     document.getElementById('ctrlModeLineGuide').style.display = 'none';
-    // 手機網頁模式不需要測試，直接啟用下一步
     const nextBtn = document.getElementById('btnGoToStep4');
     nextBtn.disabled = false;
     nextBtn.style.opacity = '1';
     nextBtn.style.cursor = 'pointer';
     nextBtn.title = '點擊進入下一步';
-    // 選擇後自動跳 Step 4
     setTimeout(() => { saveRemoteCredentials(); goToStep(4); }, 800);
     nextBtn.style.opacity = '1';
     nextBtn.style.cursor = 'pointer';
@@ -791,7 +784,6 @@ function setupStepEvents() {
     document.getElementById('ctrlModeLineGuide').style.display = 'block';
     document.getElementById('ctrlModeWebGuide').style.display = 'none';
     updateLineWebhookUrlDisplay();
-    // LINE 模式需要填憑證才能繼續
     const nextBtn = document.getElementById('btnGoToStep4');
     nextBtn.disabled = true;
     nextBtn.style.opacity = '0.4';
@@ -820,7 +812,6 @@ function setupStepEvents() {
     discordFields.style.display = 'block';
   });
 
-  // Step 3: 切換 A / B 卡片
   const cardRemoteA = document.getElementById('cardRemoteA');
   const cardRemoteB = document.getElementById('cardRemoteB');
   const credentialsForm = document.getElementById('remoteCredentialsForm');
@@ -829,8 +820,6 @@ function setupStepEvents() {
     cardRemoteA.classList.add('selected');
     cardRemoteB.classList.remove('selected');
     credentialsForm.style.display = 'block';
-    
-    // 切換回 A 時，判定下一步按鈕是否應該啟用 (如果先前有成功測試過則啟用，否則停用)
     const resultBox = document.getElementById('remoteTestResult');
     const nextBtn = document.getElementById('btnGoToStep4');
     if (resultBox && resultBox.classList.contains('success')) {
@@ -849,15 +838,12 @@ function setupStepEvents() {
     cardRemoteA.classList.remove('selected');
     credentialsForm.style.display = 'none';
     showToast('⏭️ 稍後設定', '已選擇跳過，進入大廳後可在設定面板隨時補填 LINE/DC 憑證。', '🦞');
-    
-    // 切換到 B 時，下一步按鈕自動啟用
     const nextBtn = document.getElementById('btnGoToStep4');
     nextBtn.disabled = false;
     nextBtn.style.opacity = '1';
     nextBtn.style.cursor = 'pointer';
   });
 
-  // Step 3: 測試遠端機器人連線
   document.getElementById('btnTestRemote').addEventListener('click', async () => {
     const resultBox = document.getElementById('remoteTestResult');
     const nextBtn = document.getElementById('btnGoToStep4');
@@ -868,7 +854,6 @@ function setupStepEvents() {
     const discToken = document.getElementById('discordTokenInput').value.trim();
     const discChan = document.getElementById('discordChannelInput').value.trim();
     
-    // 基本檢查
     if (isLINE) {
       if (!lineToken || !lineSecret) {
         resultBox.className = 'error';
@@ -898,7 +883,6 @@ function setupStepEvents() {
     resultBox.style.color = 'var(--neon-orange)';
     resultBox.innerHTML = '⏳ 正在測試與機器人 API 的連線，請稍後...';
     
-    // 如果 WebSocket 已連線，利用本地端 Executor 去驗證
     if (webState.isTerminalConnected && webState.ws && webState.ws.readyState === WebSocket.OPEN) {
       webState.ws.send(JSON.stringify({
         type: 'test-remote',
@@ -911,7 +895,6 @@ function setupStepEvents() {
         }
       }));
     } else {
-      // 離線/沙盒模式的模擬驗證 (Mock)
       setTimeout(() => {
         let formatValid = true;
         let mockError = '';
@@ -954,14 +937,12 @@ function setupStepEvents() {
     }
   });
 
-  // Step 3 前進/後退
   document.getElementById('btnBackToStep2').addEventListener('click', () => {
     goToStep(2);
   });
 
   document.getElementById('btnGoToStep4').addEventListener('click', () => {
     saveRemoteCredentials();
-    // 動態更新 Step 4 說明
     const desc = document.getElementById('step4Desc');
     if (desc) {
       if (webState.hasTerminal && webState.isTerminalConnected) {
@@ -979,7 +960,6 @@ function setupStepEvents() {
     document.getElementById('onboardingModal').style.display = 'none';
     document.getElementById('mainWorkspace').style.display = 'grid';
 
-    // 根據實際狀態顯示正確的初始訊息
     const greeting = document.getElementById('initialGreeting');
     if (greeting) {
       if (webState.isTerminalConnected) {
@@ -1005,7 +985,6 @@ function setupStepEvents() {
 function goToStep(stepNum) {
   webState.currentStep = stepNum;
   
-  // 更新步驟節點狀態
   const nodes = document.querySelectorAll('.step-node');
   nodes.forEach(node => {
     const nodeStep = parseInt(node.getAttribute('data-step'));
@@ -1017,11 +996,10 @@ function goToStep(stepNum) {
     }
   });
   
-  // 切換對應面板顯示（共 4 個 step-pane）
   const stepPaneMap = {
-    1: 'paneStep2', // 終端模式選擇
-    2: 'paneStep1', // AI / API 綁定
-    3: 'paneStep3', // 遠端設定
+    1: 'paneStep2',
+    2: 'paneStep1',
+    3: 'paneStep3',
     4: 'paneStep4'
   };
   const panes = document.querySelectorAll('.step-pane');
@@ -1031,15 +1009,12 @@ function goToStep(stepNum) {
   const activePane = document.getElementById(stepPaneMap[stepNum]);
   if (activePane) activePane.classList.add('active');
 
-  // Step1 顯示時套用平台專屬 UI（iOS禁用終端、Android插入Termux說明）
-  // 同時自動偵測 ngrok 網址（URL 參數或 localhost）
   if (stepNum === 1) {
     applyPlatformStep2UI();
     autoDetectNgrokUrl();
   }
 }
 
-// 更新 LINE Webhook URL 顯示（根據目前 ngrok 網址自動組合）
 function updateLineWebhookUrlDisplay() {
   const el = document.getElementById('lineWebhookUrlDisplay');
   if (!el) return;
@@ -1050,7 +1025,6 @@ function updateLineWebhookUrlDisplay() {
   }
 }
 
-// 保存 LINE / Discord 遠端憑證設定
 function saveRemoteCredentials() {
   const isLINE = (webState.remoteType === 'line');
   const lineToken = document.getElementById('lineTokenInput').value.trim();
@@ -1059,7 +1033,6 @@ function saveRemoteCredentials() {
   const discToken = document.getElementById('discordTokenInput').value.trim();
   const discChan = document.getElementById('discordChannelInput').value.trim();
   
-  // localStorage 本地快取格式
   const localPayload = {
     type: webState.remoteType,
     line: { token: lineToken, secret: lineSecret, userId: lineUserId },
@@ -1067,7 +1040,6 @@ function saveRemoteCredentials() {
   };
   localStorage.setItem('miniclaw_remote_creds', JSON.stringify(localPayload));
   
-  // 同步至本地執行端：使用 server.js 讀取的 credentials.remote 格式
   if (webState.ws && webState.ws.readyState === WebSocket.OPEN) {
     webState.ws.send(JSON.stringify({
       type: 'sync-credentials',
@@ -1077,7 +1049,6 @@ function saveRemoteCredentials() {
     }));
   }
   
-  // 更新設定面板顯示狀態
   updateSettingRemoteStatus(isLINE, isLINE ? lineToken : discToken);
 }
 
@@ -1094,7 +1065,7 @@ function updateSettingRemoteStatus(isLINE, hasKey) {
   }
 }
 
-// --- 4. WebSocket 雙端同步機制 ---
+// --- WebSocket 雙端同步機制 ---
 function initWebSocketConnection() {
   let wsUrl;
   if (webState.ngrokUrl) {
@@ -1170,7 +1141,6 @@ function initWebSocketConnection() {
     webState._wsUrl = '';
     updateTerminalConnectionUI(false);
     logStatus(`🔴 連線已關閉 code:${event.code}`);
-    // 所有非正常關閉都嘗試重連（不限 1006）
     if (event.code !== 1000 && event.code !== 1001) {
       const delay = Math.min((webState._reconnectCount || 0) * 3000 + 1000, 15000);
       webState._reconnectCount = (webState._reconnectCount || 0) + 1;
@@ -1216,7 +1186,6 @@ function handleIncomingWSMessage(msg) {
       appendMessage('warning', `⚙️ 終端輸出 [Output] :\n${msg.output}`);
     }
   } else if (msg.type === 'executor-status') {
-    // 回報硬體狀態與診斷
     if (msg.temp) {
       updateSystemStatsBar(msg.temp, msg.cpu);
     }
@@ -1243,7 +1212,6 @@ function handleIncomingWSMessage(msg) {
       nextBtn.style.opacity = '1';
       nextBtn.style.cursor = 'pointer';
       nextBtn.title = '';
-      // LINE 測試成功自動跳 Step 4
       setTimeout(() => { saveRemoteCredentials(); goToStep(4); }, 800);
     } else {
       resultBox.className = 'error';
@@ -1290,7 +1258,6 @@ function updateTerminalConnectionUI(connected) {
     modeTxt.innerText = '電腦離線 / 方案 B';
     modeTxt.style.color = 'var(--neon-orange)';
   }
-  // 遊戲助手按鈕：有終端才可按
   const gameBtn = document.getElementById('btnGameAssist');
   if (gameBtn) {
     if (connected) {
@@ -1307,7 +1274,6 @@ function updateTerminalConnectionUI(connected) {
       gameBtn.title = '需要終端連線才能使用';
     }
   }
-  // 錄製操作按鈕：有終端才可按
   const openRecorderBtn = document.getElementById('btnOpenRecorder');
   if (openRecorderBtn) {
     if (connected) {
@@ -1324,7 +1290,6 @@ function updateTerminalConnectionUI(connected) {
       openRecorderBtn.title = '需要終端連線才能使用';
     }
   }
-  // 執行腳本按鈕：有終端才可按
   const runAutoScriptBtn = document.getElementById('btnRunAutoScript');
   if (runAutoScriptBtn) {
     if (connected) {
@@ -1341,7 +1306,6 @@ function updateTerminalConnectionUI(connected) {
       runAutoScriptBtn.title = '需要終端連線才能使用';
     }
   }
-  // 關閉執行器按鈕：有終端才可按
   const shutdownBtn = document.getElementById('btnShutdownExecutor');
   if (shutdownBtn) {
     if (connected) {
@@ -1356,15 +1320,11 @@ function updateTerminalConnectionUI(connected) {
       shutdownBtn.title = '需要終端連線才能使用';
     }
   }
-  // 同步更新設定面板
   updateSettingTerminalDisplay();
-  // 同步更新系統狀態列
   updateSystemStatusBar();
 }
 
-// 自動從 localhost 偵測 ngrok 網址（start.bat 啟動後自動填入）
 function autoDetectNgrokUrl() {
-  // 優先從 URL 參數取得（start.bat 自動帶入）
   const params = new URLSearchParams(window.location.search);
   const paramNgrok = params.get('ngrok') || params.get('nght');
   if (paramNgrok) {
@@ -1372,7 +1332,6 @@ function autoDetectNgrokUrl() {
     return;
   }
 
-  // 其次從 localhost server 查詢
   fetch('http://127.0.0.1:3000/ngrok-url')
     .then(res => res.json())
     .then(data => {
@@ -1382,7 +1341,6 @@ function autoDetectNgrokUrl() {
     .catch(() => scheduleNgrokRetry());
 }
 
-// 套用 ngrok 網址
 function applyNgrokUrl(url) {
   url = url.replace(/\/$/, '');
   webState.ngrokUrl = url;
@@ -1396,14 +1354,13 @@ function applyNgrokUrl(url) {
 
   updateLineWebhookUrlDisplay();
 
-  // 若 onboarding 還在 Step 1（有終端模式），自動觸發測試連線 → 成功後自動跳 AI 綁定
   const paneStep2 = document.getElementById('paneStep2');
   const terminalGuide = document.getElementById('terminalGuideContent');
   if (paneStep2 && paneStep2.classList.contains('active') &&
       terminalGuide && terminalGuide.style.display !== 'none') {
     const testBtn = document.getElementById('btnTestExecutor');
     if (testBtn) {
-      setTimeout(() => testBtn.click(), 600); // 稍等讓 UI 渲染完
+      setTimeout(() => testBtn.click(), 600);
       return;
     }
   }
@@ -1414,7 +1371,6 @@ function applyNgrokUrl(url) {
   }
 }
 
-// 每 3 秒重試偵測（等使用者跑完 start.bat）
 let ngrokRetryTimer = null;
 function scheduleNgrokRetry() {
   if (ngrokRetryTimer) return;
@@ -1432,9 +1388,8 @@ function scheduleNgrokRetry() {
   }, 3000);
 }
 
-// --- 5. IP 心跳輪詢探測 (Step 4) ---
+// --- IP 心跳輪詢探測 ---
 function startDiagnosticPolling() {
-  // 先嘗試從 localhost 自動取得 ngrok 網址
   autoDetectNgrokUrl();
 
   setInterval(() => {
@@ -1443,7 +1398,6 @@ function startDiagnosticPolling() {
       return;
     }
     
-    // 已有 WebSocket 在連線中就不重建
     if (webState.ws && (webState.ws.readyState === WebSocket.CONNECTING || webState.ws.readyState === WebSocket.OPEN)) {
       return;
     }
@@ -1531,7 +1485,6 @@ function renderChatList() {
 }
 
 function switchChat(id) {
-  // 儲存目前對話的 DOM
   const session = chatSessions.find(s => s.id === activeChatId);
   if (session) {
     session.messages = document.getElementById('chatHistoryContainer').innerHTML;
@@ -1546,7 +1499,7 @@ function switchChat(id) {
 }
 
 function deleteChat(id) {
-  if (chatSessions.length === 1) return; // 至少保留一個
+  if (chatSessions.length === 1) return;
   const idx = chatSessions.findIndex(s => s.id === id);
   chatSessions.splice(idx, 1);
   if (activeChatId === id) {
@@ -1562,7 +1515,6 @@ function newChat() {
   switchChat(id);
 }
 
-// 快速指令（功能卡片用）
 function sendQuickCommand(text) {
   const input = document.getElementById('chatInput');
   if (input) {
@@ -1571,7 +1523,6 @@ function sendQuickCommand(text) {
   }
 }
 
-// WS 狀態 log（顯示在系統狀態列，不塞進對話框）
 function logStatus(msg) {
   const el = document.getElementById('sysStatusTerminal');
   if (el && !webState.isTerminalConnected) {
@@ -1581,7 +1532,6 @@ function logStatus(msg) {
   console.log('[WS]', msg);
 }
 
-// 系統狀態列更新
 function updateSystemStatusBar() {
   const termEl = document.getElementById('sysStatusTerminal');
   const apiEl = document.getElementById('sysStatusApi');
@@ -1600,16 +1550,14 @@ function updateSystemStatusBar() {
   }
 }
 
-// --- 6. AI 聊天面版與「方案 B」沙盒模擬器 ---
+// ==================== AI 聊天面板 ====================
 function setupChatEvents() {
   const form = document.getElementById('chatForm');
   const input = document.getElementById('chatInput');
 
-  // 初始化對話列表
   renderChatList();
   document.getElementById('btnNewChat')?.addEventListener('click', newChat);
 
-  // 測試終端按鈕
   const testBtn = document.getElementById('btnTestTerminal');
   if (testBtn) {
     testBtn.addEventListener('click', () => {
@@ -1622,7 +1570,6 @@ function setupChatEvents() {
     });
   }
 
-  // 遊戲助手按鈕（toggle）
   const gameBtn = document.getElementById('btnGameAssist');
   if (gameBtn) {
     gameBtn.addEventListener('click', () => {
@@ -1656,7 +1603,6 @@ function setupChatEvents() {
     });
   }
 
-  // 錄製操作按鈕
   const openRecorderBtn = document.getElementById('btnOpenRecorder');
   if (openRecorderBtn) {
     openRecorderBtn.addEventListener('click', () => {
@@ -1665,7 +1611,6 @@ function setupChatEvents() {
     });
   }
 
-  // 執行自動化腳本按鈕
   const runAutoScriptBtn = document.getElementById('btnRunAutoScript');
   if (runAutoScriptBtn) {
     runAutoScriptBtn.addEventListener('click', () => {
@@ -1674,23 +1619,59 @@ function setupChatEvents() {
     });
   }
 
+  // ==== 手動模式：一鍵複製按鈕 ====
+  document.getElementById('btnCopyManualPrompt')?.addEventListener('click', () => {
+    const content = document.getElementById('manualModeCopyContent');
+    if (!content || !content.innerText) return;
+    navigator.clipboard.writeText(content.innerText).then(() => {
+      const badge = document.getElementById('manualModeBadge');
+      if (badge) {
+        badge.textContent = '✅ 已複製';
+        badge.style.background = 'rgba(57,255,20,0.15)';
+        badge.style.color = 'var(--neon-green)';
+        badge.style.borderColor = 'rgba(57,255,20,0.3)';
+      }
+      showToast('📋 提示詞已複製', '請貼到網頁 AI 取得回覆後，再將回覆貼回下方欄位。', '🦞');
+      document.getElementById('manualModePasteSection').style.display = 'block';
+    }).catch(() => {
+      showToast('❌ 複製失敗', '請手動選取後複製。', '🦞');
+    });
+  });
+
+  // ==== 手動模式：送出 AI 回覆 ====
+  document.getElementById('btnSubmitManualReply')?.addEventListener('click', () => {
+    const pasteInput = document.getElementById('manualModePasteInput');
+    const reply = pasteInput.value.trim();
+    if (!reply) {
+      showToast('⚠️ 請先貼上 AI 回覆', '將網頁 AI 給你的回覆內容貼到上方文字框。', '🦞');
+      return;
+    }
+    pasteInput.value = '';
+    appendMessage('user', '📥 [貼上 AI 回覆]');
+    processManualAIReply(reply);
+  });
+
   form.addEventListener('submit', (e) => {
     e.preventDefault();
     const msg = input.value.trim();
     if (!msg) return;
     
+    // 手動模式：攔截文字，打包成提示詞
+    if (webState.manualModeEnabled) {
+      appendMessage('user', msg);
+      input.value = '';
+      enterManualMode(msg);
+      return;
+    }
+    
     appendMessage('user', msg);
     input.value = '';
-    
-    // 傳送指令
     handleOutboundMessage(msg);
   });
 }
 
 function handleOutboundMessage(text) {
-  // 先檢查餘額狀態（終端連線和非終端模式都需要）
   if (webState.aiQuotaExhausted && localStorage.getItem('miniclaw_ollama_ready') !== 'true') {
-    // 純聊天指令不需要 API（如截圖、查檔案等）
     const query = text.toLowerCase();
     const needsTerminal = query.includes('ping ') || query.includes('ipconfig') ||
       query.includes('關機') || query.includes('重開機') || query.includes('截圖') ||
@@ -1702,7 +1683,6 @@ function handleOutboundMessage(text) {
     }
   }
 
-  // 如果終端已連接，透過 WebSocket 傳送
   if (webState.isTerminalConnected && webState.ws && webState.ws.readyState === WebSocket.OPEN) {
     webState.ws.send(JSON.stringify({
       type: 'user-command',
@@ -1711,9 +1691,7 @@ function handleOutboundMessage(text) {
     return;
   }
   
-  // 終端未連線時，只有明確的「執行指令」類才用 mock，其餘走 AI 對話
   const query = text.toLowerCase();
-  // 只有這些明確需要在終端執行的指令才 mock
   const needsTerminal = query.includes('ping ') || query.includes('ipconfig') ||
     query.includes('關機') || query.includes('重開機');
 
@@ -1722,7 +1700,6 @@ function handleOutboundMessage(text) {
     return;
   }
   
-  // 純對話：優先用 Gemini（Google Token 或 API Key）
   if (webState.googleAccessToken || webState.apiKey) {
     if (webState.aiQuotaExhausted && localStorage.getItem('miniclaw_ollama_ready') !== 'true') {
       appendMessage('ai', '❌ AI 點數不足或已失效，無法回應您的對話，請檢查您的金鑰或帳號狀態。');
@@ -1743,9 +1720,7 @@ function handleOutboundMessage(text) {
     return;
   }
 
-  // 備援：嘗試本地 Ollama
   if (localStorage.getItem('miniclaw_ollama_ready') === 'true') {
-    // 有終端連線 → 透過 WebSocket 讓 server.js 呼叫 Ollama（無 CORS 問題）
     if (webState.isTerminalConnected && webState.ws && webState.ws.readyState === WebSocket.OPEN) {
       webState.ws.send(JSON.stringify({
         type: 'user-command',
@@ -1753,7 +1728,6 @@ function handleOutboundMessage(text) {
       }));
       return;
     }
-    // 沒有終端 → 直接呼叫（只有本機開啟 index.html 時有效）
     appendMessage('ai', '⏳ 本地 AI 思考中...');
     callOllamaFromFrontend(text).then(reply => {
       const container = document.getElementById('chatHistoryContainer');
@@ -1772,11 +1746,10 @@ function handleOutboundMessage(text) {
   triggerMockAIResponse(text);
 }
 
-// --- 前端直接呼叫 Gemini API（使用 Google Access Token 或 API Key）---
+// --- 前端直接呼叫 Gemini API ---
 async function callGeminiFromFrontend(text) {
   const SYSTEM_PROMPT = '你是小龍蝦控制中樞的 AI 助手，請簡明扼要地回答，控制在 100 字以內。';
 
-  // 優先用 Google Access Token
   if (webState.googleAccessToken) {
     try {
       const res = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent', {
@@ -1797,12 +1770,10 @@ async function callGeminiFromFrontend(text) {
         updateBalanceDisplay(webState.googleAccessToken);
         return data.candidates[0].content.parts[0].text;
       }
-      // Token 過期，嘗試重新取得
       if (res.status === 401) {
         requestGoogleAccessToken();
         return '⚠️ Google 授權已過期，正在重新取得，請稍後再試。';
       }
-      // 點數不足/超載等錯誤
       webState.aiQuotaExhausted = true;
       updateAIStatusUI();
       updateBalanceDisplay(webState.googleAccessToken);
@@ -1813,7 +1784,6 @@ async function callGeminiFromFrontend(text) {
     }
   }
 
-  // 備用：用 API Key
   if (webState.apiKey) {
     try {
       const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${webState.apiKey}`, {
@@ -1844,7 +1814,6 @@ async function callGeminiFromFrontend(text) {
   return null;
 }
 
-// 前端直接呼叫 Ollama（本地 AI，不需 key）
 async function callOllamaFromFrontend(text) {
   try {
     const res = await fetch('http://127.0.0.1:11434/api/generate', {
@@ -1864,7 +1833,115 @@ async function callOllamaFromFrontend(text) {
   return null;
 }
 
-// 方案 B 離線模擬回覆引擎 (限制 100 字內，警示用橘色)
+// --- 手動模式核心函式 ---
+
+// 進入手動模式：將用戶訊息打包成提示詞
+function enterManualMode(userMessage) {
+  const manualBox = document.getElementById('manualModeCopyBox');
+  const copyContent = document.getElementById('manualModeCopyContent');
+  const badge = document.getElementById('manualModeBadge');
+  const pasteSection = document.getElementById('manualModePasteSection');
+  
+  manualBox.style.display = 'block';
+  pasteSection.style.display = 'none';
+  if (badge) {
+    badge.textContent = '📋 待複製';
+    badge.style.background = 'rgba(0,240,255,0.15)';
+    badge.style.color = 'var(--neon-cyan)';
+    badge.style.borderColor = 'rgba(0,240,255,0.3)';
+  }
+  
+  document.getElementById('manualModePasteInput').value = '';
+  
+  const prompt = buildManualPrompt(userMessage);
+  copyContent.textContent = prompt;
+  
+  appendMessage('ai', '🔗 📋 [手動模式] 提示詞已準備好，請點擊下方「一鍵複製」貼給網頁版 AI，再將回覆貼回。');
+}
+
+// 建立手動模式的提示詞（含 FILE 格式規範）
+function buildManualPrompt(userMessage) {
+  return `你是一個專業的電腦自動化助手，請嚴格按照以下格式回覆。
+
+【使用者要求】
+${userMessage}
+
+【重要格式規範】
+1. 如果你的回覆需要操作多個檔案，請在 [指令:] 區塊內使用【FILE: 路徑/檔名】標籤分隔每個檔案。
+2. 僅操作單一檔案時，直接用一般文字回覆即可。
+3. 絕對不可以在同一個【FILE:】區塊內塞入多個檔案的程式碼。
+
+【正確多檔案輸出格式範例】
+[指令:]
+【FILE: C:\\Users\\user\\Desktop\\project\\main.py】
+print("Hello from main.py")
+import helper
+helper.run()
+
+【FILE: C:\\Users\\user\\Desktop\\project\\helper.py】
+def run():
+    print("Helper running!")
+
+如果你只需要輸出純文字回覆，直接回答即可。`;
+}
+
+// 解析 AI 回覆中的 【FILE: ...】 標籤，分流成多個檔案
+function parseFileTags(reply) {
+  const files = [];
+  // 正則：匹配 【FILE: 路徑】 到 下一個 【FILE:】 或結尾
+  const fileRegex = /【FILE:\s*([^\n】]+)】\s*([\s\S]*?)(?=\n【FILE:|$)/g;
+  let match;
+  while ((match = fileRegex.exec(reply)) !== null) {
+    files.push({
+      path: match[1].trim(),
+      content: match[2].trim()
+    });
+  }
+  return files;
+}
+
+// 處理從手動模式貼回的 AI 回覆
+function processManualAIReply(reply) {
+  appendMessage('ai', reply);
+  
+  const files = parseFileTags(reply);
+  
+  if (files.length === 0) {
+    if (webState.isTerminalConnected && webState.ws && webState.ws.readyState === WebSocket.OPEN) {
+      webState.ws.send(JSON.stringify({
+        type: 'user-command',
+        data: { text: reply, platform: webState.platform }
+      }));
+    } else {
+      appendMessage('ai', '✅ 已收到手動 AI 回覆（純文字）。');
+    }
+    return;
+  }
+  
+  let fileListMsg = '📁 偵測到多個檔案操作：<br>';
+  files.forEach(f => {
+    fileListMsg += `📄 <code>${f.path}</code><br>`;
+  });
+  appendMessage('warning', fileListMsg);
+  
+  if (webState.isTerminalConnected && webState.ws && webState.ws.readyState === WebSocket.OPEN) {
+    webState.ws.send(JSON.stringify({
+      type: 'multi-file-write',
+      data: { files: files }
+    }));
+    appendMessage('ai', '📤 已將多檔案寫入指令傳送至終端執行。');
+  } else {
+    let mockOutput = '';
+    files.forEach(f => {
+      mockOutput += `📝 寫入 ${f.path} (${f.content.length} 字元)... 成功\n`;
+    });
+    setTimeout(() => {
+      appendMessage('warning', `⚙️ [沙盒模擬] 多檔案寫入結果:\n${mockOutput}`);
+    }, 500);
+  }
+}
+
+// 方案 B 離線模擬回覆引擎
 function triggerMockAIResponse(text) {
   setTimeout(() => {
     let reply = '收到指令！但目前小龍蝦處於離線沙盒狀態。若需真實運作，請在設定中開啟並執行 openminiclaw.bat。';
@@ -1897,7 +1974,6 @@ function triggerMockAIResponse(text) {
       document.body.style.setProperty('--neon-orange-glow', '0 0 10px rgba(0, 127, 255, 0.6)');
     }
     
-    // 輸出回覆與日誌
     appendMessage('ai', reply);
     if (outputText) {
       setTimeout(() => {
@@ -1911,7 +1987,6 @@ function triggerMockAIResponse(text) {
 function appendMessage(sender, text) {
   const container = document.getElementById('chatHistoryContainer');
 
-  // 有訊息時隱藏功能卡片
   const cards = document.getElementById('featureCards');
   if (cards) cards.remove();
 
@@ -1921,15 +1996,12 @@ function appendMessage(sender, text) {
   container.appendChild(bubble);
   container.scrollTop = container.scrollHeight;
 
-  // 同步更新系統狀態列
   updateSystemStatusBar();
 
-  // AI 回覆後自動備份到 Google Drive
   if (sender === 'ai' && localStorage.getItem('miniclaw_chatlog_gdrive') === 'true') {
     saveChatToGDrive();
   }
 
-  // 本機日誌：若終端已連線，將 user/ai 訊息附加至 chat_history.txt
   if ((sender === 'user' || sender === 'ai') && webState.isTerminalConnected) {
     const baseUrl = webState.ngrokUrl || `http://localhost:${webState.localPort}`;
     const ts = new Date().toISOString();
@@ -1937,11 +2009,10 @@ function appendMessage(sender, text) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true' },
       body: JSON.stringify({ role: sender, text: text, ts })
-    }).catch(() => {}); // 靜默失敗，不影響主流程
+    }).catch(() => {});
   }
 }
 
-// 渲染 Fake 截圖特效 (Wow the user)
 function appendScreenshotMessage(base64Data = null) {
   const container = document.getElementById('chatHistoryContainer');
   const bubble = document.createElement('div');
@@ -1957,7 +2028,7 @@ function appendScreenshotMessage(base64Data = null) {
   container.scrollTop = container.scrollHeight;
 }
 
-// --- 7. 動態快捷範例 (依據平台切換) ---
+// --- 動態快捷範例 ---
 function renderShortcutChips() {
   const wrapper = document.getElementById('shortcutsWrapper');
   if (!wrapper) return;
@@ -1973,7 +2044,6 @@ function renderShortcutChips() {
     { text: '📋 查看下載', cmd: '列出我的下載資料夾有哪些檔案。' }
   ];
 
-  // Android 有終端：可以跑 shell 指令
   const androidTerminalChips = [
     { text: '🌐 開瀏覽器查詢', cmd: '幫我查台北今天天氣' },
     { text: '🔋 查電量', cmd: '查一下現在電池電量' },
@@ -1981,7 +2051,6 @@ function renderShortcutChips() {
     { text: '🌐 網路診斷', cmd: '幫我檢查網路連線狀況，ping 一下 8.8.8.8。' }
   ];
 
-  // Android/iOS 無終端：只能純 AI 對話
   const mobileNoTerminalChips = [
     { text: '💬 問 AI', cmd: '你好，請介紹一下你自己的功能。' },
     { text: '📝 幫我寫作', cmd: '幫我寫一封請假信，原因是身體不舒服。' },
@@ -2009,9 +2078,8 @@ function renderShortcutChips() {
   });
 }
 
-// --- 8. 設定面板與還原系統處理 ---
+// --- 設定面板與還原系統處理 ---
 function setupSettingsPanelEvents() {
-  // 背景圖片
   const bgInput = document.getElementById('bgImageUrlInput');
   bgInput.addEventListener('input', () => {
     const url = bgInput.value.trim();
@@ -2024,14 +2092,12 @@ function setupSettingsPanelEvents() {
     }
   });
 
-  // AI 優先級
   document.getElementById('selectAIPriority').addEventListener('change', (e) => {
     localStorage.setItem('miniclaw_ai_priority', e.target.value);
     syncAllCredentialsToLocal();
     showToast('🧠 優先級已更改', `已調整首選 AI 引擎為 : ${e.target.value.toUpperCase()}`, '🦞');
   });
 
-  // 完整執行端開關
   document.getElementById('toggleCompleteExecution').addEventListener('change', (e) => {
     const isComplete = e.target.checked;
     webState.apiMode = isComplete ? 'complete' : 'lightweight';
@@ -2045,13 +2111,11 @@ function setupSettingsPanelEvents() {
     }
   });
 
-  // 重置引導
   document.getElementById('btnResetAllOnboarding').addEventListener('click', () => {
     document.getElementById('onboardingModal').style.display = 'flex';
     goToStep(1);
   });
 
-  // 重新設定遠端（舊按鈕，保留相容）
   const btnRemoteReset = document.getElementById('btnTriggerRemoteReset');
   if (btnRemoteReset) {
     btnRemoteReset.addEventListener('click', () => {
@@ -2060,8 +2124,6 @@ function setupSettingsPanelEvents() {
     });
   }
 
-  // --- 新增：帳號群組 ---
-  // Google 登入按鈕（設定面板）
   document.getElementById('btnSettingGoogleLogin').addEventListener('click', () => {
     if (webState.googleUser) {
       handleGoogleLogout();
@@ -2070,7 +2132,6 @@ function setupSettingsPanelEvents() {
     }
   });
 
-  // 修改 API Key
   document.getElementById('btnEditApiKey').addEventListener('click', () => {
     const form = document.getElementById('editApiKeyForm');
     form.style.display = form.style.display === 'none' ? 'block' : 'none';
@@ -2087,11 +2148,9 @@ function setupSettingsPanelEvents() {
     document.getElementById('editApiKeyForm').style.display = 'none';
     input.value = '';
     showToast('🔑 API 金鑰已更新', '正在檢查額度...', '🦞');
-    // 自動檢查餘額
     checkAPIBalance();
   });
 
-  // --- 新增：終端群組 ---
   document.getElementById('btnReconnectTerminal').addEventListener('click', () => {
     const input = document.getElementById('settingNgrokInput');
     const url = input.value.trim().replace(/\/$/, '');
@@ -2103,7 +2162,6 @@ function setupSettingsPanelEvents() {
     showToast('🔌 重新連線中', '正在嘗試建立 WebSocket 連線...', '🦞');
   });
 
-  // 關閉執行器按鈕
   const shutdownBtn = document.getElementById('btnShutdownExecutor');
   if (shutdownBtn) {
     shutdownBtn.addEventListener('click', () => {
@@ -2114,13 +2172,11 @@ function setupSettingsPanelEvents() {
     });
   }
 
-  // 恢復 ngrok 網址到設定面板
   if (webState.ngrokUrl) {
     const ngrokInput = document.getElementById('settingNgrokInput');
     if (ngrokInput) ngrokInput.value = webState.ngrokUrl;
   }
 
-  // --- 新增：LINE/DC 快速修改 ---
   document.getElementById('btnToggleEditLINE').addEventListener('click', () => {
     const el = document.getElementById('quickEditLINE');
     el.style.display = el.style.display === 'none' ? 'block' : 'none';
@@ -2141,7 +2197,6 @@ function setupSettingsPanelEvents() {
     creds.type = 'line';
     creds.line = { token, secret, userId: creds.line ? (creds.line.userId || '') : '' };
     localStorage.setItem('miniclaw_remote_creds', JSON.stringify(creds));
-    // 同步至執行端，使用 remote 包裝格式
     if (webState.ws && webState.ws.readyState === WebSocket.OPEN) {
       webState.ws.send(JSON.stringify({ type: 'sync-credentials', data: { remote: creds } }));
     }
@@ -2158,7 +2213,6 @@ function setupSettingsPanelEvents() {
     creds.type = 'discord';
     creds.discord = { token, channel };
     localStorage.setItem('miniclaw_remote_creds', JSON.stringify(creds));
-    // 同步至執行端，使用 remote 包裝格式
     if (webState.ws && webState.ws.readyState === WebSocket.OPEN) {
       webState.ws.send(JSON.stringify({ type: 'sync-credentials', data: { remote: creds } }));
     }
@@ -2167,7 +2221,6 @@ function setupSettingsPanelEvents() {
     showToast('✅ Discord 設定已儲存', '憑證已更新並同步至執行端。', '🦞');
   });
 
-  // --- 新增：System Prompt ---
   const savedPrompt = localStorage.getItem('miniclaw_system_prompt');
   if (savedPrompt) document.getElementById('customSystemPrompt').value = savedPrompt;
 
@@ -2177,7 +2230,6 @@ function setupSettingsPanelEvents() {
     showToast('💬 提示詞已儲存', prompt ? '自訂提示詞已啟用。' : '已恢復預設提示詞。', '🦞');
   });
 
-  // --- 新增：對話管理 ---
   document.getElementById('btnClearChat').addEventListener('click', () => {
     const container = document.getElementById('chatHistoryContainer');
     container.innerHTML = '<div class="message-bubble ai">對話已清除。有什麼需要幫忙的嗎？</div>';
@@ -2200,14 +2252,12 @@ function setupSettingsPanelEvents() {
     showToast('📥 對話已匯出', '已下載為 .txt 檔案。', '🦞');
   });
 
-  // 初始化設定面板顯示
   updateSettingApiKeyDisplay(webState.apiKey);
   updateSettingGoogleDisplay();
   updateSettingTerminalDisplay();
   setupChatLogEvents();
 }
 
-// 更新設定面板 API Key 顯示
 function updateSettingApiKeyDisplay(key) {
   const el = document.getElementById('settingApiKeyDisplay');
   if (!el) return;
@@ -2220,7 +2270,6 @@ function updateSettingApiKeyDisplay(key) {
   }
 }
 
-// 更新設定面板 Google 顯示
 function updateSettingGoogleDisplay() {
   const statusEl = document.getElementById('settingGoogleStatus');
   const btnEl = document.getElementById('btnSettingGoogleLogin');
@@ -2234,7 +2283,6 @@ function updateSettingGoogleDisplay() {
   }
 }
 
-// 更新設定面板終端狀態顯示
 function updateSettingTerminalDisplay() {
   const el = document.getElementById('settingTerminalStatus');
   if (!el) return;
@@ -2247,14 +2295,12 @@ function updateSettingTerminalDisplay() {
   }
 }
 
-// 模擬執行端代碼自癒還原
 function triggerServerRestoration() {
   showToast('🛠️ 觸發代碼還原', '正在指示本地端將 server.js 還原至 server.js.bak...', '🦞');
   
   if (webState.isTerminalConnected && webState.ws && webState.ws.readyState === WebSocket.OPEN) {
     webState.ws.send(JSON.stringify({ type: 'sys-restore', data: {} }));
   } else {
-    // 方案 B 模擬還原
     setTimeout(() => {
       showToast('🟢 備份還原成功', '本地伺服器已順利將 server.js 修復並自我重啟！', '🦞');
       appendMessage('warning', '⚙️ [自癒日誌] : server.js 已被還原，系統於 1.5 秒後正常重啟。');
@@ -2262,7 +2308,7 @@ function triggerServerRestoration() {
   }
 }
 
-// --- 9. 工具與輔助 UI 函式 ---
+// --- 工具與輔助 UI 函式 ---
 function updateBalanceDisplay(key) {
   const el = document.getElementById('monitorBalanceVal');
   if (webState.aiQuotaExhausted) {
@@ -2271,7 +2317,6 @@ function updateBalanceDisplay(key) {
     return;
   }
   
-  // 優先用 Google Token 顯示額度
   const activeKey = key || webState.googleAccessToken || '';
   if (!activeKey) {
     el.innerText = '$0.00 (免費模擬版)';
@@ -2291,7 +2336,6 @@ function updateBalanceDisplay(key) {
   }
 }
 
-// 自動檢查 API 餘額
 async function checkAPIBalance() {
   const el = document.getElementById('monitorBalanceVal');
   if (!el) return;
@@ -2310,7 +2354,6 @@ async function checkAPIBalance() {
   
   try {
     if (hasGoogleToken) {
-      // Google Token：測試一次 API 呼叫來確認額度
       const res = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent', {
         method: 'POST',
         headers: {
@@ -2338,7 +2381,6 @@ async function checkAPIBalance() {
         el.style.color = '#ff4444';
       }
     } else if (activeKey.startsWith('AIzaSy')) {
-      // Gemini API Key
       const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${activeKey}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -2360,7 +2402,6 @@ async function checkAPIBalance() {
         el.style.color = '#ff4444';
       }
     } else if (activeKey.startsWith('sk-or-')) {
-      // Openround：查詢模型列表確認額度
       const res = await fetch('https://openrouter.ai/api/v1/models', {
         headers: { 'Authorization': `Bearer ${activeKey}` }
       });
@@ -2375,7 +2416,6 @@ async function checkAPIBalance() {
         el.style.color = '#ff4444';
       }
     } else if (activeKey.startsWith('sk-')) {
-      // OpenAI：查詢模型列表確認額度
       const res = await fetch('https://api.openai.com/v1/models', {
         headers: { 'Authorization': `Bearer ${activeKey}` }
       });
@@ -2396,7 +2436,6 @@ async function checkAPIBalance() {
   }
 }
 
-// AI 連接狀態燈號更新
 function updateAIStatusUI() {
   const dot = document.getElementById('aiStatusDot');
   const txt = document.getElementById('aiStatusText');
@@ -2437,7 +2476,6 @@ function updateAIStatusUI() {
   }
 
   dot.className = active ? 'status-dot active' : 'status-dot inactive';
-  // 如果是額度耗盡，雖然 inactive，但我們用紅色燈
   if (webState.aiQuotaExhausted) {
     dot.style.background = '#ff4444';
     dot.style.boxShadow = '0 0 10px rgba(255, 68, 68, 0.8)';
@@ -2462,27 +2500,24 @@ function showToast(title, desc, icon) {
   `;
   container.appendChild(toast);
   
-  // 4 秒後自動移出
   setTimeout(() => {
     toast.style.animation = 'slideOutToast 0.4s forwards';
     setTimeout(() => toast.remove(), 400);
   }, 4000);
 }
 
-// --- 10. 對話紀錄儲存 ---
+// --- 對話紀錄儲存 ---
 function setupChatLogEvents() {
   const toggleMain = document.getElementById('toggleChatLog');
   const subOptions = document.getElementById('chatLogSubOptions');
   const toggleLineDC = document.getElementById('toggleLineDCHistory');
   const toggleGDrive = document.getElementById('toggleGDriveBackup');
 
-  // 恢復儲存的開關狀態
   toggleMain.checked = localStorage.getItem('miniclaw_chatlog_enabled') === 'true';
   toggleLineDC.checked = localStorage.getItem('miniclaw_chatlog_linedc') === 'true';
   toggleGDrive.checked = localStorage.getItem('miniclaw_chatlog_gdrive') === 'true';
   if (toggleMain.checked) subOptions.style.display = 'flex';
 
-  // 主開關
   toggleMain.addEventListener('change', () => {
     const enabled = toggleMain.checked;
     localStorage.setItem('miniclaw_chatlog_enabled', enabled);
@@ -2496,7 +2531,6 @@ function setupChatLogEvents() {
     showToast(enabled ? '🗂️ 對話紀錄已啟用' : '🗂️ 對話紀錄已關閉', '', '🦞');
   });
 
-  // LINE/DC 子開關
   toggleLineDC.addEventListener('change', () => {
     const enabled = toggleLineDC.checked;
     localStorage.setItem('miniclaw_chatlog_linedc', enabled);
@@ -2509,7 +2543,6 @@ function setupChatLogEvents() {
     }
   });
 
-  // Google Drive 子開關
   toggleGDrive.addEventListener('change', () => {
     const enabled = toggleGDrive.checked;
     localStorage.setItem('miniclaw_chatlog_gdrive', enabled);
@@ -2522,7 +2555,6 @@ function setupChatLogEvents() {
     }
   });
 
-  // 初始化時若開關已開，顯示狀態
   if (toggleLineDC.checked) {
     const el = document.getElementById('lineDCHistoryStatus');
     el.style.display = 'block';
@@ -2535,7 +2567,6 @@ function setupChatLogEvents() {
   }
 }
 
-// LINE/DC 歷史讀取
 function loadLineDCHistory(statusEl) {
   const creds = JSON.parse(localStorage.getItem('miniclaw_remote_creds') || '{}');
 
@@ -2548,7 +2579,6 @@ function loadLineDCHistory(statusEl) {
   }
 
   if (creds.type === 'line') {
-    // LINE API 不支援讀取歷史
     statusEl.style.background = 'rgba(255,102,0,0.1)';
     statusEl.style.border = '1px solid rgba(255,102,0,0.3)';
     statusEl.style.color = 'var(--neon-orange)';
@@ -2574,7 +2604,6 @@ function loadLineDCHistory(statusEl) {
           statusEl.innerHTML = '✅ Discord 連線成功，但頻道目前沒有歷史訊息。';
           return;
         }
-        // 把歷史訊息注入聊天視窗（最舊的在前）
         const sorted = messages.reverse();
         sorted.forEach(m => {
           if (m.content) appendMessage('ai', `[Discord 歷史] ${m.author.username}: ${m.content}`);
@@ -2599,9 +2628,7 @@ function loadLineDCHistory(statusEl) {
   statusEl.innerHTML = '⚠️ 憑證不完整，請重新設定 Discord Token 與 Channel ID。';
 }
 
-// Google Drive 備份
 async function initGDriveBackup(statusEl) {
-  // 需要 Google Access Token 且有 drive.file scope
   if (!webState.googleAccessToken) {
     statusEl.style.background = 'rgba(255,102,0,0.1)';
     statusEl.style.border = '1px solid rgba(255,102,0,0.3)';
@@ -2615,11 +2642,9 @@ async function initGDriveBackup(statusEl) {
   statusEl.style.color = 'var(--neon-green)';
   statusEl.innerHTML = '✅ Google Drive 備份已啟用。每次對話結束後自動上傳至你的 Drive。';
 
-  // 立即備份一次現有對話
   saveChatToGDrive();
 }
 
-// 將聊天記錄上傳到 Google Drive
 async function saveChatToGDrive() {
   if (!webState.googleAccessToken) return;
   if (localStorage.getItem('miniclaw_chatlog_gdrive') !== 'true') return;
@@ -2637,7 +2662,6 @@ async function saveChatToGDrive() {
   const fileName = `miniclaw_chat_${new Date().toISOString().slice(0, 10)}.txt`;
 
   try {
-    // 用 multipart upload 上傳到 Drive
     const boundary = 'miniclaw_boundary';
     const body = [
       `--${boundary}`,

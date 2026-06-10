@@ -298,6 +298,125 @@ header {
   margin-bottom: 25px;
 }
 
+/* ===== 折疊面板（Collapsible Panel） ===== */
+.collapsible-panel {
+  margin-bottom: 12px;
+  border-radius: 12px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.panel-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.2s ease;
+  border-radius: 12px;
+}
+
+.panel-header:hover {
+  filter: brightness(1.15);
+}
+
+.panel-arrow {
+  font-size: 0.85rem;
+  flex-shrink: 0;
+  transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  color: var(--text-muted);
+  width: 20px;
+  text-align: center;
+}
+
+.panel-arrow.open {
+  transform: rotate(90deg);
+}
+
+.panel-title {
+  font-weight: bold;
+  font-size: 0.95rem;
+  flex: 1;
+}
+
+.panel-body {
+  display: none;
+  padding: 0 18px 18px 18px;
+  border-top: 1px solid rgba(255,255,255,0.06);
+  animation: panelExpand 0.35s ease forwards;
+}
+
+.panel-body.open {
+  display: block;
+}
+
+@keyframes panelExpand {
+  from { opacity: 0; max-height: 0; }
+  to { opacity: 1; max-height: 800px; }
+}
+
+/* 各面板專屬顏色主題 */
+.panel-google {
+  background: rgba(66,133,244,0.08);
+  border: 1px solid rgba(66,133,244,0.35);
+}
+.panel-google .panel-header {
+  color: #8ab4f8;
+}
+.panel-google .panel-body {
+  background: rgba(66,133,244,0.03);
+}
+
+.panel-apikey {
+  background: rgba(0,0,0,0.2);
+  border: 1px solid rgba(255,255,255,0.07);
+}
+.panel-apikey .panel-header {
+  color: #fff;
+}
+
+.panel-ollama {
+  background: rgba(57,255,20,0.05);
+  border: 1px solid rgba(57,255,20,0.25);
+}
+.panel-ollama .panel-header {
+  color: var(--neon-green);
+}
+.panel-ollama .panel-body {
+  background: rgba(57,255,20,0.02);
+}
+
+.panel-manual {
+  background: rgba(255,189,3,0.05);
+  border: 1px solid rgba(255,189,3,0.2);
+}
+.panel-manual .panel-header {
+  color: var(--neon-gold);
+}
+.panel-manual .panel-body {
+  background: rgba(255,189,3,0.02);
+}
+
+/* 面板內成功/失敗徽章 */
+.panel-badge {
+  font-size: 0.75rem;
+  padding: 2px 10px;
+  border-radius: 10px;
+  font-family: var(--font-mono);
+  flex-shrink: 0;
+}
+.panel-badge.verified {
+  background: rgba(57,255,20,0.15);
+  color: var(--neon-green);
+  border: 1px solid rgba(57,255,20,0.3);
+}
+.panel-badge.unverified {
+  background: rgba(255,255,255,0.05);
+  color: var(--text-muted);
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
 /* 各步驟細節 UI */
 .input-group {
   margin-bottom: 20px;
@@ -998,18 +1117,4 @@ input:checked + .slider:before {
 /* API 測試結果回饋 */
 #apiTestResult.success {
   background: rgba(57,255,20,0.07);
-  border: 1px solid var(--neon-green);
-  color: var(--neon-green);
-}
-
-#apiTestResult.error {
-  background: rgba(255,50,50,0.07);
-  border: 1px solid #ff4444;
-  color: #ff6666;
-}
-
-#apiTestResult.testing {
-  background: rgba(255,102,0,0.07);
-  border: 1px solid var(--neon-orange);
-  color: var(--neon-orange);
 }

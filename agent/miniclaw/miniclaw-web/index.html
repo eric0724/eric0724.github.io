@@ -55,105 +55,113 @@
           <div class="step-node" data-step="4">4</div>
         </div>
 
-        <!-- Step 2：API 鎖定與路徑判定 -->
+        <!-- Step 2：API 鎖定與路徑判定（折疊面板版本） -->
         <div class="step-pane" id="paneStep1">
           <h3 class="step-title">Step 2：取得並驗證 AI 使用權限</h3>
-          <p class="step-desc">先依照上一個步驟選好的模式，再選擇下方任一方式取得 AI 使用權限：</p>
+          <p class="step-desc">點開任意一種方式完成驗證即可解鎖下一步（可同時開啟多種方式，彼此獨立）：</p>
 
-          <!-- 方式 A：Google 登入（推薦） -->
-          <div style="background:rgba(66,133,244,0.08);border:1px solid rgba(66,133,244,0.35);border-radius:12px;padding:18px;margin-bottom:16px;">
-            <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
-              <span style="font-size:1.3rem;">🔵</span>
-              <strong style="color:#fff;font-size:0.95rem;">方式 A：用 Google 帳號登入（推薦，免輸入金鑰）</strong>
+          <!-- ===== 方式 A：Google 登入 ===== -->
+          <div class="collapsible-panel panel-google">
+            <div class="panel-header" data-panel="google">
+              <span class="panel-arrow">▶</span>
+              <span class="panel-title">🔵 方式 A：用 Google 帳號登入（推薦，免輸入金鑰）</span>
+              <span class="panel-badge unverified" id="badgeGoogle">未驗證</span>
             </div>
-            <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:14px;line-height:1.6;">
-              登入後自動取得 Gemini 使用權限，不需要手動複製貼上任何金鑰。
-            </p>
-            <!-- Google 登入按鈕 -->
-            <div id="googleSignInBtn" style="display:flex;justify-content:center;"></div>
-            <div id="googleLoginResult" style="display:none;margin-top:12px;padding:10px 14px;border-radius:8px;font-size:0.85rem;font-family:var(--font-mono);"></div>
-          </div>
-
-          <!-- 分隔線 -->
-          <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
-            <div style="flex:1;height:1px;background:rgba(255,255,255,0.1);"></div>
-            <span style="color:var(--text-muted);font-size:0.8rem;">或</span>
-            <div style="flex:1;height:1px;background:rgba(255,255,255,0.1);"></div>
-          </div>
-
-          <!-- 方式 C：本地 AI -->
-          <div style="background:rgba(57,255,20,0.05);border:1px solid rgba(57,255,20,0.25);border-radius:12px;padding:18px;margin-bottom:16px;">
-            <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
-              <span style="font-size:1.3rem;">🖥️</span>
-              <strong style="color:var(--neon-green);font-size:0.95rem;">方式 C：使用本地 AI（完全免費，不需網路）</strong>
+            <div class="panel-body" id="panelBodyGoogle">
+              <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:14px;line-height:1.6;">
+                登入後自動取得 Gemini 使用權限，不需要手動複製貼上任何金鑰。
+              </p>
+              <div id="googleSignInBtn" style="display:flex;justify-content:center;margin-bottom:10px;"></div>
+              <div id="googleLoginResult" style="display:none;margin-top:12px;padding:10px 14px;border-radius:8px;font-size:0.85rem;font-family:var(--font-mono);"></div>
             </div>
-            <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:14px;line-height:1.6;">
-              在你的電腦上跑 AI 模型，不需要任何 API Key，也不會消耗點數。需要先安裝 Ollama（約 2GB，只需下載一次）。<br>
-              <span style="color:var(--neon-orange);font-size:0.8rem;">⚠️ 偵測方式：有終端 → 先完成 Step 1 連線再偵測；直接在本機開啟網頁 → 可直接偵測。</span>
-            </p>
-            <a href="https://raw.githubusercontent.com/eric0724/eric0724.github.io/main/agent/miniclaw/miniclaw-executor.zip" class="cyber-btn muted" download="miniclaw-executor.zip" style="display:block;text-align:center;text-decoration:none;margin-bottom:10px;font-size:0.82rem;padding:8px;">
-              📥 下載執行器（內含 install-local-ai.bat）
-            </a>
-            <p style="font-size:0.8rem;color:var(--text-muted);margin-bottom:10px;">解壓縮後，點兩下 <code style="color:var(--neon-green);">install-local-ai.bat</code> 自動安裝。安裝完成後點下方按鈕偵測。</p>
-            <button class="cyber-btn orange" id="btnDetectOllama" style="width:100%;padding:10px;">🔍 偵測本地 AI</button>
-            <div id="ollamaDetectResult" style="display:none;margin-top:10px;padding:10px 14px;border-radius:8px;font-size:0.85rem;font-family:var(--font-mono);"></div>
           </div>
 
-          <!-- 分隔線 2 -->
-          <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
-            <div style="flex:1;height:1px;background:rgba(255,255,255,0.1);"></div>
-            <span style="color:var(--text-muted);font-size:0.8rem;">或</span>
-            <div style="flex:1;height:1px;background:rgba(255,255,255,0.1);"></div>
-          </div>
-
-          <!-- 方式 B：手動輸入 API Key -->
-          <div style="background:rgba(0,0,0,0.2);border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:18px;margin-bottom:16px;">
-            <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
-              <span style="font-size:1.3rem;">🔑</span>
-              <strong style="color:#fff;font-size:0.95rem;">方式 B：手動輸入 Gemini API 金鑰</strong>
+          <!-- ===== 方式 B：手動輸入 API Key ===== -->
+          <div class="collapsible-panel panel-apikey">
+            <div class="panel-header" data-panel="apikey">
+              <span class="panel-arrow">▶</span>
+              <span class="panel-title">🔑 方式 B：手動輸入 API 金鑰</span>
+              <span class="panel-badge unverified" id="badgeApikey">未驗證</span>
             </div>
-
-            <!-- 教學步驟卡片 -->
-            <div class="api-guide-steps" style="margin-bottom:14px;">
-              <div class="api-guide-step">
-                <span class="api-guide-num">1</span>
-                <div class="api-guide-body">
-                  <strong>前往 Google AI Studio</strong>
-                  <span>點擊下方連結，登入您的 Google 帳號</span>
-                  <a href="https://aistudio.google.com/apikey" target="_blank" class="free-key-tip" style="margin-top:6px;">
-                    🌐 前往 aistudio.google.com/apikey
-                  </a>
+            <div class="panel-body" id="panelBodyApikey">
+              <!-- 教學步驟卡片 -->
+              <div class="api-guide-steps" style="margin-bottom:14px;">
+                <div class="api-guide-step">
+                  <span class="api-guide-num">1</span>
+                  <div class="api-guide-body">
+                    <strong>前往 Google AI Studio</strong>
+                    <span>點擊下方連結，登入您的 Google 帳號</span>
+                    <a href="https://aistudio.google.com/apikey" target="_blank" class="free-key-tip" style="margin-top:6px;">
+                      🌐 前往 aistudio.google.com/apikey
+                    </a>
+                  </div>
+                </div>
+                <div class="api-guide-step">
+                  <span class="api-guide-num">2</span>
+                  <div class="api-guide-body">
+                    <strong>點擊「Create API Key」</strong>
+                    <span>點擊藍色按鈕，選擇任意一個專案（或建新專案），即可生成金鑰。</span>
+                  </div>
+                </div>
+                <div class="api-guide-step">
+                  <span class="api-guide-num">3</span>
+                  <div class="api-guide-body">
+                    <strong>複製金鑰，貼到下方欄位</strong>
+                    <span>金鑰格式通常為 <code style="color:var(--neon-cyan);background:rgba(0,255,200,0.08);padding:1px 6px;border-radius:4px;">AIzaSy...</code>（39 個字元）</span>
+                  </div>
                 </div>
               </div>
-              <div class="api-guide-step">
-                <span class="api-guide-num">2</span>
-                <div class="api-guide-body">
-                  <strong>點擊「Create API Key」</strong>
-                  <span>點擊藍色按鈕，選擇任意一個專案（或建新專案），即可生成金鑰。</span>
+              <div class="input-group">
+                <label class="input-label" for="apiKeyTypeSelect">選擇 API 服務</label>
+                <div style="display:flex;gap:10px;align-items:center;">
+                  <select id="apiKeyTypeSelect" class="cyber-input" style="flex:0 0 130px;padding:10px;">
+                    <option value="auto">🔮 自動跳測</option>
+                    <option value="gemini">🟦 Gemini</option>
+                    <option value="openrouter">🟧 OpenRouter</option>
+                    <option value="openai">🟩 OpenAI</option>
+                  </select>
+                  <input type="password" class="cyber-input" id="apiKeyInput" placeholder="AIzaSy... / sk-or-... / sk-..." style="flex:1;">
+                  <button class="cyber-btn orange" id="btnTestApiKey" style="white-space:nowrap;padding:10px 18px;">🔍 測試</button>
                 </div>
-              </div>
-              <div class="api-guide-step">
-                <span class="api-guide-num">3</span>
-                <div class="api-guide-body">
-                  <strong>複製金鑰，貼到下方欄位</strong>
-                  <span>金鑰格式通常為 <code style="color:var(--neon-cyan);background:rgba(0,255,200,0.08);padding:1px 6px;border-radius:4px;">AIzaSy...</code>（39 個字元）</span>
-                </div>
+                <div id="apiTestResult" style="display:none;margin-top:12px;padding:10px 14px;border-radius:8px;font-size:0.85rem;font-family:var(--font-mono);"></div>
               </div>
             </div>
+          </div>
 
-            <div class="input-group">
-              <label class="input-label" for="apiKeyTypeSelect">選擇 API 服務</label>
-              <div style="display:flex;gap:10px;align-items:center;">
-                <select id="apiKeyTypeSelect" class="cyber-input" style="flex:0 0 130px;padding:10px;">
-                  <option value="auto">🔮 自動跳測</option>
-                  <option value="gemini">🟦 Gemini</option>
-                  <option value="openrouter">🟧 OpenRouter</option>
-                  <option value="openai">🟩 OpenAI</option>
-                </select>
-                <input type="password" class="cyber-input" id="apiKeyInput" placeholder="AIzaSy... / sk-or-... / sk-..." style="flex:1;">
-                <button class="cyber-btn orange" id="btnTestApiKey" style="white-space:nowrap;padding:10px 18px;">🔍 測試</button>
-              </div>
-              <div id="apiTestResult" style="display:none;margin-top:12px;padding:10px 14px;border-radius:8px;font-size:0.85rem;font-family:var(--font-mono);"></div>
+          <!-- ===== 方式 C：本地 AI（Ollama） ===== -->
+          <div class="collapsible-panel panel-ollama">
+            <div class="panel-header" data-panel="ollama">
+              <span class="panel-arrow">▶</span>
+              <span class="panel-title">🖥️ 方式 C：使用本地 AI（完全免費，不需網路）</span>
+              <span class="panel-badge unverified" id="badgeOllama">未驗證</span>
+            </div>
+            <div class="panel-body" id="panelBodyOllama">
+              <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:14px;line-height:1.6;">
+                在你的電腦上跑 AI 模型，不需要任何 API Key，也不會消耗點數。需要先安裝 Ollama（約 2GB，只需下載一次）。<br>
+                <span style="color:var(--neon-orange);font-size:0.8rem;">⚠️ 偵測方式：有終端 → 先完成 Step 1 連線再偵測；直接在本機開啟網頁 → 可直接偵測。</span>
+              </p>
+              <a href="https://raw.githubusercontent.com/eric0724/eric0724.github.io/main/agent/miniclaw/miniclaw-executor.zip" class="cyber-btn muted" download="miniclaw-executor.zip" style="display:block;text-align:center;text-decoration:none;margin-bottom:10px;font-size:0.82rem;padding:8px;">
+                📥 下載執行器（內含 install-local-ai.bat）
+              </a>
+              <p style="font-size:0.8rem;color:var(--text-muted);margin-bottom:10px;">解壓縮後，點兩下 <code style="color:var(--neon-green);">install-local-ai.bat</code> 自動安裝。安裝完成後點下方按鈕偵測。</p>
+              <button class="cyber-btn orange" id="btnDetectOllama" style="width:100%;padding:10px;">🔍 偵測本地 AI</button>
+              <div id="ollamaDetectResult" style="display:none;margin-top:10px;padding:10px 14px;border-radius:8px;font-size:0.85rem;font-family:var(--font-mono);"></div>
+            </div>
+          </div>
+
+          <!-- ===== 方式 D：手動模式 ===== -->
+          <div class="collapsible-panel panel-manual">
+            <div class="panel-header" data-panel="manual">
+              <span class="panel-arrow">▶</span>
+              <span class="panel-title">🔗 方式 D：手動模式（自行傳給網頁 AI）</span>
+              <span class="panel-badge unverified" id="badgeManual">未啟用</span>
+            </div>
+            <div class="panel-body" id="panelBodyManual">
+              <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:14px;line-height:1.6;">
+                由你自己將對話內容複製貼到任何網頁 AI（ChatGPT、Claude、Gemini 等），再將 AI 的回覆貼回來。適合進階使用者。
+              </p>
+              <button class="cyber-btn orange" id="btnEnableManualMode" style="width:100%;padding:10px;">🔗 啟用手動模式</button>
+              <div id="manualModeResult" style="display:none;margin-top:10px;padding:10px 14px;border-radius:8px;font-size:0.85rem;font-family:var(--font-mono);"></div>
             </div>
           </div>
 
@@ -161,7 +169,7 @@
             <button class="cyber-btn muted" id="btnBackToTerminalStep">上一步</button>
             <div style="display:flex;gap:10px;">
               <button class="cyber-btn muted" id="btnSkipToStep3">跳過（啟動沙盒模式）</button>
-              <button class="cyber-btn orange" id="btnGoToStep2" disabled style="opacity:0.4;cursor:not-allowed;" title="請先完成 Google 登入、API 金鑰驗證或本地 AI 偵測">確認，下一步 →</button>
+              <button class="cyber-btn orange" id="btnGoToStep2" disabled style="opacity:0.4;cursor:not-allowed;" title="請先完成任一方式驗證">確認，下一步 →</button>
             </div>
           </div>
         </div>
@@ -518,10 +526,19 @@
         <div id="manualModeCopyBox" style="display:none;background:rgba(0,240,255,0.06);border:1px solid rgba(0,240,255,0.25);border-radius:12px;padding:16px;margin:0 12px 8px;">
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
             <span style="font-size:1.2rem;">📋</span>
-            <strong style="color:var(--neon-cyan);">請複製以下內容貼給網頁版 AI</strong>
+            <strong style="color:var(--neon-cyan);">請複製下方提示詞，貼給網頁版 AI</strong>
+            <span id="manualModeBadge" style="font-size:0.7rem;padding:2px 8px;border-radius:8px;background:rgba(0,240,255,0.15);color:var(--neon-cyan);border:1px solid rgba(0,240,255,0.3);margin-left:auto;">📋 待複製</span>
           </div>
           <div id="manualModeCopyContent" style="background:rgba(0,0,0,0.4);border-radius:8px;padding:12px;font-size:0.78rem;font-family:var(--font-mono);color:var(--neon-green);max-height:200px;overflow-y:auto;white-space:pre-wrap;word-break:break-all;margin-bottom:10px;"></div>
           <button class="cyber-btn orange" id="btnCopyManualPrompt" style="width:100%;padding:8px;font-size:0.82rem;">📋 一鍵複製提示詞</button>
+          <div id="manualModePasteSection" style="display:none;margin-top:12px;border-top:1px dashed rgba(0,240,255,0.2);padding-top:12px;">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+              <span style="font-size:1rem;">📥</span>
+              <strong style="color:var(--neon-cyan);font-size:0.85rem;">貼上 AI 的回覆</strong>
+            </div>
+            <textarea id="manualModePasteInput" class="cyber-input" placeholder="將網頁 AI 的回覆內容完整貼在這裡..." style="width:100%;min-height:80px;padding:10px;font-size:0.85rem;resize:vertical;font-family:var(--font-mono);"></textarea>
+            <button class="cyber-btn orange" id="btnSubmitManualReply" style="width:100%;padding:8px;font-size:0.82rem;margin-top:8px;">📤 送出 AI 回覆</button>
+          </div>
         </div>
 
         <!-- 功能長條區 -->
@@ -737,7 +754,7 @@
   <!-- 固定底部資訊列 -->
   <div style="position:fixed;bottom:0;left:0;right:0;z-index:1001;background:rgba(6,5,11,0.92);backdrop-filter:blur(10px);border-top:1px solid rgba(255,102,0,0.2);padding:8px 20px;display:flex;justify-content:space-between;align-items:center;font-size:0.75rem;font-family:var(--font-mono);">
     <span style="color:var(--text-muted);">💬 有任何問題或意見，歡迎聯絡：<a href="mailto:eric940724@gmail.com" style="color:var(--neon-cyan);text-decoration:none;">eric940724@gmail.com</a></span>
-    <span style="color:#ffffff;">上次更新：2026-06-09 12:13</span>
+    <span style="color:#ffffff;">上次更新：2026-06-10 11:53</span>
   </div>
 
   <!-- 前端引導邏輯與通訊協定 -->

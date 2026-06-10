@@ -235,7 +235,41 @@ function handleClientMessage(msg, socket) {
     processUserCommand(msg.data.text, msg.data.platform, socket);
   } else if (msg.type === 'test-remote') {
     testRemoteCredentials(msg.data, socket);
+  } else if (msg.type === 'multi-file-write') {
+    handleMultiFileWrite(msg.data, socket);
   }
+}
+
+// 多檔案寫入處理（手動模式 FILE 標籤分流）
+function handleMultiFileWrite(data, socket) {
+  const files = data.files || [];
+  if (files.length === 0) {
+    sendWSMessage(socket, { type: 'ai-response', reply: '⚠️ 未收到任何檔案資料。' });
+    return;
+  }
+
+  let results = [];
+  for (const file of files) {
+    const targetPath = file.path;
+    const content = file.content;
+    try {
+      // 確保目錄存在
+      const dir = path.dirname(targetPath);
+      if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
+      }
+      fs.writeFileSync(targetPath, content, 'utf8');
+      results.push(`✅ ${targetPath} (${content.length} 字元)`);
+      console.log(`📝 [多檔案寫入] 已寫入: ${targetPath}`);
+    } catch (err) {
+      results.push(`❌ ${targetPath}: ${err.message}`);
+      console.error(`⚠️ [多檔案寫入] 失敗: ${targetPath} - ${err.message}`);
+    }
+  }
+
+  const replyText = `📁 多檔案寫入結果 (${files.length} 個檔案):\n${results.join('\n')}`;
+  sendWSMessage(socket, { type: 'ai-response', reply: replyText, output: results.join('\n') });
+  triggerExternalWebhook(replyText);
 }
 
 // 驗證遠端 LINE / Discord 機器人憑證連線
