@@ -527,13 +527,11 @@
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
             <span style="font-size:1.2rem;">📋</span>
             <strong style="color:var(--neon-cyan);">請複製下方提示詞，貼給網頁版 AI</strong>
-            <span id="manualModeBadge" style="font-size:0.7rem;padding:2px 8px;border-radius:8px;background:rgba(0,240,255,0.15);color:var(--neon-cyan);border:1px solid rgba(0,240,255,0.3);margin-left:auto;">📋 待複製</span>
+            <span id="manualModeBadge" style="font-size:0.7rem;padding:2px 8px;border-radius:8px;background:rgba(0,240,255,0.15);color:var(--neon-cyan);border:1px solid rgba(0,240,255,0.3);">📋 待複製</span>
+            <button type="button" class="cyber-btn muted" id="btnCancelManual" style="visibility:hidden;padding:2px 8px;font-size:0.7rem;flex-shrink:0;" title="取消手動模式，重新描述要做的事">✕ 取消</button>
           </div>
           <div id="manualModeCopyContent" style="background:rgba(0,0,0,0.4);border-radius:8px;padding:12px;font-size:0.78rem;font-family:var(--font-mono);color:var(--neon-green);max-height:200px;overflow-y:auto;white-space:pre-wrap;word-break:break-all;margin-bottom:10px;"></div>
           <button class="cyber-btn orange" id="btnCopyManualPrompt" style="width:100%;padding:8px;font-size:0.82rem;">📋 一鍵複製提示詞</button>
-          <div style="display:flex;gap:8px;margin-top:8px;">
-            <button type="button" class="cyber-btn muted" id="btnCancelManual" style="display:none;flex:1;padding:6px;font-size:0.75rem;" title="取消手動模式，重新描述要做的事">✕ 取消手動</button>
-          </div>
           <div id="manualModePasteSection" style="display:none;margin-top:12px;border-top:1px dashed rgba(0,240,255,0.2);padding-top:12px;">
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
               <span style="font-size:1rem;">📥</span>

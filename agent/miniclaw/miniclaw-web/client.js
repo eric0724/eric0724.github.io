@@ -1871,8 +1871,8 @@ function enterManualMode(userMessage) {
     badge.style.borderColor = 'rgba(0,240,255,0.3)';
   }
   
-  // 顯示取消手動按鈕
-  if (cancelBtn) cancelBtn.style.display = 'inline-block';
+  // 顯示取消手動按鈕（用 visibility 保持位置固定）
+  if (cancelBtn) cancelBtn.style.visibility = 'visible';
   
   // 添加 manual-mode class 使輸入框變色
   const chatPanel = document.getElementById('mainWorkspace');
@@ -1898,7 +1898,7 @@ function cancelManualMode() {
   const pasteSection = document.getElementById('manualModePasteSection');
   
   if (manualBox) manualBox.style.display = 'none';
-  if (cancelBtn) cancelBtn.style.display = 'none';
+  if (cancelBtn) cancelBtn.style.visibility = 'hidden';
   if (pasteSection) pasteSection.style.display = 'none';
   
   // 移除 manual-mode class
@@ -1986,7 +1986,7 @@ function processManualAIReply(reply) {
   const pasteSection = document.getElementById('manualModePasteSection');
   
   if (manualBox) manualBox.style.display = 'none';
-  if (cancelBtn) cancelBtn.style.display = 'none';
+  if (cancelBtn) cancelBtn.style.visibility = 'hidden';
   if (pasteSection) pasteSection.style.display = 'none';
   
   const chatPanel = document.getElementById('mainWorkspace');
