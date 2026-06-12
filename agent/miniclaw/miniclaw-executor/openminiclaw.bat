@@ -2,6 +2,10 @@
 setlocal enabledelayedexpansion
 set "ROOT=%~dp0"
 set "APP_DIR=%ROOT%app"
+
+:: 在開頭即打開提示筆記本（常見問題、重新啟動指引）
+start /b "" notepad.exe "%ROOT%docs\startup_tips.md"
+
 cd /d "%APP_DIR%"
 
 echo [1/5] Node.js check...

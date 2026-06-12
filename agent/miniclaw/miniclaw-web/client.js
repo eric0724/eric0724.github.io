@@ -1619,6 +1619,9 @@ function setupChatEvents() {
     });
   }
 
+  // ==== 取消手動模式按鈕 ====
+  document.getElementById('btnCancelManual')?.addEventListener('click', cancelManualMode);
+
   // ==== 手動模式：一鍵複製按鈕 ====
   document.getElementById('btnCopyManualPrompt')?.addEventListener('click', () => {
     const content = document.getElementById('manualModeCopyContent');
@@ -1841,6 +1844,7 @@ function enterManualMode(userMessage) {
   const copyContent = document.getElementById('manualModeCopyContent');
   const badge = document.getElementById('manualModeBadge');
   const pasteSection = document.getElementById('manualModePasteSection');
+  const cancelBtn = document.getElementById('btnCancelManual');
   
   manualBox.style.display = 'block';
   pasteSection.style.display = 'none';
@@ -1851,12 +1855,60 @@ function enterManualMode(userMessage) {
     badge.style.borderColor = 'rgba(0,240,255,0.3)';
   }
   
+  // 顯示取消手動按鈕
+  if (cancelBtn) cancelBtn.style.display = 'inline-block';
+  
+  // 添加 manual-mode class 使輸入框變色
+  const chatPanel = document.getElementById('mainWorkspace');
+  if (chatPanel) chatPanel.classList.add('manual-mode');
+  
   document.getElementById('manualModePasteInput').value = '';
   
   const prompt = buildManualPrompt(userMessage);
   copyContent.textContent = prompt;
   
   appendMessage('ai', '🔗 📋 [手動模式] 提示詞已準備好，請點擊下方「一鍵複製」貼給網頁版 AI，再將回覆貼回。');
+}
+
+// 取消手動模式：隱藏複製框、恢復輸入框顏色、讓使用者重新描述
+function cancelManualMode() {
+  webState.manualModeEnabled = false;
+  
+  const manualBox = document.getElementById('manualModeCopyBox');
+  const cancelBtn = document.getElementById('btnCancelManual');
+  const pasteSection = document.getElementById('manualModePasteSection');
+  
+  if (manualBox) manualBox.style.display = 'none';
+  if (cancelBtn) cancelBtn.style.display = 'none';
+  if (pasteSection) pasteSection.style.display = 'none';
+  
+  // 移除 manual-mode class
+  const chatPanel = document.getElementById('mainWorkspace');
+  if (chatPanel) chatPanel.classList.remove('manual-mode');
+  
+  // 清空手動模式貼上的文字
+  const pasteInput = document.getElementById('manualModePasteInput');
+  if (pasteInput) pasteInput.value = '';
+  
+  // 清空複製內容
+  const copyContent = document.getElementById('manualModeCopyContent');
+  if (copyContent) copyContent.textContent = '';
+  
+  // 更新徽章
+  const badge = document.getElementById('manualModeBadge');
+  if (badge) {
+    badge.textContent = '📋 待複製';
+    badge.style.background = 'rgba(0,240,255,0.15)';
+    badge.style.color = 'var(--neon-cyan)';
+    badge.style.borderColor = 'rgba(0,240,255,0.3)';
+  }
+  
+  // 更新 AI 供應商下拉選單
+  const providerSelect = document.getElementById('selectAIProvider');
+  if (providerSelect) providerSelect.value = 'auto';
+  
+  appendMessage('ai', '🔙 手動模式已取消，請重新輸入你要做的事。');
+  showToast('🔙 手動模式已取消', '可以重新輸入想做的事了。', '🦞');
 }
 
 // 建立手動模式的提示詞（含 FILE 格式規範）
