@@ -1634,24 +1634,23 @@ function setupChatEvents() {
         badge.style.color = 'var(--neon-green)';
         badge.style.borderColor = 'rgba(57,255,20,0.3)';
       }
-      showToast('📋 提示詞已複製', '請貼到網頁 AI 取得回覆後，再將回覆貼回下方欄位。', '🦞');
-      document.getElementById('manualModePasteSection').style.display = 'block';
+      showToast('📋 提示詞已複製', '請貼到網頁 AI 取得回覆後，再將回覆貼到下方輸入框按送出。', '🦞');
+      // 顯示提示並解鎖輸入框
+      const hint = document.getElementById('manualModeHint');
+      if (hint) hint.style.display = 'block';
+      // 解鎖輸入框，改成等候貼上 AI 回覆
+      const inputEl = document.getElementById('chatInput');
+      const sendBtn = document.getElementById('btnSend');
+      if (inputEl) {
+        inputEl.disabled = false;
+        inputEl.placeholder = '📥 貼上 AI 回覆後按送出...';
+        inputEl.value = '';
+        inputEl.focus();
+      }
+      if (sendBtn) sendBtn.disabled = false;
     }).catch(() => {
       showToast('❌ 複製失敗', '請手動選取後複製。', '🦞');
     });
-  });
-
-  // ==== 手動模式：送出 AI 回覆 ====
-  document.getElementById('btnSubmitManualReply')?.addEventListener('click', () => {
-    const pasteInput = document.getElementById('manualModePasteInput');
-    const reply = pasteInput.value.trim();
-    if (!reply) {
-      showToast('⚠️ 請先貼上 AI 回覆', '將網頁 AI 給你的回覆內容貼到上方文字框。', '🦞');
-      return;
-    }
-    pasteInput.value = '';
-    appendMessage('user', '📥 [貼上 AI 回覆]');
-    processManualAIReply(reply);
   });
 
   form.addEventListener('submit', (e) => {
@@ -1659,8 +1658,17 @@ function setupChatEvents() {
     const msg = input.value.trim();
     if (!msg) return;
     
-    // 手動模式：攔截文字，打包成提示詞
+    // 手動模式：攔截文字
     if (webState.manualModeEnabled) {
+      // 如果輸入框的 placeholder 是等待貼上 AI 回覆，代表這是 AI 回覆
+      if (input.placeholder.includes('貼上 AI 回覆')) {
+        appendMessage('user', '📥 [貼上 AI 回覆]');
+        input.value = '';
+        input.placeholder = '輸入指令，例如「幫我螢幕截圖」...';
+        processManualAIReply(msg);
+        return;
+      }
+      // 否則是第一次輸入，打包成提示詞
       appendMessage('user', msg);
       input.value = '';
       enterManualMode(msg);
@@ -1859,11 +1867,9 @@ function enterManualMode(userMessage) {
   const manualBox = document.getElementById('manualModeCopyBox');
   const copyContent = document.getElementById('manualModeCopyContent');
   const badge = document.getElementById('manualModeBadge');
-  const pasteSection = document.getElementById('manualModePasteSection');
   const cancelBtn = document.getElementById('btnCancelManual');
   
   manualBox.style.display = 'block';
-  pasteSection.style.display = 'none';
   if (badge) {
     badge.textContent = '📋 待複製';
     badge.style.background = 'rgba(0,240,255,0.15)';
@@ -1878,15 +1884,13 @@ function enterManualMode(userMessage) {
   const chatPanel = document.getElementById('mainWorkspace');
   if (chatPanel) chatPanel.classList.add('manual-mode');
   
-  // 鎖住輸入框（等候 AI 回覆）
+  // 輸入框改為等候 AI 回覆狀態
   setManualInputLocked(true);
-  
-  document.getElementById('manualModePasteInput').value = '';
   
   const prompt = buildManualPrompt(userMessage);
   copyContent.textContent = prompt;
   
-  appendMessage('ai', '🔗 📋 [手動模式] 提示詞已準備好，請點擊下方「一鍵複製」貼給網頁版 AI，再將回覆貼回。');
+  appendMessage('ai', '🔗 📋 [手動模式] 提示詞已準備好，請點擊下方「一鍵複製」貼給網頁版 AI，再將回覆貼到下方輸入框按送出。');
 }
 
 // 取消手動模式：隱藏複製框、恢復輸入框顏色、讓使用者重新描述
@@ -1895,22 +1899,15 @@ function cancelManualMode() {
   
   const manualBox = document.getElementById('manualModeCopyBox');
   const cancelBtn = document.getElementById('btnCancelManual');
-  const pasteSection = document.getElementById('manualModePasteSection');
   
   if (manualBox) manualBox.style.display = 'none';
   if (cancelBtn) cancelBtn.style.visibility = 'hidden';
-  if (pasteSection) pasteSection.style.display = 'none';
   
-  // 移除 manual-mode class
   const chatPanel = document.getElementById('mainWorkspace');
   if (chatPanel) chatPanel.classList.remove('manual-mode');
   
   // 恢復輸入框
   setManualInputLocked(false);
-  
-  // 清空手動模式貼上的文字
-  const pasteInput = document.getElementById('manualModePasteInput');
-  if (pasteInput) pasteInput.value = '';
   
   // 清空複製內容
   const copyContent = document.getElementById('manualModeCopyContent');
