@@ -1838,6 +1838,22 @@ async function callOllamaFromFrontend(text) {
 
 // --- 手動模式核心函式 ---
 
+// 切換輸入框鎖定狀態（手動模式時禁止打字）
+function setManualInputLocked(locked) {
+  const input = document.getElementById('chatInput');
+  const sendBtn = document.getElementById('btnSend');
+  if (!input) return;
+  if (locked) {
+    input.disabled = true;
+    input.placeholder = '🔒 等候 AI 回覆中...';
+    if (sendBtn) sendBtn.disabled = true;
+  } else {
+    input.disabled = false;
+    input.placeholder = '輸入指令，例如「幫我螢幕截圖」...';
+    if (sendBtn) sendBtn.disabled = false;
+  }
+}
+
 // 進入手動模式：將用戶訊息打包成提示詞
 function enterManualMode(userMessage) {
   const manualBox = document.getElementById('manualModeCopyBox');
@@ -1862,6 +1878,9 @@ function enterManualMode(userMessage) {
   const chatPanel = document.getElementById('mainWorkspace');
   if (chatPanel) chatPanel.classList.add('manual-mode');
   
+  // 鎖住輸入框（等候 AI 回覆）
+  setManualInputLocked(true);
+  
   document.getElementById('manualModePasteInput').value = '';
   
   const prompt = buildManualPrompt(userMessage);
@@ -1885,6 +1904,9 @@ function cancelManualMode() {
   // 移除 manual-mode class
   const chatPanel = document.getElementById('mainWorkspace');
   if (chatPanel) chatPanel.classList.remove('manual-mode');
+  
+  // 恢復輸入框
+  setManualInputLocked(false);
   
   // 清空手動模式貼上的文字
   const pasteInput = document.getElementById('manualModePasteInput');
@@ -1955,6 +1977,25 @@ function parseFileTags(reply) {
 // 處理從手動模式貼回的 AI 回覆
 function processManualAIReply(reply) {
   appendMessage('ai', reply);
+  
+  // 送出回覆後自動取消手動模式，恢復正常對話
+  webState.manualModeEnabled = false;
+  
+  const manualBox = document.getElementById('manualModeCopyBox');
+  const cancelBtn = document.getElementById('btnCancelManual');
+  const pasteSection = document.getElementById('manualModePasteSection');
+  
+  if (manualBox) manualBox.style.display = 'none';
+  if (cancelBtn) cancelBtn.style.display = 'none';
+  if (pasteSection) pasteSection.style.display = 'none';
+  
+  const chatPanel = document.getElementById('mainWorkspace');
+  if (chatPanel) chatPanel.classList.remove('manual-mode');
+  
+  setManualInputLocked(false);
+  
+  const providerSelect = document.getElementById('selectAIProvider');
+  if (providerSelect) providerSelect.value = 'auto';
   
   const files = parseFileTags(reply);
   
