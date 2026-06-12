@@ -531,6 +531,9 @@
           </div>
           <div id="manualModeCopyContent" style="background:rgba(0,0,0,0.4);border-radius:8px;padding:12px;font-size:0.78rem;font-family:var(--font-mono);color:var(--neon-green);max-height:200px;overflow-y:auto;white-space:pre-wrap;word-break:break-all;margin-bottom:10px;"></div>
           <button class="cyber-btn orange" id="btnCopyManualPrompt" style="width:100%;padding:8px;font-size:0.82rem;">📋 一鍵複製提示詞</button>
+          <div style="display:flex;gap:8px;margin-top:8px;">
+            <button type="button" class="cyber-btn muted" id="btnCancelManual" style="display:none;flex:1;padding:6px;font-size:0.75rem;" title="取消手動模式，重新描述要做的事">✕ 取消手動</button>
+          </div>
           <div id="manualModePasteSection" style="display:none;margin-top:12px;border-top:1px dashed rgba(0,240,255,0.2);padding-top:12px;">
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
               <span style="font-size:1rem;">📥</span>
@@ -565,7 +568,6 @@
         <form class="chat-input-bar" id="chatForm">
           <input type="text" id="chatInput" placeholder="輸入指令，例如「幫我螢幕截圖」..." autocomplete="off">
           <button type="submit" class="cyber-btn orange" id="btnSend" style="padding: 10px 22px;">傳送</button>
-          <button type="button" class="cyber-btn muted" id="btnCancelManual" style="display:none;padding: 4px 10px;font-size:0.72rem;flex-shrink:0;" title="取消手動模式，重新描述要做的事">✕ 取消手動</button>
           <button type="button" class="cyber-btn muted" id="btnResend" style="display:none;padding: 10px 22px;font-size:0.82rem;">重新傳送</button>
         </form>
 
@@ -755,7 +757,7 @@
   <!-- 固定底部資訊列 -->
   <div style="position:fixed;bottom:0;left:0;right:0;z-index:1001;background:rgba(6,5,11,0.92);backdrop-filter:blur(10px);border-top:1px solid rgba(255,102,0,0.2);padding:8px 20px;display:flex;justify-content:space-between;align-items:center;font-size:0.75rem;font-family:var(--font-mono);">
     <span style="color:var(--text-muted);">💬 有任何問題或意見，歡迎聯絡：<a href="mailto:eric940724@gmail.com" style="color:var(--neon-cyan);text-decoration:none;">eric940724@gmail.com</a></span>
-    <span style="color:#ffffff;">上次更新：2026-06-10 12:35</span>
+    <span style="color:#ffffff;">上次更新：2026-06-12 12:22</span>
   </div>
 
   <!-- 前端引導邏輯與通訊協定 -->
