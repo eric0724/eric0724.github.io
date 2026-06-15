@@ -9,7 +9,7 @@
 Miniclaw（小龍蝦）：一個讓玩家透過自然語言指令操控電腦的 AI 助手系統。
 
 ### 已完成里程碑
-- **Web UI**：四折疊面板（Google/API Key/Ollama/手動）+ 通行解耦
+- **Web UI**：手風琴折疊面板（終端/帳號/遠端/AI/對話/外觀/安全）+ 聰明預設開關邏輯 + 通行解耦
 - **手動模式**：FILE 標籤解析 → WebSocket multi-file-write
 - **DPI 偵測**：三重備援（shcore → GDI → 註冊表），Mac/Linux 自動跳過
 - **校準系統**：calibrate.py — AI 找位置 → 截 normal/hover 範本 → 點擊前後確認 → 降級手動校準
@@ -87,3 +87,5 @@ Miniclaw（小龍蝦）：一個讓玩家透過自然語言指令操控電腦的
 [2026-06-12 10:28] 新增startup_tips.md（開頭筆記本提示）| openminiclaw.bat開頭加入啟動指引
 [2026-06-12 12:02] 手動模式輸入框青色發光+取消按鈕 | 輸入框預設邊框加亮 | 新增cancelManualMode()
 [2026-06-12 12:14] 手動模式輸入框鎖定（避免誤打）| 送出回覆後自動取消手動模式 | processManualAIReply自動恢復
+[2026-06-15 11:46] 大廳設定面板手風琴折疊（7個panel）| 智慧預設開關（依連線/API/遠端狀態）| GOGO push (57ba509)
+[2026-06-15 12:02] 手風琴收合修復：inline onclick改addEventListener | CSS移除overflow:hidden | display切換邏輯修正 | GOGO push (6dc80ae)
