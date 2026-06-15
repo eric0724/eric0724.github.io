@@ -568,8 +568,12 @@
       <aside class="settings-panel">
 
         <!-- 群組 1：終端連線（最頂端） -->
-        <div class="glass-box orange-accent settings-group">
-          <h3 class="settings-group-title">🖥️ 終端連線</h3>
+        <div class="glass-box orange-accent settings-group lobby-accordion" data-panel="terminal" id="lobbyPanelTerminal">
+          <div class="lobby-accordion-header" onclick="toggleLobbyPanel('terminal')">
+            <span class="panel-arrow" id="lobbyArrowTerminal">▶</span>
+            <h3 class="settings-group-title" style="border:none;margin:0;padding:0;">🖥️ 終端連線</h3>
+          </div>
+          <div class="lobby-accordion-body" id="lobbyBodyTerminal">
 
           <div class="settings-item">
             <span class="settings-label">連線狀態</span>
@@ -601,11 +605,16 @@
 
           <!-- 關閉執行器 -->
           <button class="cyber-btn muted" id="btnShutdownExecutor" style="width:100%;margin-top:10px;font-size:0.78rem;padding:7px;opacity:0.4;cursor:not-allowed;" disabled title="需要終端連線才能使用">🔴 關閉執行器</button>
+          </div>
         </div>
 
         <!-- 群組 0：帳號與 API 金鑰 -->
-        <div class="glass-box orange-accent settings-group">
-          <h3 class="settings-group-title">👤 帳號與 API 金鑰</h3>
+        <div class="glass-box orange-accent settings-group lobby-accordion" data-panel="account" id="lobbyPanelAccount">
+          <div class="lobby-accordion-header" onclick="toggleLobbyPanel('account')">
+            <span class="panel-arrow" id="lobbyArrowAccount">▶</span>
+            <h3 class="settings-group-title" style="border:none;margin:0;padding:0;">👤 帳號與 API 金鑰</h3>
+          </div>
+          <div class="lobby-accordion-body" id="lobbyBodyAccount">
 
           <!-- Google 登入狀態 -->
           <div class="settings-item" style="flex-direction:column;align-items:flex-start;gap:8px;">
@@ -630,13 +639,16 @@
               </div>
             </div>
           </div>
+          </div>
         </div>
 
-        <!-- 群組 1：終端連線（已移至頂端） -->
-
         <!-- 群組 2：遠端平台通訊 -->
-        <div class="glass-box cyan-accent settings-group">
-          <h3 class="settings-group-title">🌐 遠端平台通訊</h3>
+        <div class="glass-box cyan-accent settings-group lobby-accordion" data-panel="remote" id="lobbyPanelRemote">
+          <div class="lobby-accordion-header" onclick="toggleLobbyPanel('remote')">
+            <span class="panel-arrow" id="lobbyArrowRemote">▶</span>
+            <h3 class="settings-group-title" style="border:none;margin:0;padding:0;">🌐 遠端平台通訊</h3>
+          </div>
+          <div class="lobby-accordion-body" id="lobbyBodyRemote">
           
           <div class="settings-item">
             <span class="settings-label">LINE 機器人</span>
@@ -669,11 +681,16 @@
             <button class="cyber-btn muted" id="btnToggleEditLINE" style="flex:1;font-size:0.75rem;padding:7px;">✏️ 修改 LINE</button>
             <button class="cyber-btn muted" id="btnToggleEditDiscord" style="flex:1;font-size:0.75rem;padding:7px;">✏️ 修改 Discord</button>
           </div>
+          </div>
         </div>
 
         <!-- 群組 3：AI 設定 -->
-        <div class="glass-box orange-accent settings-group">
-          <h3 class="settings-group-title">🧠 AI 設定</h3>
+        <div class="glass-box orange-accent settings-group lobby-accordion" data-panel="ai" id="lobbyPanelAi">
+          <div class="lobby-accordion-header" onclick="toggleLobbyPanel('ai')">
+            <span class="panel-arrow" id="lobbyArrowAi">▶</span>
+            <h3 class="settings-group-title" style="border:none;margin:0;padding:0;">🧠 AI 設定</h3>
+          </div>
+          <div class="lobby-accordion-body" id="lobbyBodyAi">
           
           <div class="settings-item">
             <span class="settings-label">優先供應商</span>
@@ -697,30 +714,45 @@
             <textarea class="cyber-input" id="customSystemPrompt" placeholder="留空使用預設提示詞..." style="padding:8px 12px;font-size:0.78rem;resize:vertical;min-height:60px;width:100%;"></textarea>
             <button class="cyber-btn muted" id="btnSaveSystemPrompt" style="width:100%;font-size:0.75rem;padding:6px;margin-top:6px;">💾 儲存提示詞</button>
           </div>
+          </div>
         </div>
 
         <!-- 群組 4：對話管理 -->
-        <div class="glass-box cyan-accent settings-group">
-          <h3 class="settings-group-title">💬 對話管理</h3>
+        <div class="glass-box cyan-accent settings-group lobby-accordion" data-panel="chat" id="lobbyPanelChat">
+          <div class="lobby-accordion-header" onclick="toggleLobbyPanel('chat')">
+            <span class="panel-arrow" id="lobbyArrowChat">▶</span>
+            <h3 class="settings-group-title" style="border:none;margin:0;padding:0;">💬 對話管理</h3>
+          </div>
+          <div class="lobby-accordion-body" id="lobbyBodyChat">
 
           <div style="display:flex;gap:8px;">
             <button class="cyber-btn muted" id="btnClearChat" style="flex:1;font-size:0.78rem;padding:8px;">🗑️ 清除對話</button>
             <button class="cyber-btn muted" id="btnExportChat" style="flex:1;font-size:0.78rem;padding:8px;">📥 匯出對話</button>
           </div>
+          </div>
         </div>
 
         <!-- 群組 5：外觀 -->
-        <div class="glass-box orange-accent settings-group">
-          <h3 class="settings-group-title">🎨 外觀</h3>
+        <div class="glass-box orange-accent settings-group lobby-accordion" data-panel="appearance" id="lobbyPanelAppearance">
+          <div class="lobby-accordion-header" onclick="toggleLobbyPanel('appearance')">
+            <span class="panel-arrow" id="lobbyArrowAppearance">▶</span>
+            <h3 class="settings-group-title" style="border:none;margin:0;padding:0;">🎨 外觀</h3>
+          </div>
+          <div class="lobby-accordion-body" id="lobbyBodyAppearance">
           <div class="input-group" style="margin-bottom: 0;">
             <label class="input-label" style="font-size: 0.75rem;">背景圖片 URL</label>
             <input type="text" class="cyber-input" id="bgImageUrlInput" placeholder="貼上圖片網址..." style="padding: 6px 12px; font-size: 0.85rem;">
           </div>
+          </div>
         </div>
 
         <!-- 群組 6：安全自癒與備份還原 -->
-        <div class="glass-box cyan-accent settings-group">
-          <h3 class="settings-group-title">🛠️ 安全防禦與還原</h3>
+        <div class="glass-box cyan-accent settings-group lobby-accordion" data-panel="security" id="lobbyPanelSecurity">
+          <div class="lobby-accordion-header" onclick="toggleLobbyPanel('security')">
+            <span class="panel-arrow" id="lobbyArrowSecurity">▶</span>
+            <h3 class="settings-group-title" style="border:none;margin:0;padding:0;">🛠️ 安全防禦與還原</h3>
+          </div>
+          <div class="lobby-accordion-body" id="lobbyBodySecurity">
           <p style="font-size: 0.75rem; color: var(--text-muted); line-height: 1.4; margin-bottom: 15px;">
             若本地端核心邏輯出錯，可在此還原備份。
           </p>
@@ -734,6 +766,7 @@
             </div>
           </div>
           <button class="cyber-btn muted" id="btnResetAllOnboarding" style="width: 100%; font-size: 0.8rem; padding: 8px; margin-top: 15px; border-color: rgba(255, 102, 0, 0.3); color: var(--neon-orange);">重置並重啟引導設定</button>
+          </div>
         </div>
 
       </aside>
@@ -748,7 +781,7 @@
   <!-- 固定底部資訊列 -->
   <div style="position:fixed;bottom:0;left:0;right:0;z-index:1001;background:rgba(6,5,11,0.92);backdrop-filter:blur(10px);border-top:1px solid rgba(255,102,0,0.2);padding:8px 20px;display:flex;justify-content:space-between;align-items:center;font-size:0.75rem;font-family:var(--font-mono);">
     <span style="color:var(--text-muted);">💬 有任何問題或意見，歡迎聯絡：<a href="mailto:eric940724@gmail.com" style="color:var(--neon-cyan);text-decoration:none;">eric940724@gmail.com</a></span>
-    <span style="color:#ffffff;">上次更新：2026-06-12 12:22</span>
+    <span style="color:#ffffff;">上次更新：2026-06-15 11:46</span>
   </div>
 
   <!-- 前端引導邏輯與通訊協定 -->

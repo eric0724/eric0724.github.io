@@ -68,6 +68,54 @@ async function testAPIKeyByType(key, selectedType) {
   return { passed: false, detectedType: null, message: '❌ 跳測失敗。' };
 }
 
+// --- 大廳設定面板手風琴折疊邏輯 ---
+function toggleLobbyPanel(panelName) {
+  const body = document.getElementById('lobbyBody' + panelName.charAt(0).toUpperCase() + panelName.slice(1));
+  const arrow = document.getElementById('lobbyArrow' + panelName.charAt(0).toUpperCase() + panelName.slice(1));
+  if (!body || !arrow) return;
+  const isOpen = body.classList.contains('open');
+  if (isOpen) {
+    body.classList.remove('open');
+    body.style.display = 'none';
+    arrow.classList.remove('open');
+  } else {
+    body.classList.add('open');
+    body.style.display = 'block';
+    arrow.classList.add('open');
+  }
+}
+
+function setLobbyPanelState(panelName, open) {
+  const body = document.getElementById('lobbyBody' + panelName.charAt(0).toUpperCase() + panelName.slice(1));
+  const arrow = document.getElementById('lobbyArrow' + panelName.charAt(0).toUpperCase() + panelName.slice(1));
+  if (!body || !arrow) return;
+  if (open) {
+    body.classList.add('open');
+    body.style.display = 'block';
+    arrow.classList.add('open');
+  } else {
+    body.classList.remove('open');
+    body.style.display = 'none';
+    arrow.classList.remove('open');
+  }
+}
+
+function initLobbyPanelDefaults() {
+  setLobbyPanelState('terminal', !webState.isTerminalConnected);
+  const hasApi = webState.apiKey || webState.googleAccessToken || localStorage.getItem('miniclaw_ollama_ready') === 'true';
+  setLobbyPanelState('account', !hasApi);
+  let remoteConfigured = false;
+  try {
+    const creds = JSON.parse(localStorage.getItem('miniclaw_remote_creds') || '{}');
+    remoteConfigured = !!(creds.type && ((creds.line && creds.line.token) || (creds.discord && creds.discord.token)));
+  } catch(e) {}
+  setLobbyPanelState('remote', !remoteConfigured);
+  setLobbyPanelState('ai', false);
+  setLobbyPanelState('chat', false);
+  setLobbyPanelState('appearance', false);
+  setLobbyPanelState('security', false);
+}
+
 // --- 初始化處理 ---
 window.addEventListener('DOMContentLoaded', () => {
   detectUserPlatform();
@@ -743,6 +791,7 @@ function setupStepEvents() {
 
     document.getElementById('onboardingModal').style.display = 'none';
     document.getElementById('mainWorkspace').style.display = 'grid';
+    initLobbyPanelDefaults();
 
     const greeting = document.getElementById('initialGreeting');
     if (greeting) {
@@ -972,6 +1021,7 @@ function setupStepEvents() {
     }
 
     showToast('🚀 大廳解鎖成功', '小龍蝦控制中樞運轉中！歡迎開始對話操控！', '🦞');
+    initLobbyPanelDefaults();
     
     if (!webState.isTerminalConnected && webState.ngrokUrl) {
       initWebSocketConnection();
