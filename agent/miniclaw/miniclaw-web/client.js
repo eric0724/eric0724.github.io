@@ -110,6 +110,19 @@ function setupLobbyAccordion() {
       if (panelKey) toggleLobbyPanel(panelKey);
     });
   });
+
+  // 紀錄儲存區塊折疊
+  const chatLogToggle = document.getElementById('chatLogToggle');
+  if (chatLogToggle) {
+    chatLogToggle.addEventListener('click', function() {
+      const content = document.getElementById('chatLogContent');
+      const arrow = document.getElementById('chatLogArrow');
+      if (!content || !arrow) return;
+      const isOpen = content.style.display === 'block';
+      content.style.display = isOpen ? 'none' : 'block';
+      arrow.style.transform = isOpen ? '' : 'rotate(90deg)';
+    });
+  }
 }
 
 function initLobbyPanelDefaults() {

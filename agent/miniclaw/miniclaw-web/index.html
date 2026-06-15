@@ -445,8 +445,12 @@
 
         <!-- 對話紀錄儲存（側欄底部） -->
         <div style="margin-top:auto;padding-top:10px;border-top:1px solid rgba(255,255,255,0.07);">
-          <div style="font-size:0.72rem;color:var(--text-muted);margin-bottom:8px;font-family:var(--font-mono);">🗂️ 紀錄儲存</div>
+          <div id="chatLogToggle" style="font-size:0.72rem;color:var(--text-muted);font-family:var(--font-mono);cursor:pointer;display:flex;align-items:center;gap:6px;margin-bottom:8px;">
+            <span id="chatLogArrow" style="font-size:0.6rem;transition:transform 0.3s ease;">▶</span>
+            🗂️ 紀錄儲存
+          </div>
 
+          <div id="chatLogContent" style="display:none;">
           <div class="settings-item" style="margin-bottom:6px;">
             <span style="font-size:0.75rem;color:var(--text-muted);">啟用紀錄</span>
             <label class="switch-control">
@@ -473,6 +477,7 @@
             </div>
             <div id="gdriveStatus" style="display:none;font-size:0.72rem;font-family:var(--font-mono);padding:4px 8px;border-radius:4px;"></div>
           </div>
+          </div><!-- end chatLogContent -->
         </div>
       </aside>
 
@@ -781,7 +786,7 @@
   <!-- 固定底部資訊列 -->
   <div style="position:fixed;bottom:0;left:0;right:0;z-index:1001;background:rgba(6,5,11,0.92);backdrop-filter:blur(10px);border-top:1px solid rgba(255,102,0,0.2);padding:8px 20px;display:flex;justify-content:space-between;align-items:center;font-size:0.75rem;font-family:var(--font-mono);">
     <span style="color:var(--text-muted);">💬 有任何問題或意見，歡迎聯絡：<a href="mailto:eric940724@gmail.com" style="color:var(--neon-cyan);text-decoration:none;">eric940724@gmail.com</a></span>
-    <span style="color:#ffffff;">上次更新：2026-06-15 12:05</span>
+    <span style="color:#ffffff;">上次更新：2026-06-15 12:10</span>
   </div>
 
   <!-- 前端引導邏輯與通訊協定 -->
