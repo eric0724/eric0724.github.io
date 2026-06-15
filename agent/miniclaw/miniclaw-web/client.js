@@ -69,35 +69,47 @@ async function testAPIKeyByType(key, selectedType) {
 }
 
 // --- 大廳設定面板手風琴折疊邏輯 ---
-function toggleLobbyPanel(panelName) {
-  const body = document.getElementById('lobbyBody' + panelName.charAt(0).toUpperCase() + panelName.slice(1));
-  const arrow = document.getElementById('lobbyArrow' + panelName.charAt(0).toUpperCase() + panelName.slice(1));
+function toggleLobbyPanel(panelKey) {
+  const panel = document.getElementById('lobbyPanel' + panelKey.charAt(0).toUpperCase() + panelKey.slice(1));
+  if (!panel) return;
+  const header = panel.querySelector('.lobby-accordion-header');
+  const body = panel.querySelector('.lobby-accordion-body');
+  const arrow = panel.querySelector('.panel-arrow');
   if (!body || !arrow) return;
-  const isOpen = body.classList.contains('open');
+  const isOpen = body.style.display === 'block';
   if (isOpen) {
-    body.classList.remove('open');
     body.style.display = 'none';
     arrow.classList.remove('open');
   } else {
-    body.classList.add('open');
     body.style.display = 'block';
     arrow.classList.add('open');
   }
 }
 
-function setLobbyPanelState(panelName, open) {
-  const body = document.getElementById('lobbyBody' + panelName.charAt(0).toUpperCase() + panelName.slice(1));
-  const arrow = document.getElementById('lobbyArrow' + panelName.charAt(0).toUpperCase() + panelName.slice(1));
+function setLobbyPanelState(panelKey, open) {
+  const panel = document.getElementById('lobbyPanel' + panelKey.charAt(0).toUpperCase() + panelKey.slice(1));
+  if (!panel) return;
+  const body = panel.querySelector('.lobby-accordion-body');
+  const arrow = panel.querySelector('.panel-arrow');
   if (!body || !arrow) return;
   if (open) {
-    body.classList.add('open');
     body.style.display = 'block';
     arrow.classList.add('open');
   } else {
-    body.classList.remove('open');
     body.style.display = 'none';
     arrow.classList.remove('open');
   }
+}
+
+function setupLobbyAccordion() {
+  document.querySelectorAll('.lobby-accordion-header').forEach(header => {
+    header.addEventListener('click', function() {
+      const panel = this.closest('.lobby-accordion');
+      if (!panel) return;
+      const panelKey = panel.dataset.panel;
+      if (panelKey) toggleLobbyPanel(panelKey);
+    });
+  });
 }
 
 function initLobbyPanelDefaults() {
@@ -127,6 +139,7 @@ window.addEventListener('DOMContentLoaded', () => {
   initGoogleSignIn();
   startDiagnosticPolling();
   updateAIStatusUI();
+  setupLobbyAccordion();
 });
 
 // --- Google OAuth 初始化 ---

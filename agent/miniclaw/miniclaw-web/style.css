@@ -1134,7 +1134,6 @@ input:checked + .slider:before {
 /* ===== 大廳設定面板手風琴折疊（Lobby Accordion） ===== */
 .lobby-accordion {
   padding: 0 !important;
-  overflow: hidden;
 }
 
 .lobby-accordion-header {
@@ -1160,13 +1159,7 @@ input:checked + .slider:before {
 }
 
 .lobby-accordion-body {
-  display: none;
   padding: 0 20px 18px 20px;
-  animation: panelExpand 0.35s ease forwards;
-}
-
-.lobby-accordion-body.open {
-  display: block;
 }
 
 .lobby-accordion .panel-arrow {
