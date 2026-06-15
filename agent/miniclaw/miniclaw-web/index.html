@@ -540,11 +540,17 @@
           <div id="manualModeHint" style="display:none;margin-top:8px;text-align:center;font-size:0.75rem;color:var(--text-muted);">✅ 複製後請在下方輸入框貼上 AI 回覆並按送出</div>
         </div>
 
+        <!-- 上傳檔案預覽區（隱藏，選檔案後顯示） -->
+        <div id="filePreviewArea" style="display:none;padding:8px 12px;background:rgba(255,102,0,0.06);border-top:1px solid rgba(255,102,0,0.2);">
+          <div id="manualModeUploadHint" style="display:none;font-size:0.75rem;color:#ff4d4d;margin-bottom:6px;">🔗 手動模式：此檔案可直接傳給網頁版 AI（請手動貼上傳）</div>
+          <div id="filePreviewContent" style="display:flex;align-items:center;gap:8px;"></div>
+        </div>
+
         <!-- 功能長條區 -->
         <div id="inputToolbar" style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-top:1px solid rgba(255,255,255,0.06);background:rgba(0,0,0,0.15);">
           <!-- + 號上傳按鈕 -->
-          <button type="button" id="btnUpload" class="cyber-btn muted" style="padding:6px 10px;font-size:1rem;flex-shrink:0;" title="上傳檔案/圖片">+</button>
-          <input type="file" id="fileUploadInput" style="display:none;" accept="image/*,.txt,.json,.py,.md">
+          <button type="button" id="btnUpload" class="cyber-btn muted" style="padding:6px 10px;font-size:1rem;flex-shrink:0;" title="上傳檔案/圖片/影片">+</button>
+          <input type="file" id="fileUploadInput" style="display:none;" accept="image/*,video/*,.txt,.json,.py,.md,.pdf">
           <!-- AI 廠商下拉 -->
           <select id="selectAIProvider" class="cyber-select" style="flex:1;padding:6px 8px;font-size:0.78rem;">
             <option value="auto">🤖 自動</option>
@@ -786,7 +792,7 @@
   <!-- 固定底部資訊列 -->
   <div style="position:fixed;bottom:0;left:0;right:0;z-index:1001;background:rgba(6,5,11,0.92);backdrop-filter:blur(10px);border-top:1px solid rgba(255,102,0,0.2);padding:8px 20px;display:flex;justify-content:space-between;align-items:center;font-size:0.75rem;font-family:var(--font-mono);">
     <span style="color:var(--text-muted);">💬 有任何問題或意見，歡迎聯絡：<a href="mailto:eric940724@gmail.com" style="color:var(--neon-cyan);text-decoration:none;">eric940724@gmail.com</a></span>
-    <span style="color:#ffffff;">上次更新：2026-06-15 12:10</span>
+    <span style="color:#ffffff;">上次更新：2026-06-15 12:16</span>
   </div>
 
   <!-- 前端引導邏輯與通訊協定 -->

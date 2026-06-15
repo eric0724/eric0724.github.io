@@ -1695,6 +1695,114 @@ function setupChatEvents() {
     });
   }
 
+  // ==== 上傳按鈕邏輯 ====
+  const btnUpload = document.getElementById('btnUpload');
+  const fileUploadInput = document.getElementById('fileUploadInput');
+  if (btnUpload && fileUploadInput) {
+    btnUpload.addEventListener('click', () => {
+      fileUploadInput.click();
+    });
+    fileUploadInput.addEventListener('change', handleFileUpload);
+  }
+
+  // === 檔案上傳處理函式 ===
+  function handleFileUpload(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    e.target.value = '';
+
+    const previewArea = document.getElementById('filePreviewArea');
+    const previewContent = document.getElementById('filePreviewContent');
+    const manualHint = document.getElementById('manualModeUploadHint');
+    if (!previewArea || !previewContent) return;
+
+    previewContent.innerHTML = '';
+    const isVideo = file.type.startsWith('video/');
+    const isImage = file.type.startsWith('image/');
+
+    if (isImage) {
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        previewContent.innerHTML = `
+          <img src="${ev.target.result}" style="width:40px;height:40px;object-fit:cover;border-radius:6px;border:1px solid rgba(255,102,0,0.3);">
+          <span style="font-size:0.78rem;color:var(--text-muted);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${file.name}</span>
+          <button class="cyber-btn muted" onclick="document.getElementById('filePreviewArea').style.display='none'" style="font-size:0.7rem;padding:3px 8px;">✕</button>
+        `;
+      };
+      reader.readAsDataURL(file);
+    } else if (isVideo) {
+      const sizeMB = (file.size / 1024 / 1024).toFixed(1);
+      const videoUrl = URL.createObjectURL(file);
+      previewContent.innerHTML = `
+        <video src="${videoUrl}" style="width:40px;height:40px;object-fit:cover;border-radius:6px;border:1px solid rgba(255,102,0,0.3);" muted></video>
+        <span style="font-size:0.78rem;color:var(--text-muted);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${file.name} (${sizeMB}MB)</span>
+        <button class="cyber-btn muted" onclick="document.getElementById('filePreviewArea').style.display='none'" style="font-size:0.7rem;padding:3px 8px;">✕</button>
+      `;
+    } else {
+      previewContent.innerHTML = `
+        <span style="font-size:1.2rem;">📄</span>
+        <span style="font-size:0.78rem;color:var(--text-muted);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${file.name}</span>
+        <button class="cyber-btn muted" onclick="document.getElementById('filePreviewArea').style.display='none'" style="font-size:0.7rem;padding:3px 8px;">✕</button>
+      `;
+    }
+
+    previewArea.style.display = 'block';
+    if (manualHint) {
+      manualHint.style.display = webState.manualModeEnabled ? 'block' : 'none';
+    }
+
+    // 圖片自動貼到對話
+    if (isImage) {
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const container = document.getElementById('chatHistoryContainer');
+        const cards = document.getElementById('featureCards');
+        if (cards) cards.remove();
+        const bubble = document.createElement('div');
+        bubble.className = 'message-bubble user';
+        bubble.innerHTML = `<img src="${ev.target.result}" style="max-width:300px;max-height:200px;border-radius:8px;">`;
+        container.appendChild(bubble);
+        container.scrollTop = container.scrollHeight;
+
+        if (webState.isTerminalConnected && webState.ws && webState.ws.readyState === WebSocket.OPEN) {
+          webState.ws.send(JSON.stringify({ type: 'upload-image', data: { name: file.name, base64: ev.target.result, mimeType: file.type } }));
+        } else if (webState.googleAccessToken || webState.apiKey) {
+          appendMessage('ai', '⏳ 圖片已上傳，正在請 AI 分析...');
+          callGeminiWithImage(file.name, ev.target.result, file.type).then(reply => {
+            const bubbles = container.querySelectorAll('.message-bubble.ai');
+            const last = bubbles[bubbles.length - 1];
+            if (last && last.innerHTML.includes('分析')) last.remove();
+            appendMessage('ai', reply || '⚠️ 圖片分析失敗，請確認 API 金鑰。');
+          });
+        } else {
+          appendMessage('ai', '✅ 圖片已收到（離線模式無法分析）。');
+        }
+      };
+      reader.readAsDataURL(file);
+      return;
+    }
+
+    // 影片上傳
+    if (isVideo) {
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        if (webState.isTerminalConnected && webState.ws && webState.ws.readyState === WebSocket.OPEN) {
+          appendMessage('user', `🎬 已選擇影片：${file.name}`);
+          webState.ws.send(JSON.stringify({ type: 'upload-video', data: { name: file.name, base64: ev.target.result, mimeType: file.type } }));
+        } else if (webState.manualModeEnabled) {
+          appendMessage('ai', '🔗 影片已選擇。手動模式下請自行將影片上傳給網頁版 AI。');
+        } else {
+          appendMessage('ai', `🎬 影片 <code>${file.name}</code> 已就緒。目前僅支援終端連線模式下自動上傳。`);
+        }
+      };
+      reader.readAsDataURL(file);
+      return;
+    }
+
+    // 其他檔案
+    appendMessage('ai', `📄 檔案 <code>${file.name}</code> 已選擇。可透過終端模式上傳或手動處理。`);
+  }
+
   // ==== 取消手動模式按鈕 ====
   document.getElementById('btnCancelManual')?.addEventListener('click', cancelManualMode);
 
@@ -1898,6 +2006,42 @@ async function callGeminiFromFrontend(text) {
     }
   }
 
+  return null;
+}
+
+async function callGeminiWithImage(name, base64DataUrl, mimeType) {
+  const SYSTEM_PROMPT = '你是小龍蝦控制中樞的 AI 助手。這是一張圖片，請簡要描述圖片內容或回答使用者的問題。';
+  const parts = [{ text: '請分析這張圖片。' }];
+
+  // 從 data URL 提取 base64
+  const base64 = base64DataUrl.split(',')[1] || base64DataUrl;
+
+  if (webState.googleAccessToken) {
+    try {
+      const res = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${webState.googleAccessToken}` },
+        body: JSON.stringify({
+          contents: [{ parts: [{ inline_data: { mime_type: mimeType, data: base64 } }, { text: '請分析這張圖片。' }] }],
+          systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] }
+        })
+      });
+      if (res.ok) { const data = await res.json(); return data.candidates[0].content.parts[0].text; }
+    } catch (e) {}
+  }
+  if (webState.apiKey) {
+    try {
+      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${webState.apiKey}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ inline_data: { mime_type: mimeType, data: base64 } }, { text: '請分析這張圖片。' }] }],
+          systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] }
+        })
+      });
+      if (res.ok) { const data = await res.json(); return data.candidates[0].content.parts[0].text; }
+    } catch (e) {}
+  }
   return null;
 }
 
