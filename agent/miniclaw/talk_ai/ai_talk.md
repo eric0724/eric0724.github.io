@@ -15,10 +15,14 @@ Miniclaw（小龍蝦）：一個讓玩家透過自然語言指令操控電腦的
 - **校準系統**：calibrate.py — AI 找位置 → 截 normal/hover 範本 → 點擊前後確認 → 降級手動校準
 - **自動化腳本**：recorder.py（錄製）+ auto_run.py（執行）+ safe_locate.py（防崩潰）
 - **架構**：run/talk 分流 + 三層日誌（ai_talk.md / chat_history.txt / 雲端）
+- **Skills 技能系統（外掛架構）**：競品原始碼分析（opencode + Codex CLI）| 建立 skills/ 目錄 | 首個技能 click-master（SKILL.md）| 零依賴 skills_manager.js 管理模組 | 盲點評估報告
+- **Skills Phase 2 — 架構深化**：內嵌輕量 YAML 解析器（零依賴）| SKILL.md Body 第二層深度載入（getSkillBody）| 技能觸發偵測引擎（detectTriggeredSkills）| 記憶體快取 | SKILLS_PATH 環境變數支援 | server.js 動態注入技能 Body
 
 ### 下一步
 - 校準流程實測優化（提示詞精度、重試策略）
 - 整合 test-lab 到 Miniclaw 主系統
+- **Skills Phase 3**：前端技能清單顯示（新型 WebSocket message）| SKILL.md Body 按需深度載入優化 | 技能觸發比對門檻調校
+- **Skills Phase 4**：技能流程自動化（scripts/ 執行 + references/ 載入）
 
 ---
 
@@ -42,6 +46,19 @@ Miniclaw（小龍蝦）：一個讓玩家透過自然語言指令操控電腦的
 - **Git 指令：** `"C:\Program Files\Git\bin\git.exe"`
 - **Repo：** `https://github.com/eric0724/eric0724.github.io.git`
 - **Pull 後：** 必須先讀 ai_talk.md 了解背景再繼續
+
+### 提示詞助手（Prompt Assistant）工作流程
+玩家現在會使用 **另一個 AI** 來輔助整理與優化提示詞，再將最終版本傳遞給主要執行 AI（你或其他 Agent）進行檔案修改。
+
+**流程說明：**
+1. **提示詞助手 AI** — 負責分析需求、整理上下文、規劃修改方案、產出精確的提示詞
+2. **執行 AI（你/其他 Agent）** — 收到已整理好的提示詞後，直接進行檔案修改與實作
+
+**注意事項：**
+- 提示詞助手 AI 產出的內容可能包含 `SEARCH/REPLACE` 區塊、指令清單或程式碼片段
+- 執行 AI 收到這類內容時，應視為已規劃完成，直接執行而非重新規劃
+- 如果提示詞中有不清楚的地方，仍可提問確認，但不要推翻已確定的修改方向
+- 所有對話仍須遵守本文件的互動規則（步驟限制、時間戳、紀錄規則等）
 
 ### 紀錄規則
 - 每次對話結束補一行 `[YYYY-MM-DD HH:MM] 關鍵字 | 關鍵字`（有改程式才記）
@@ -89,3 +106,5 @@ Miniclaw（小龍蝦）：一個讓玩家透過自然語言指令操控電腦的
 [2026-06-12 12:14] 手動模式輸入框鎖定（避免誤打）| 送出回覆後自動取消手動模式 | processManualAIReply自動恢復
 [2026-06-15 11:46] 大廳設定面板手風琴折疊（7個panel）| 智慧預設開關（依連線/API/遠端狀態）| GOGO push (57ba509)
 [2026-06-15 12:02] 手風琴收合修復：inline onclick改addEventListener | CSS移除overflow:hidden | display切換邏輯修正 | GOGO push (6dc80ae)
+[2026-06-16 10:11] Skills系統外掛實作：競品原始碼分析(opencode+Codex CLI) | 建立skills/click-master/SKILL.md | 建立skills_manager.js | 盲點評估報告 | 產出grr.md交接摘要
+[2026-06-16 10:24] Skills Phase2：內嵌YAML解析器 | getSkillBody深度載入 | detectTriggeredSkills引擎 | 記憶體快取 | SKILLS_PATH環境變數 | server.js動態注入技能Body

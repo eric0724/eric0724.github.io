@@ -4,6 +4,7 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const { exec } = require('child_process');
+const skillsManager = require('./skills_manager');
 
 const PORT = 3000;
 const AUTH_FILE_PATH = path.join(__dirname, 'credentials', 'auth-profiles.json');
@@ -581,6 +582,18 @@ async function processUserCommand(text, clientPlatform, socket) {
     }
   }
   
+  // Phase 2: 技能觸發偵測 → 動態注入完整 Body（第二層深度載入）
+  try {
+    const skillTrigger = skillsManager.formatTriggeredSkillsForPrompt(text);
+    if (skillTrigger) {
+      enrichedPrompt += skillTrigger;
+      console.log(`🎯 [技能觸發] 已偵測並注入技能指引至上下文`);
+    }
+  } catch (e) {
+    // 技能觸發失敗不影響主流程，僅記錄警告
+    console.warn(`[技能觸發] 偵測異常 (不影響主流程): ${e.message}`);
+  }
+  
   callAIModelWithFailover(enrichedPrompt, socket, clientPlatform);
 }
 
@@ -706,6 +719,19 @@ async function callAIModelWithFailover(prompt, socket, clientPlatform) {
 }
 
 // --- 各 AI 接口封裝 (標準 fetch 實作) ---
+// 動態載入可用技能清單（僅存在 skills 目錄且有 SKILL.md 時才附加）
+const SKILLS_PROMPT_SEGMENT = (() => {
+  try {
+    const metadata = skillsManager.getSkillsMetadata();
+    if (metadata.length === 0) return '';
+    const lines = metadata.map((s, i) => `${i + 1}. ${s.name}：${s.description}`);
+    return `\n\n【可用技能清單】\n${lines.join('\n')}\n\n當使用者需求明確符合上述技能的描述時，請使用對應的 [技能名稱] 格式來呼叫技能。`;
+  } catch (e) {
+    console.warn('[SYSTEM_PROMPT] 無法讀取技能資訊:', e.message);
+    return '';
+  }
+})();
+
 const SYSTEM_PROMPT = `你現在是『Miniclaw 小龍蝦控制中樞』的專屬本地端 AI 助手。你已被授權最高系統操作權限，可透過終端機執行任意指令。
 
 請務必嚴格遵守以下輸出格式規範：
@@ -714,7 +740,7 @@ const SYSTEM_PROMPT = `你現在是『Miniclaw 小龍蝦控制中樞』的專屬
 
 - 如果要求需要控制電腦或查詢系統，請在第二行加上「指令:」並附上終端機指令（若需截圖請用 miniclaw:screenshot）。
 - 如果只是純聊天，則「指令:」可留空或不寫。
-- 請簡明扼要，聊天長度盡量控制在 100 字內。`;
+- 請簡明扼要，聊天長度盡量控制在 100 字內。${SKILLS_PROMPT_SEGMENT}`;
 
 async function fetchGeminiAPI(prompt, key, googleToken) {
   // 使用支援 systemInstruction 的 gemini-1.5-flash
