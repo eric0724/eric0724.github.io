@@ -30,7 +30,7 @@ echo.
 
 :: 啟動 openminiclaw.bat（新視窗，不卡住 watchdog）
 echo [*] 啟動 openminiclaw.bat...
-start "Miniclaw" cmd /c ""%BAT_PATH%""
+start "Miniclaw" "%BAT_PATH%"
 
 :: 等待 node.exe 出現（最多等 60 秒）
 echo [*] 等待 node.exe 啟動（60 秒內）...
