@@ -1,13 +1,12 @@
-$src = Join-Path $PSScriptRoot 'miniclaw-executor'
-$tmp = Join-Path $PSScriptRoot '_zip_tmp'
-$out = Join-Path $PSScriptRoot 'miniclaw-executor.zip'
+$src = 'C:\Users\user\Downloads\g\agent\miniclaw\miniclaw-executor'
+$out = 'C:\Users\user\Downloads\g\agent\miniclaw\miniclaw-executor.zip'
+$tmp = 'C:\Users\user\Downloads\g\agent\miniclaw\_zip_tmp'
 
-if (Test-Path $tmp) { Remove-Item $tmp -Recurse -Force }
 if (Test-Path $out) { Remove-Item $out -Force }
+if (Test-Path $tmp) { Remove-Item $tmp -Recurse -Force }
 
 Copy-Item $src $tmp -Recurse
 
-# 排除敏感/暫存檔案
 Remove-Item (Join-Path $tmp 'app\credentials\auth-profiles.json') -Force -ErrorAction SilentlyContinue
 Remove-Item (Join-Path $tmp 'app\server.js.bak') -Force -ErrorAction SilentlyContinue
 Remove-Item (Join-Path $tmp 'app\node_modules') -Recurse -Force -ErrorAction SilentlyContinue
