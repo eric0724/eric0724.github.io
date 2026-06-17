@@ -286,3 +286,78 @@ isRunning = true  → 加入隊列等待
 ### 相關檔案
 - `miniclaw-executor/app/server.js` — 隊列 + 清理機制
 - `miniclaw-web/index.html` — 時間戳更新（10:24）
+
+---
+
+## 本次完成：Phase 13 — 全局系統驗證與日誌自動滾動清理
+
+### 修改檔案
+- `miniclaw-executor/app/server.js`（日誌封存 + 健康檢查）
+- `miniclaw-web/index.html`（時間戳更新）
+
+### 核心功能
+
+**1. 日誌檔案大小限制與自動封存**
+- 監控 `chat_history.txt` 寫入前的大小
+- 超過 5MB 自動封存為 `chat_history_bak.txt`
+- 保留最新一版備份（覆蓋式）
+- 非同步執行，不阻塞主流程
+
+**關鍵程式碼：**
+```javascript
+const LOG_SIZE_THRESHOLD = 5 * 1024 * 1024;  // 5MB
+const LOG_BACKUP_SUFFIX = '_bak';
+
+function rotateLogIfNeeded(logPath) {
+  const stats = fs.statSync(logPath);
+  if (stats.size >= LOG_SIZE_THRESHOLD) {
+    const backupPath = `${base}${LOG_BACKUP_SUFFIX}${ext}`;
+    if (fs.existsSync(backupPath)) fs.unlinkSync(backupPath);
+    fs.renameSync(logPath, backupPath);
+    console.log(`📦 [日誌封存] ${path.basename(logPath)} → ${path.basename(backupPath)}（${(stats.size / 1024 / 1024).toFixed(2)}MB）`);
+  }
+}
+```
+
+**2. 啟動自我健康檢查**
+- 檢查 Python 環境（`py --version`）
+- 檢查必要套件：pyautogui, Pillow, pynput
+- 檢查 skills/ 目錄結構完整性
+- 檢查關鍵執行器檔案是否存在
+- 非阻塞式：警告但不中斷啟動
+
+**檢查項目：**
+```javascript
+function performHealthCheck() {
+  // 1. Python 環境
+  // 2. 必要套件（pyautogui, Pillow, pynput）
+  // 3. skills/ 目錄結構
+  // 4. 關鍵檔案（server.js, skills_manager.js, index.html, client.js）
+}
+```
+
+**3. 執行流程**
+```
+伺服器啟動
+    ↓
+performHealthCheck() 執行
+    ↓
+檢查 Python、套件、skills/、關鍵檔案
+    ↓
+輸出警告（黃色）或通過（綠色）
+    ↓
+系統繼續啟動（不中斷）
+    ↓
+日誌寫入時 rotateLogIfNeeded() 檢查
+    ↓
+超過 5MB → 自動封存為 _bak 檔案
+```
+
+**4. 防護機制**
+- 日誌封存失敗不影響主流程（try-catch 保護）
+- 健康檢查警告但不中斷啟動
+- 彩色輸出：綠色通過、黃色警告、紅色錯誤
+
+### 相關檔案
+- `miniclaw-executor/app/server.js` — 日誌封存 + 健康檢查
+- `miniclaw-web/index.html` — 時間戳更新（10:45）

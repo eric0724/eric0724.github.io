@@ -25,6 +25,106 @@ const activeProcesses = new Map(); // pid -> { skillName, startTime, killed }
 const STALE_THRESHOLD = 120000; // 2 分鐘未完成視為僵死
 const CLEANUP_INTERVAL = 30000; // 每 30 秒清理一次
 
+// Phase 13: 日誌檔案大小限制與自動封存
+const LOG_SIZE_THRESHOLD = 5 * 1024 * 1024;  // 5MB
+const LOG_BACKUP_SUFFIX = '_bak';
+
+/**
+ * 檢查日誌檔案大小，超過閾值則自動封存
+ * @param {string} logPath - 日誌檔案完整路徑
+ */
+function rotateLogIfNeeded(logPath) {
+  try {
+    if (!fs.existsSync(logPath)) return;
+    
+    const stats = fs.statSync(logPath);
+    if (stats.size >= LOG_SIZE_THRESHOLD) {
+      const ext = path.extname(logPath);
+      const base = logPath.slice(0, -ext.length);
+      const backupPath = `${base}${LOG_BACKUP_SUFFIX}${ext}`;
+      
+      // 如果備份已存在，直接刪除（保留最新一版）
+      if (fs.existsSync(backupPath)) {
+        fs.unlinkSync(backupPath);
+      }
+      
+      // 重新命名當前日誌為備份
+      fs.renameSync(logPath, backupPath);
+      console.log('\x1b[33m%s\x1b[0m', `📦 [日誌封存] ${path.basename(logPath)} → ${path.basename(backupPath)}（${(stats.size / 1024 / 1024).toFixed(2)}MB）`);
+    }
+  } catch (err) {
+    console.error('\x1b[31m%s\x1b[0m', `[日誌封存] 失敗：${err.message}`);
+  }
+}
+
+// Phase 13: 啟動自我健康檢查
+function performHealthCheck() {
+  console.log('\x1b[36m%s\x1b[0m', '🔍 [啟動檢查] 開始系統環境驗證...');
+  const warnings = [];
+  
+  // 1. 檢查 Python 環境
+  try {
+    const { execSync } = require('child_process');
+    const pythonVersion = execSync('py --version', { encoding: 'utf8', stdio: 'pipe' }).trim();
+    console.log('\x1b[32m%s\x1b[0m', `  ✅ Python：${pythonVersion}`);
+  } catch (e) {
+    warnings.push('Python 環境未安裝或不在 PATH 中（py 指令無效）');
+  }
+  
+  // 2. 檢查必要套件
+  const requiredPackages = ['pyautogui', 'Pillow', 'pynput'];
+  for (const pkg of requiredPackages) {
+    try {
+      execSync(`py -m pip show ${pkg}`, { encoding: 'utf8', stdio: 'pipe' });
+      console.log(`\x1b[32m%s\x1b[0m`, `  ✅ 套件 ${pkg}：已安裝`);
+    } catch (e) {
+      warnings.push(`套件 ${pkg} 未安裝（執行 py -m pip install ${pkg}）`);
+    }
+  }
+  
+  // 3. 檢查 skills/ 目錄結構
+  const skillsRoot = path.resolve(__dirname, '../../skills');
+  if (!fs.existsSync(skillsRoot)) {
+    warnings.push('skills/ 目錄不存在');
+  } else {
+    const skills = fs.readdirSync(skillsRoot, { withFileTypes: true })
+      .filter(d => d.isDirectory())
+      .map(d => d.name);
+    console.log('\x1b[32m%s\x1b[0m', `  ✅ Skills 目錄：找到 ${skills.length} 個技能（${skills.join(', ')}）`);
+    
+    // 檢查每個技能是否有 SKILL.md
+    for (const skill of skills) {
+      const skillMd = path.join(skillsRoot, skill, 'SKILL.md');
+      if (!fs.existsSync(skillMd)) {
+        warnings.push(`技能 ${skill} 缺少 SKILL.md`);
+      }
+    }
+  }
+  
+  // 4. 檢查執行器目錄結構
+  const appDir = path.resolve(__dirname, '../..');
+  const criticalFiles = [
+    'miniclaw-executor/app/server.js',
+    'miniclaw-executor/app/skills_manager.js',
+    'miniclaw-web/index.html',
+    'miniclaw-web/client.js'
+  ];
+  for (const file of criticalFiles) {
+    if (!fs.existsSync(path.join(appDir, file))) {
+      warnings.push(`關鍵檔案缺失：${file}`);
+    }
+  }
+  
+  // 輸出警告（黃色）
+  if (warnings.length > 0) {
+    console.log('\x1b[33m%s\x1b[0m', '⚠️ [啟動檢查] 發現以下問題：');
+    warnings.forEach(w => console.log('\x1b[33m%s\x1b[0m', `   - ${w}`));
+    console.log('\x1b[33m%s\x1b[0m', '   系統將繼續啟動，但部分功能可能無法正常運作。');
+  } else {
+    console.log('\x1b[32m%s\x1b[0m', '✅ [啟動檢查] 所有環境驗證通過！');
+  }
+}
+
 // --- 對話記憶（Session 內滾動記憶，最多保留 20 輪）---
 const chatHistory = [];
 const MAX_CHAT_HISTORY = 20;
@@ -165,6 +265,10 @@ const server = http.createServer((req, res) => {
         const logDir  = path.resolve(__dirname, '../../talk_ai');
         const logFile = path.join(logDir, 'chat_history.txt');
         if (!fs.existsSync(logDir)) fs.mkdirSync(logDir, { recursive: true });
+        
+        // Phase 13: 寫入前檢查日誌大小，超過 5MB 自動封存
+        rotateLogIfNeeded(logFile);
+        
         const line = `[${ts || new Date().toISOString()}] ${role || 'user'}: ${(text || '').slice(0, 500)}\n`;
         fs.appendFileSync(logFile, line, 'utf8');
         res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -1380,9 +1484,13 @@ function getQueueStatus() {
 
 // --- 啟動伺服器 ---
 server.listen(PORT, () => {
+  // Phase 13: 啟動時執行自我健康檢查
+  performHealthCheck();
+  
   console.log('\x1b[32m%s\x1b[0m', `🦞 [小龍蝦伺服器] 正式在 http://localhost:${PORT} 啟動！`);
   console.log('\x1b[36m%s\x1b[0m', '💡 [自檢說明] 在瀏覽器中開啟 miniclaw-web/index.html 即可立刻與我建立WebSocket連線。');
   console.log('\x1b[33m%s\x1b[0m', `🔧 [Phase 12] 技能執行隊列與僵死進程清理機制已啟動（最大隊列：${skillExecutionQueue.maxQueueSize}，清理間隔：${CLEANUP_INTERVAL / 1000}秒）`);
+  console.log('\x1b[33m%s\x1b[0m', `📦 [Phase 13] 日誌自動封存機制已啟動（閾值：${LOG_SIZE_THRESHOLD / 1024 / 1024}MB）`);
 });
 
 // --- 9. 全域異常防護 (防止 any 未捕獲例外導致伺服器崩潰) ---
