@@ -10,6 +10,10 @@ const PORT = 3000;
 const AUTH_FILE_PATH = path.join(__dirname, 'credentials', 'auth-profiles.json');
 const BACKUP_PATH = path.join(__dirname, 'server.js.bak');
 
+// Phase 15: 整合測試模式（--test 參數）
+const args = process.argv.slice(2);
+const RUN_INTEGRATION_TEST = args.includes('--test');
+
 // Phase 11: 手勢自動觸發巨集開關（全域狀態）
 let gestureAutoTriggerEnabled = false;  // 預設關閉
 
@@ -1482,16 +1486,55 @@ function getQueueStatus() {
   };
 }
 
-// --- 啟動伺服器 ---
-server.listen(PORT, () => {
-  // Phase 13: 啟動時執行自我健康檢查
-  performHealthCheck();
+// Phase 15: 整合測試執行
+async function runIntegrationTests() {
+  console.log('\x1b[36m%s\x1b[0m', '🧪 [Phase 15] 啟動整合測試模式...');
+  console.log();
   
-  console.log('\x1b[32m%s\x1b[0m', `🦞 [小龍蝦伺服器] 正式在 http://localhost:${PORT} 啟動！`);
-  console.log('\x1b[36m%s\x1b[0m', '💡 [自檢說明] 在瀏覽器中開啟 miniclaw-web/index.html 即可立刻與我建立WebSocket連線。');
-  console.log('\x1b[33m%s\x1b[0m', `🔧 [Phase 12] 技能執行隊列與僵死進程清理機制已啟動（最大隊列：${skillExecutionQueue.maxQueueSize}，清理間隔：${CLEANUP_INTERVAL / 1000}秒）`);
-  console.log('\x1b[33m%s\x1b[0m', `📦 [Phase 13] 日誌自動封存機制已啟動（閾值：${LOG_SIZE_THRESHOLD / 1024 / 1024}MB）`);
-});
+  const { spawn } = require('child_process');
+  const testScript = path.join(__dirname, 'scripts', 'integration_test.py');
+  
+  return new Promise((resolve) => {
+    const testProc = spawn('py', [testScript], {
+      stdio: 'inherit',
+      cwd: __dirname
+    });
+    
+    testProc.on('close', (code) => {
+      console.log();
+      console.log('='.repeat(60));
+      
+      if (code === 0) {
+        console.log('\x1b[32m%s\x1b[0m', '🎉 整合測試通過！PASS');
+      } else {
+        console.log('\x1b[31m%s\x1b[0m', `⚠️  整合測試失敗！FAIL (exit code: ${code})`);
+      }
+      
+      console.log('='.repeat(60));
+      console.log('\x1b[33m%s\x1b[0m', '💡 提示：使用 node server.js 啟動正常伺服器');
+      
+      process.exit(code || 0);
+    });
+  });
+}
+
+// --- 啟動伺服器 ---
+if (RUN_INTEGRATION_TEST) {
+  // Phase 15: 執行整合測試
+  runIntegrationTests();
+} else {
+  // 正常啟動
+  server.listen(PORT, () => {
+    // Phase 13: 啟動時執行自我健康檢查
+    performHealthCheck();
+    
+    console.log('\x1b[32m%s\x1b[0m', `🦞 [小龍蝦伺服器] 正式在 http://localhost:${PORT} 啟動！`);
+    console.log('\x1b[36m%s\x1b[0m', '💡 [自檢說明] 在瀏覽器中開啟 miniclaw-web/index.html 即可立刻與我建立WebSocket連線。');
+    console.log('\x1b[33m%s\x1b[0m', `🔧 [Phase 12] 技能執行隊列與僵死進程清理機制已啟動（最大隊列：${skillExecutionQueue.maxQueueSize}，清理間隔：${CLEANUP_INTERVAL / 1000}秒）`);
+    console.log('\x1b[33m%s\x1b[0m', `📦 [Phase 13] 日誌自動封存機制已啟動（閾值：${LOG_SIZE_THRESHOLD / 1024 / 1024}MB）`);
+    console.log('\x1b[36m%s\x1b[0m', `🧪 [Phase 15] 整合測試框架已就緒（執行 node server.js --test 啟動測試）`);
+  });
+}
 
 // --- 9. 全域異常防護 (防止 any 未捕獲例外導致伺服器崩潰) ---
 process.on('uncaughtException', (err) => {
