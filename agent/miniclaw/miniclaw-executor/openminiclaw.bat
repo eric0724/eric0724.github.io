@@ -84,7 +84,7 @@ if !NGROK_VERSION_OK!==0 (
   winget upgrade ngrok.ngrok
   del "%ROOT%installing.flag" >nul 2>&1
   
-  :: Re-check version after upgrade attempt
+  rem Re-check version after upgrade attempt
   call :check_ngrok_version
   if !NGROK_VERSION_OK!==0 goto :ngrok_too_old
 )
