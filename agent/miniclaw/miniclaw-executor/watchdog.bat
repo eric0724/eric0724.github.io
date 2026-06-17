@@ -2,91 +2,86 @@
 setlocal enabledelayedexpansion
 
 :: ============================================
-:: Miniclaw Watchdog v4 — 純依賴檢查 + 啟動
+:: Miniclaw Watchdog v5 — 無限重試啟動模式
 :: ============================================
-::  只檢查 Node.js 和 ngrok 是否已安裝
-::  用 timeout 等固定秒數 + where 檢查
-::  不監控進程，不安裝，單純啟動
+::  不自己做安裝，不檢查 ngrok
+::  只做一件事：不斷重試開啟 openminiclaw.bat
+::  直到 node.exe 成功啟動為止
+::  如果 node.exe 後來停止，也自動重啟
 :: ============================================
 
 set "ROOT=%~dp0"
 set "BAT_PATH=%ROOT%openminiclaw.bat"
 
 echo ============================================
-echo  🦞 Miniclaw Watchdog v4 啟動管理員
+echo  🦞 Miniclaw Watchdog v5
 echo ============================================
-echo  1. 檢查 Node.js
-echo  2. 檢查 ngrok
-echo  3. 啟動 Miniclaw
+echo  自動重試啟動 openminiclaw.bat
+echo  直到 node.exe 正常執行
 echo ============================================
 echo.
+echo  提示：第一次執行安裝 Node.js 或 ngrok 時
+echo        安裝完成會自動關閉視窗，
+echo        Watchdog 會自動再次啟動。
+echo        不需要手動關閉任何東西！
+echo.
 
-:: ─── 步驟 1：檢查 Node.js ────────────────
-echo [1/3] 檢查 Node.js...
-where node >nul 2>&1
-if !errorlevel! neq 0 (
-    echo [!] Node.js 尚未安裝，正在安裝...
-    start /min "" "%ROOT%install_node.bat"
-    echo [*] 等待 30 秒讓安裝完成...
-    timeout /t 30 /nobreak >nul
-    
-    :: 再次檢查
-    where node >nul 2>&1
-    if !errorlevel! neq 0 (
-        echo [X] Node.js 似乎尚未安裝完成
-        echo     請關閉安裝視窗後重新執行 watchdog.bat
-        pause
-        exit /b 1
+:startup
+
+:: 啟動 openminiclaw.bat（新視窗，不卡住 watchdog）
+echo [*] 啟動 openminiclaw.bat...
+start "Miniclaw" cmd /c ""%BAT_PATH%""
+
+:: 等待 node.exe 出現（最多等 60 秒）
+echo [*] 等待 node.exe 啟動（60 秒內）...
+set WAIT=0
+:wait_node_start
+timeout /t 3 /nobreak >nul
+tasklist /fi "imagename eq node.exe" 2>nul | find /i "node.exe" >nul
+if !errorlevel! equ 0 (
+    echo [OK] node.exe 已啟動！
+    goto :monitor
+)
+set /a WAIT+=3
+if !WAIT! geq 60 (
+    if exist "%ROOT%installing.flag" (
+        echo [*] 偵測到系統正在進行環境安裝，繼續等待...
+        set WAIT=0
+        goto :wait_node_start
     )
+    echo [!] node.exe 未啟動（已等 60 秒且無安裝活動）
+    echo     可能是正在安裝，或安裝卡住
+    echo     將關閉視窗並重試...
+    taskkill /f /fi "WINDOWTITLE eq Miniclaw" >nul 2>&1
+    taskkill /f /im node.exe >nul 2>&1
+    taskkill /f /im ngrok.exe >nul 2>&1
+    timeout /t 2 /nobreak >nul
+    goto :startup
 )
-for /f "tokens=*" %%i in ('where node') do echo [OK] Node.js：%%i
-echo.
+goto :wait_node_start
 
-:: ─── 步驟 2：檢查 ngrok ──────────────────
-echo [2/3] 檢查 ngrok...
-where ngrok >nul 2>&1
+:: ─── 監控模式 ────────────────────────────
+:monitor
+echo [*] 進入監控模式，每 5 秒檢查 node.exe...
+
+:monitor_loop
+timeout /t 5 /nobreak >nul
+
+:: 檢查 node.exe
+tasklist /fi "imagename eq node.exe" 2>nul | find /i "node.exe" >nul
 if !errorlevel! neq 0 (
-    :: 也檢查 winget 安裝路徑
-    set NGROK_FOUND=0
-    if exist "%LOCALAPPDATA%\Microsoft\WinGet\Packages\ngrok.ngrok_Microsoft.Winget.Source_8wekyb3d8bbwe\ngrok.exe" set NGROK_FOUND=1
-    if exist "%LOCALAPPDATA%\Microsoft\WinGet\Packages\Ngrok.Ngrok_Microsoft.Winget.Source_8wekyb3d8bbwe\ngrok.exe" set NGROK_FOUND=1
-    
-    if !NGROK_FOUND! equ 0 (
-        echo [!] ngrok 尚未安裝，正在安裝...
-        start /min "" "%ROOT%install_ngrok.bat"
-        echo [*] 等待 30 秒讓安裝完成...
-        timeout /t 30 /nobreak >nul
-        
-        :: 再次檢查 PATH 或 winget 路徑
-        where ngrok >nul 2>&1
-        if !errorlevel! equ 0 (
-            set NGROK_FOUND=1
-        ) else (
-            if exist "%LOCALAPPDATA%\Microsoft\WinGet\Packages\ngrok.ngrok_Microsoft.Winget.Source_8wekyb3d8bbwe\ngrok.exe" set NGROK_FOUND=1
-            if exist "%LOCALAPPDATA%\Microsoft\WinGet\Packages\Ngrok.Ngrok_Microsoft.Winget.Source_8wekyb3d8bbwe\ngrok.exe" set NGROK_FOUND=1
-        )
-        
-        if !NGROK_FOUND! equ 0 (
-            echo [X] ngrok 似乎尚未安裝完成
-            echo     請關閉安裝視窗後重新執行 watchdog.bat
-            pause
-            exit /b 1
-        )
-    )
+    echo [!] node.exe 已停止！
+    echo     將清理並重新啟動...
+    taskkill /f /im ngrok.exe >nul 2>&1
+    timeout /t 2 /nobreak >nul
+    goto :startup
 )
-if !NGROK_FOUND! equ 1 (
-    echo [OK] ngrok：已透過 winget 安裝
-) else (
-    for /f "tokens=*" %%i in ('where ngrok') do echo [OK] ngrok：%%i
-)
-echo.
 
-:: ─── 步驟 3：啟動 ────────────────────────
-echo [3/3] 啟動 Miniclaw...
-echo.
-start "" cmd /c ""%BAT_PATH%" & pause"
-echo [OK] 已啟動！
-echo.
-echo  你可以關閉此視窗。
-pause
-exit /b 0
+:: 顯示狀態（每 30 秒顯示一次）
+set /a COUNT+=1
+if !COUNT! geq 6 (
+    set COUNT=0
+    echo [!TIME!] 監控中：node.exe ✅ 執行中
+)
+
+goto :monitor_loop

@@ -38,7 +38,7 @@ Miniclaw（小龍蝦）：一個讓玩家透過自然語言指令操控電腦的
 **回答：** 簡短精簡  
 **先說明後動手：** 每次先說明問題解法，等使用者說 OK 再改程式碼  
 **一次一問題：** 多個問題時一次只解決一個，確認後再處理下一個  
-**步驟限制：** 每次最多 3 個「重操作」（讀大檔 >500行、寫檔、執行指令），超過就等待 30 秒再繼續（PowerShell 用 `Start-Sleep -Seconds 30`，Python 用 `time.sleep(30)`）  
+**步驟限制：** 每次最多 3 個「重操作」（讀大檔 >500行、寫檔、執行指令），超過就等待 30 秒再繼續（PowerShell 用 `Start-Sleep -Seconds 30`，Python 用 `time.sleep(30)`，此規則僅 Kiro Agent 需遵守，其他 Agent 不受限制）  
 **不准自作主張：** 只改指定檔案，不碰不相關的程式碼  
 **時間戳：** 改程式後更新 `index.html` 底部時間戳（`Get-Date -Format "yyyy-MM-dd HH:mm" -TimeZone "Asia/Taipei"`）
 
@@ -128,3 +128,5 @@ Miniclaw（小龍蝦）：一個讓玩家透過自然語言指令操控電腦的
 [2026-06-17 10:24] Skills Phase12：多技能併發壓力測試與邊界異常防禦 | server.js隊列機制(skillExecutionQueue) | 僵死進程清理(activeProcesses+killChildProcesses) | 60秒超時+SIGKILL | grr.md交接文件更新
 [2026-06-17 10:45] Skills Phase13：全局系統驗證與日誌自動滾動清理 | rotateLogIfNeeded(5MB閾值+_bak備份) | performHealthCheck(Python+套件+skills+關鍵檔案) | grr.md交接文件更新
 [2026-06-17 11:06] Skills Phase14：系統白皮書與完整操作/外掛開發手冊生成 | 建立USER_GUIDE.md(使用者操作手冊) | 建立DEVELOPER_SKILLS.md(開發者外掛開發手冊) | grr.md交接文件更新
+[2026-06-17 12:26] Watchdog與Openminiclaw安裝標記聯動優化 | openminiclaw.bat新增installing.flag | watchdog.bat檢查installing.flag跳過強殺 | index.html時間戳更新 | 執行_repack_local.ps1壓縮 | grr.md交接文件更新
+

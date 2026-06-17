@@ -2,17 +2,21 @@
 setlocal enabledelayedexpansion
 set "ROOT=%~dp0"
 set "APP_DIR=%ROOT%app"
+set "STARTUP_TIPS=%ROOT%docs\startup_tips.md"
+set "NGROK_GUIDE=%ROOT%docs\ngrok_update_guide.md"
 
 :: 在開頭即打開提示筆記本（常見問題、重新啟動指引）
-start /b "" notepad.exe "%ROOT%docs\startup_tips.md"
+start /b "" notepad.exe "%STARTUP_TIPS%"
 
 cd /d "%APP_DIR%"
 
 echo [1/5] Node.js check...
 where node >nul 2>&1
 if %errorlevel% neq 0 (
+  echo installing > "%ROOT%installing.flag"
   echo [x] Node.js not found. Installing via winget...
   winget install OpenJS.NodeJS
+  del "%ROOT%installing.flag" >nul 2>&1
   if %errorlevel% neq 0 (
     echo [X] Install failed. Please visit https://nodejs.org
     pause
@@ -53,7 +57,9 @@ if %errorlevel% neq 0 (
     goto :ngrok_found
   )
   echo [x] ngrok not found. Installing via winget...
+  echo installing > "%ROOT%installing.flag"
   winget install ngrok.ngrok
+  del "%ROOT%installing.flag" >nul 2>&1
   if %errorlevel% neq 0 (
     echo [X] ngrok install failed. Please visit https://ngrok.com/download
     pause
@@ -202,10 +208,10 @@ pause
 exit /b 0
 
 :open_ngrok_update_guide
-if exist "%ROOT%docs\ngrok_update_guide.md" (
-  start "" notepad.exe "%ROOT%docs\ngrok_update_guide.md"
+if exist "%NGROK_GUIDE%" (
+  start "" notepad.exe "%NGROK_GUIDE%"
 ) else (
-  echo [X] Guide file missing: %ROOT%docs\ngrok_update_guide.md
+  echo [X] Guide file missing: %NGROK_GUIDE%
 )
 exit /b 0
 

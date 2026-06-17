@@ -361,3 +361,23 @@ performHealthCheck() 執行
 ### 相關檔案
 - `miniclaw-executor/app/server.js` — 日誌封存 + 健康檢查
 - `miniclaw-web/index.html` — 時間戳更新（10:45）
+
+---
+
+## 本次完成：Watchdog 與 Openminiclaw 安裝標記聯動優化
+
+### 修改檔案
+- `miniclaw-executor/openminiclaw.bat`（加入 `installing.flag` 建立與刪除）
+- `miniclaw-executor/watchdog.bat`（判斷 `installing.flag` 存在時重設計時，跳過 `taskkill`）
+- `miniclaw-web/index.html`（更新時間戳：2026-06-17 12:26）
+
+### 核心功能
+為防止 `watchdog.bat` 在 60 秒超時判定中，強制殺死正在以 `winget` 下載安裝環境（Node.js / ngrok）的 `openminiclaw.bat` 視窗，引入進程標記檔聯動機制。
+
+### 關鍵機制
+1. **建立安裝標記**：當 `openminiclaw.bat` 偵測到缺乏環境需要安裝時，執行 `echo installing > "%ROOT%installing.flag"`。安裝完成後將標記刪除：`del "%ROOT%installing.flag" >nul 2>&1`。
+2. **Watchdog 動態避開**：`watchdog.bat` 在逾時判定時檢查 `%ROOT%installing.flag` 是否存在。若存在則顯示 `偵測到系統正在進行環境安裝，繼續等待...`，並重設計時器而不執行強殺。
+
+### 驗證與封裝
+- 執行本地打包指令 `_repack_local.ps1`，成功打包成 `miniclaw-executor.zip` (42 KB)。
+
