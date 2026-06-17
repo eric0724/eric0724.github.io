@@ -37,6 +37,17 @@ echo [*] 等待 node.exe 啟動（60 秒內）...
 set WAIT=0
 :wait_node_start
 timeout /t 3 /nobreak >nul
+if exist "%ROOT%install_error.flag" (
+    echo.
+    echo ============================================
+    echo  [X] 偵測到關鍵安裝錯誤（例如 ngrok 版本過舊）
+    echo      自動監控已停止。請參考已開啟的說明文件，
+    echo      手動更新後再重新執行 watchdog.bat。
+    echo ============================================
+    echo.
+    pause
+    exit /b 1
+)
 tasklist /fi "imagename eq node.exe" 2>nul | find /i "node.exe" >nul
 if !errorlevel! equ 0 (
     echo [OK] node.exe 已啟動！

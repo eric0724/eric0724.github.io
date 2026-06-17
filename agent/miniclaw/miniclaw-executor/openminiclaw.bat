@@ -1,6 +1,7 @@
 @echo off
 setlocal enabledelayedexpansion
 set "ROOT=%~dp0"
+del "%ROOT%install_error.flag" >nul 2>&1
 set "APP_DIR=%ROOT%app"
 set "STARTUP_TIPS=%ROOT%docs\startup_tips.md"
 set "NGROK_GUIDE=%ROOT%docs\ngrok_update_guide.md"
@@ -203,6 +204,7 @@ echo [X] ngrok is too old for this account.
 echo     Current version: 3.3.1
 echo     Need: 3.20.0 or newer
 echo     Please update ngrok manually.
+echo error > "%ROOT%install_error.flag"
 call :open_ngrok_update_guide
 pause
 exit /b 0
