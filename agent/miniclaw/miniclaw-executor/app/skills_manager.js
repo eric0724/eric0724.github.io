@@ -16,6 +16,9 @@
 
 const fs = require('fs');
 const path = require('path');
+const { exec, spawn } = require('child_process');
+const { promisify } = require('util');
+const execAsync = promisify(exec);
 
 // ─── 設定 ──────────────────────────────────────────────
 // 支援 process.env.SKILLS_PATH 環境變數，若無設定則預設相對路徑
@@ -354,6 +357,120 @@ function formatTriggeredSkillsForPrompt(userInput, minConfidence = 0.5) {
   return `\n\n【已觸發技能 — 完整操作指引】\n${parts.join('\n\n')}\n\n請參考上述指引來回應使用者需求。`;
 }
 
+// ═══════════════════════════════════════════════════════
+//  Phase 4 新增功能 — 技能腳本執行橋樑
+// ═══════════════════════════════════════════════════════
+
+/**
+ * 執行技能內部的自動化腳本
+ *
+ * @param {string} skillName - 技能名稱（folder name 或 frontmatter name）
+ * @param {string} [args=''] - 傳遞給腳本的參數（空白分隔）
+ * @returns {Promise<{ success: boolean, output: string, error: string|null }>}
+ */
+async function executeSkillScript(skillName, args = '') {
+  // 先從快取中搜尋技能
+  const skills = loadAllSkills();
+  const match = skills.find(
+    (s) => s.folder.toLowerCase() === skillName.toLowerCase()
+      || (s.name && s.name.toLowerCase() === skillName.toLowerCase()),
+  );
+
+  if (!match) {
+    return {
+      success: false,
+      output: '',
+      error: `找不到技能：${skillName}`,
+    };
+  }
+
+  const scriptsDir = path.join(match.folder, 'scripts');
+  const scriptsFullPath = path.join(SKILLS_ROOT, scriptsDir);
+
+  if (!fs.existsSync(scriptsFullPath)) {
+    return {
+      success: false,
+      output: '',
+      error: `技能「${match.name}」沒有 scripts/ 目錄`,
+    };
+  }
+
+  // 優先尋找 run.py，其次 run.js
+  const runPy = path.join(scriptsFullPath, 'run.py');
+  const runJs = path.join(scriptsFullPath, 'run.js');
+  let scriptPath = null;
+  let command = null;
+  let scriptArgs = [];
+
+  if (fs.existsSync(runPy)) {
+    scriptPath = runPy;
+    // Windows 使用 py，其他平台使用 python3
+    const pythonCmd = process.platform === 'win32' ? 'py' : 'python3';
+    command = pythonCmd;
+    scriptArgs = [scriptPath];
+    if (args) scriptArgs.push(...args.split(/\s+/).filter(Boolean));
+  } else if (fs.existsSync(runJs)) {
+    scriptPath = runJs;
+    command = 'node';
+    scriptArgs = [scriptPath];
+    if (args) scriptArgs.push(...args.split(/\s+/).filter(Boolean));
+  } else {
+    return {
+      success: false,
+      output: '',
+      error: `技能「${match.name}」的 scripts/ 目錄中找不到 run.py 或 run.js`,
+    };
+  }
+
+  try {
+    console.log(`[skills_manager] 🚀 執行技能腳本：${match.name} → ${scriptPath} ${scriptArgs.slice(1).join(' ')}`);
+
+    const fullCommand = `${command} ${scriptArgs.map(a => `"${a}"`).join(' ')}`;
+    const { stdout, stderr } = await execAsync(fullCommand, {
+      timeout: 60000, // 60 秒超時
+      maxBuffer: 1024 * 1024, // 1MB 輸出緩衝
+      cwd: path.dirname(scriptPath),
+    });
+
+    const output = (stdout || stderr || '').trim();
+    console.log(`[skills_manager] ✅ 腳本執行完成：${match.name}（輸出 ${output.length} 字元）`);
+
+    return {
+      success: true,
+      output: output || '（腳本執行完畢，無輸出）',
+      error: null,
+    };
+  } catch (err) {
+    const errorMsg = err.message || err.toString();
+    console.error(`[skills_manager] ❌ 腳本執行失敗：${match.name} — ${errorMsg}`);
+    return {
+      success: false,
+      output: '',
+      error: errorMsg,
+    };
+  }
+}
+
+/**
+ * 從文字中解析 [技能名稱 參數] 標籤
+ *
+ * @param {string} text - AI 回覆文字
+ * @returns {Array<{ skillName: string, args: string }>}
+ */
+function parseSkillTags(text) {
+  const tags = [];
+  // 匹配 [技能名稱] 或 [技能名稱 參數1 參數2]
+  const regex = /\[([a-zA-Z0-9_-]+)(?:\s+([^\]]+))?\]/g;
+  let match;
+  while ((match = regex.exec(text)) !== null) {
+    tags.push({
+      skillName: match[1].trim(),
+      args: (match[2] || '').trim(),
+    });
+  }
+  return tags;
+}
+
 // ─── 匯出 ──────────────────────────────────────────────
 module.exports = {
   SKILLS_ROOT,
@@ -364,6 +481,9 @@ module.exports = {
   getSkillBody,
   detectTriggeredSkills,
   formatTriggeredSkillsForPrompt,
+  // Phase 4 新增
+  executeSkillScript,
+  parseSkillTags,
   // 內部方法也匯出（供測試用）
   parseSkillDoc,
 };

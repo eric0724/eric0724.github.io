@@ -18,11 +18,17 @@ Miniclaw（小龍蝦）：一個讓玩家透過自然語言指令操控電腦的
 - **Skills 技能系統（外掛架構）**：競品原始碼分析（opencode + Codex CLI）| 建立 skills/ 目錄 | 首個技能 click-master（SKILL.md）| 零依賴 skills_manager.js 管理模組 | 盲點評估報告
 - **Skills Phase 2 — 架構深化**：內嵌輕量 YAML 解析器（零依賴）| SKILL.md Body 第二層深度載入（getSkillBody）| 技能觸發偵測引擎（detectTriggeredSkills）| 記憶體快取 | SKILLS_PATH 環境變數支援 | server.js 動態注入技能 Body
 
+### 已完成里程碑
+- **Skills Phase 3 — 前端可視化**：新增 WebSocket `skills-list` 訊息 | 大廳 accordion 技能背包面板 | 動態渲染技能列表（綠色燈號+120字簡介）| XSS 防護 | grr.md 交接文件更新
+- **Skills Phase 4 — 終極自動化**：新增 `executeSkillScript()` 腳本執行橋樑 | `parseSkillTags()` 標籤解析 | server.js 自動攔截 [技能名稱] 並執行 | 60秒超時保護 | 結構化結果回傳 | grr.md 交接文件更新
+- **Skills Phase 5 — click-master 腳本實作**：建立 `skills/click-master/scripts/safe_locate.py` 防崩潰模組 | 建立 `run.py` 主腳本（pyautogui + 安全檢查 + 結構化日誌）| 完整整合測試 | grr.md 交接文件更新
+- **Skills Phase 6 — calibration-master 技能實作**：建立 `skills/calibration-master/SKILL.md` | 建立 `run.py` 校準腳本（GPT-4o Vision 2×放大 + 三種模式 + JSON持久化 + 自動降級）| grr.md 交接文件更新
+- **Skills Phase 7 — test-lab 功能外掛化**：建立 `skills/macro-recorder/`（巨集錄製執行）| 建立 `skills/visual-trail/`（視覺軌跡管理 + 時間衰減 + 熱區分析）| 完整結構化日誌 | grr.md 交接文件更新
+- **Skills Phase 8 — gesture-recognizer 手勢識別**：建立 `skills/gesture-recognizer/`（M/W/O/V手勢辨識 + 波峰波谷檢測 + 對稱度計算 + 模板匹配）| grr.md 交接文件更新
+- **Skills Phase 9 — 手勢巨集聯動**：server.js 重構 | 手勢辨識成功後自動觸發巨集 | 正則匹配 [MATCHED] M/W/O/V | 防錯機制（巨集不存在友善提示）| grr.md 交接文件更新
+
 ### 下一步
 - 校準流程實測優化（提示詞精度、重試策略）
-- 整合 test-lab 到 Miniclaw 主系統
-- **Skills Phase 3**：前端技能清單顯示（新型 WebSocket message）| SKILL.md Body 按需深度載入優化 | 技能觸發比對門檻調校
-- **Skills Phase 4**：技能流程自動化（scripts/ 執行 + references/ 載入）
 
 ---
 
@@ -39,6 +45,8 @@ Miniclaw（小龍蝦）：一個讓玩家透過自然語言指令操控電腦的
 ### Plan Mode（規劃模式）
 **先說明後動手：** 先規劃方案，等確認後才進 Act Mode 實作  
 **一次一問題：** 不跳步驟，不預先實作未確認的改動
+
+
 
 ### Git 規則
 - **GO：** 繼續上次未完成的工作，不 push
@@ -108,3 +116,12 @@ Miniclaw（小龍蝦）：一個讓玩家透過自然語言指令操控電腦的
 [2026-06-15 12:02] 手風琴收合修復：inline onclick改addEventListener | CSS移除overflow:hidden | display切換邏輯修正 | GOGO push (6dc80ae)
 [2026-06-16 10:11] Skills系統外掛實作：競品原始碼分析(opencode+Codex CLI) | 建立skills/click-master/SKILL.md | 建立skills_manager.js | 盲點評估報告 | 產出grr.md交接摘要
 [2026-06-16 10:24] Skills Phase2：內嵌YAML解析器 | getSkillBody深度載入 | detectTriggeredSkills引擎 | 記憶體快取 | SKILLS_PATH環境變數 | server.js動態注入技能Body
+[2026-06-17 09:23] Skills Phase3：WebSocket skills-list推送 | 大廳accordion技能背包UI | renderSkillsInventory動態渲染 | escapeHtml XSS防護 | grr.md交接文件更新
+[2026-06-17 09:31] Skills Phase4：executeSkillScript腳本執行橋樑 | parseSkillTags標籤解析 | server.js自動攔截[技能名稱] | 60秒超時保護 | 結構化結果回傳 | grr.md交接文件更新
+[2026-06-17 09:39] Skills Phase5：click-master腳本實作 | safe_locate.py防崩潰模組 | run.py主腳本(pyautogui+安全檢查) | 結構化日誌輸出 | grr.md交接文件更新
+[2026-06-17 09:43] Skills Phase6：calibration-master技能實作 | SKILL.md建立 | run.py校準腳本(GPT-4o Vision+三種模式+JSON持久化) | 自動降級機制 | grr.md交接文件更新
+[2026-06-17 09:47] Skills Phase7：macro-recorder巨集錄製執行 | visual-trail視覺軌跡管理(時間衰減+熱區分析) | test-lab功能外掛化整合 | grr.md交接文件更新
+[2026-06-17 09:56] Skills Phase8：gesture-recognizer手勢識別(M/W/O/V) | 波峰波谷檢測 | 對稱度計算 | 模板匹配算法 | grr.md交接文件更新
+[2026-06-17 09:59] Skills Phase9：手勢辨識與巨集自動觸發聯動 | server.js重構 | 正則匹配[MATCHED] | 防錯機制 | grr.md交接文件更新
+[2026-06-17 10:09] Skills Phase10：校準流程實測優化 | GPT-4o Vision提示詞強化(邊界防禦+中心點要求) | StepD重試策略(3次+5px偏移) | index.html時間戳更新 | grr.md交接文件更新
+[2026-06-17 10:14] Skills Phase11：大廳手勢自動觸發巨集開關 | index.html新增toggleGestureAutoTrigger | client.js WebSocket發送 | server.js全域狀態+開關判斷 | grr.md交接文件更新

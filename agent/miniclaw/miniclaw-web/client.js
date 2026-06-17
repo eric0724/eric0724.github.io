@@ -1300,6 +1300,8 @@ function handleIncomingWSMessage(msg) {
       nextBtn.style.opacity = '0.4';
       nextBtn.style.cursor = 'not-allowed';
     }
+  } else if (msg.type === 'skills-list') {
+    renderSkillsInventory(msg.skills);
   }
 }
 
@@ -1496,6 +1498,43 @@ function startDiagnosticPolling() {
         updateDiagnosticLights(false);
       });
   }, 15000);
+}
+
+function renderSkillsInventory(skills) {
+  const container = document.getElementById('skillsListContainer');
+  if (!container) return;
+  
+  if (!skills || skills.length === 0) {
+    container.innerHTML = '<div style="font-size: 0.8rem; color: var(--text-muted); text-align: center; padding: 12px;">⚠️ 尚未找到任何技能</div>';
+    return;
+  }
+  
+  container.innerHTML = '';
+  skills.forEach((skill, index) => {
+    const skillItem = document.createElement('div');
+    skillItem.style.cssText = 'background:rgba(0,0,0,0.25);border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:10px 12px;display:flex;align-items:flex-start;gap:10px;';
+    
+    const isActive = true; // 技能存在即視為可用
+    const statusDot = isActive 
+      ? '<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--neon-green);box-shadow:0 0 6px var(--neon-green);flex-shrink:0;margin-top:4px;" title="技能可用"></span>'
+      : '<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#ff4444;flex-shrink:0;margin-top:4px;" title="技能讀取失敗"></span>';
+    
+    skillItem.innerHTML = `
+      ${statusDot}
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:0.85rem;color:#fff;font-weight:bold;margin-bottom:4px;">${index + 1}. ${escapeHtml(skill.name)}</div>
+        <div style="font-size:0.75rem;color:var(--text-muted);line-height:1.5;word-break:break-word;">${escapeHtml(skill.description || '（無描述）')}</div>
+      </div>
+    `;
+    
+    container.appendChild(skillItem);
+  });
+}
+
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
 }
 
 function updateDiagnosticLights(success) {
@@ -2420,6 +2459,21 @@ function setupSettingsPanelEvents() {
       showToast('🛡️ 降級至輕量隧道', '已切換為純前端輕量運作模式。', '🦞');
     }
   });
+
+  // Phase 11: 手勢自動觸發巨集開關
+  const gestureToggle = document.getElementById('toggleGestureAutoTrigger');
+  if (gestureToggle) {
+    gestureToggle.addEventListener('change', function() {
+      const enabled = this.checked;
+      if (webState.ws && webState.ws.readyState === WebSocket.OPEN) {
+        webState.ws.send(JSON.stringify({
+          type: 'sync-gesture-setting',
+          data: { enabled: enabled }
+        }));
+      }
+      console.log(`[手勢設定] 自動觸發巨集：${enabled ? '啟用' : '關閉'}`);
+    });
+  }
 
   document.getElementById('btnResetAllOnboarding').addEventListener('click', () => {
     document.getElementById('onboardingModal').style.display = 'flex';

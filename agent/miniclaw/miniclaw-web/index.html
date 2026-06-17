@@ -721,9 +721,20 @@
           </div>
 
           <div class="input-group" style="margin-top:12px;margin-bottom:0;">
-            <label class="input-label" style="font-size:0.75rem;">自訂 System Prompt（選填）</label>
+            <label class="input-label" style="font-size: 0.75rem;">自訂 System Prompt（選填）</label>
             <textarea class="cyber-input" id="customSystemPrompt" placeholder="留空使用預設提示詞..." style="padding:8px 12px;font-size:0.78rem;resize:vertical;min-height:60px;width:100%;"></textarea>
             <button class="cyber-btn muted" id="btnSaveSystemPrompt" style="width:100%;font-size:0.75rem;padding:6px;margin-top:6px;">💾 儲存提示詞</button>
+          </div>
+
+          <div class="settings-item" style="margin-top:12px;">
+            <span class="settings-label">手勢自動觸發巨集</span>
+            <label class="switch-control">
+              <input type="checkbox" id="toggleGestureAutoTrigger">
+              <span class="slider"></span>
+            </label>
+          </div>
+          <div style="font-size:0.75rem;color:var(--text-muted);margin-top:4px;line-height:1.4;">
+            辨識到手勢（M/W/O/V）後，自動執行對應的預錄巨集
           </div>
           </div>
         </div>
@@ -780,6 +791,27 @@
           </div>
         </div>
 
+        <!-- 群組 7：小龍蝦技能背包（Skills Inventory） -->
+        <div class="glass-box orange-accent settings-group lobby-accordion" data-panel="skills" id="lobbyPanelSkills">
+          <div class="lobby-accordion-header">
+            <span class="panel-arrow" id="lobbyArrowSkills">▶</span>
+            <h3 class="settings-group-title" style="border:none;margin:0;padding:0;">🎒 小龍蝦技能背包</h3>
+          </div>
+          <div class="lobby-accordion-body" id="lobbyBodySkills">
+            <div id="skillsInventoryContent">
+              <p style="font-size: 0.75rem; color: var(--text-muted); line-height: 1.4; margin-bottom: 10px;">
+                目前系統已安裝的技能插件，會根據你的指令自動觸發對應技能。
+              </p>
+              <div id="skillsListContainer" style="display: flex; flex-direction: column; gap: 8px;">
+                <!-- 動態渲染技能列表 -->
+                <div style="font-size: 0.8rem; color: var(--text-muted); text-align: center; padding: 12px;">
+                  ⏳ 正在載入技能清單...
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
       </aside>
 
     </div>
@@ -792,7 +824,7 @@
   <!-- 固定底部資訊列 -->
   <div style="position:fixed;bottom:0;left:0;right:0;z-index:1001;background:rgba(6,5,11,0.92);backdrop-filter:blur(10px);border-top:1px solid rgba(255,102,0,0.2);padding:8px 20px;display:flex;justify-content:space-between;align-items:center;font-size:0.75rem;font-family:var(--font-mono);">
     <span style="color:var(--text-muted);">💬 有任何問題或意見，歡迎聯絡：<a href="mailto:eric940724@gmail.com" style="color:var(--neon-cyan);text-decoration:none;">eric940724@gmail.com</a></span>
-    <span style="color:#ffffff;">上次更新：2026-06-15 12:16</span>
+    <span style="color:#ffffff;">上次更新：2026-06-17 10:13</span>
   </div>
 
   <!-- 前端引導邏輯與通訊協定 -->
