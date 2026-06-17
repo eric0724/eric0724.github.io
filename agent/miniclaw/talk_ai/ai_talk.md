@@ -40,7 +40,7 @@ Miniclaw（小龍蝦）：一個讓玩家透過自然語言指令操控電腦的
 **一次一問題：** 多個問題時一次只解決一個，確認後再處理下一個  
 **步驟限制：** 每次最多 3 個「重操作」（讀大檔 >500行、寫檔、執行指令），超過就等待 30 秒再繼續（PowerShell 用 `Start-Sleep -Seconds 30`，Python 用 `time.sleep(30)`，此規則僅 Kiro Agent 需遵守，其他 Agent 不受限制）  
 **不准自作主張：** 只改指定檔案，不碰不相關的程式碼  
-**時間戳：** 改程式後更新 `index.html` 底部時間戳（`Get-Date -Format "yyyy-MM-dd HH:mm" -TimeZone "Asia/Taipei"`）
+**時間戳：** 只要有改程式或重新打包壓縮檔（repack）並上傳 Git，都必須更新 `index.html` 底部時間戳（`Get-Date -Format "yyyy-MM-dd HH:mm" -TimeZone "Asia/Taipei"`）
 
 ### Plan Mode（規劃模式）
 **先說明後動手：** 先規劃方案，等確認後才進 Act Mode 實作  
