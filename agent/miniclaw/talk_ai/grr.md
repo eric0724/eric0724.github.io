@@ -381,3 +381,18 @@ performHealthCheck() 執行
 ### 驗證與封裝
 - 執行本地打包指令 `_repack_local.ps1`，成功打包成 `miniclaw-executor.zip` (42 KB)。
 
+---
+
+## 本次完成：Watchdog 與 Openminiclaw 語法與路徑相容性優化
+
+### 修改檔案
+- `miniclaw-executor/openminiclaw.bat`（修正括號內雙冒號註解為 `rem`，新增 `winget upgrade` 自動更新 ngrok 邏輯）
+- `miniclaw-executor/watchdog.bat`（簡化啟動指令為 `start "Miniclaw" "%BAT_PATH%"` 以支援空格與括號路徑）
+- `miniclaw-web/index.html`（更新時間戳：2026-06-17 12:56）
+
+### 核心功能
+1. **修正 CMD 語法崩潰**：修正 `openminiclaw.bat` 在括號區塊中使用 `::` 註解引起的 CMD 解析錯誤（解決「這個時候不應有 \docs\ngrok_update_guide.md」之錯誤）。
+2. **路徑相容性擴充**：支援當專案資料夾被放置在含有空格或括號（如 `miniclaw-executor (14)`）的目錄下時，Watchdog 能成功呼叫子批次檔而不閃退。
+3. **移除不必要的 git 追蹤**：移除了暫存旗標 `install_error.flag` 的 git 追蹤。
+
+
