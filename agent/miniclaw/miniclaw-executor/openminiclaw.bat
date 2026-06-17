@@ -78,7 +78,16 @@ echo [OK] ngrok ready: %NGROK_EXE%
 
 echo [4.4] Checking ngrok version...
 call :check_ngrok_version
-if !NGROK_VERSION_OK!==0 goto :ngrok_too_old
+if !NGROK_VERSION_OK!==0 (
+  echo [x] ngrok is too old. Attempting to upgrade via winget...
+  echo installing > "%ROOT%installing.flag"
+  winget upgrade ngrok.ngrok
+  del "%ROOT%installing.flag" >nul 2>&1
+  
+  :: Re-check version after upgrade attempt
+  call :check_ngrok_version
+  if !NGROK_VERSION_OK!==0 goto :ngrok_too_old
+)
 
 echo [4.5] Resetting ngrok authtoken...
 powershell -NoProfile -ExecutionPolicy Bypass -Command "$paths=@($env:LOCALAPPDATA+'\ngrok\ngrok.yml',$env:APPDATA+'\ngrok\ngrok.yml',$env:USERPROFILE+'\.ngrok2\ngrok.yml'); foreach($p in $paths){ if(Test-Path -LiteralPath $p){ $lines=Get-Content -LiteralPath $p -ErrorAction SilentlyContinue | Where-Object { $_ -notmatch '^\s*authtoken\s*:' }; if($lines){ $lines | Set-Content -LiteralPath $p -Encoding UTF8 } else { Remove-Item -LiteralPath $p -Force } } }" >nul 2>&1
