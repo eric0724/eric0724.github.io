@@ -13,6 +13,18 @@ const BACKUP_PATH = path.join(__dirname, 'server.js.bak');
 // Phase 11: 手勢自動觸發巨集開關（全域狀態）
 let gestureAutoTriggerEnabled = false;  // 預設關閉
 
+// Phase 12: 技能執行隊列與互斥鎖（防止併發搶奪滑鼠控制權）
+const skillExecutionQueue = {
+  isRunning: false,
+  queue: [],
+  maxQueueSize: 10,  // 最大隊列長度，超過則拒絕
+};
+
+// 追蹤所有活躍的 Python 子進程（用於僵死進程清理）
+const activeProcesses = new Map(); // pid -> { skillName, startTime, killed }
+const STALE_THRESHOLD = 120000; // 2 分鐘未完成視為僵死
+const CLEANUP_INTERVAL = 30000; // 每 30 秒清理一次
+
 // --- 對話記憶（Session 內滾動記憶，最多保留 20 輪）---
 const chatHistory = [];
 const MAX_CHAT_HISTORY = 20;
@@ -723,7 +735,8 @@ async function callAIModelWithFailover(prompt, socket, clientPlatform) {
       console.log(`🎯 [Phase 4] 偵測到 ${skillTags.length} 個技能標籤，準備執行...`);
       
       for (const tag of skillTags) {
-        const result = await skillsManager.executeSkillScript(tag.skillName, tag.args);
+        // Phase 12: 使用隊列機制執行技能（防止併發搶奪滑鼠控制權）
+        const result = await executeSkillWithQueue(tag.skillName, tag.args);
         if (result.success) {
           skillExecutionResults.push(`✅ [${tag.skillName}] 執行成功：\n${result.output}`);
           
@@ -744,7 +757,8 @@ async function callAIModelWithFailover(prompt, socket, clientPlatform) {
                 // 延遲 500ms 讓使用者看到手勢辨識結果
                 await new Promise(resolve => setTimeout(resolve, 500));
                 
-                const macroResult = await skillsManager.executeSkillScript('macro-recorder', `play ${macroName}`);
+                // Phase 12: 巨集觸發也使用隊列
+                const macroResult = await executeSkillWithQueue('macro-recorder', `play ${macroName}`);
                 if (macroResult.success) {
                   skillExecutionResults.push(`✅ [macro-recorder] 手勢巨集觸發成功：\n${macroResult.output}`);
                 } else {
@@ -1214,10 +1228,161 @@ function fetchWithTimeout(url, options, timeout = 5000) {
   ]);
 }
 
+// Phase 12: 技能執行隊列與互斥鎖實作
+async function executeSkillWithQueue(skillName, args) {
+  return new Promise((resolve, reject) => {
+    // 檢查隊列是否已滿
+    if (skillExecutionQueue.queue.length >= skillExecutionQueue.maxQueueSize) {
+      console.log(`[Queue] ❌ 技能 ${skillName} 被拒絕：隊列已滿 (${skillExecutionQueue.maxQueueSize})`);
+      resolve({
+        success: false,
+        error: `技能執行隊列已滿，請稍後再試（當前等待數：${skillExecutionQueue.queue.length}）`,
+        queueFull: true
+      });
+      return;
+    }
+
+    const task = {
+      skillName,
+      args,
+      resolve,
+      reject,
+      timestamp: Date.now(),
+      id: `${skillName}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`
+    };
+
+    // 如果正在執行，加入隊列
+    if (skillExecutionQueue.isRunning) {
+      skillExecutionQueue.queue.push(task);
+      console.log(`[Queue] 📋 技能 ${skillName} 排隊中，當前隊列長度：${skillExecutionQueue.queue.length}`);
+      return;
+    }
+
+    // 直接執行
+    executeSkillTask(task);
+  });
+}
+
+async function executeSkillTask(task) {
+  skillExecutionQueue.isRunning = true;
+  skillExecutionQueue.currentProcess = task;
+
+  try {
+    console.log(`[Queue] 🚀 開始執行技能：${task.skillName} (任務ID: ${task.id})`);
+    const result = await skillsManager.executeSkillScript(task.skillName, task.args);
+    task.resolve(result);
+  } catch (error) {
+    console.error(`[Queue] ❌ 技能執行異常：${task.skillName} — ${error.message}`);
+    task.resolve({
+      success: false,
+      error: error.message || '執行異常',
+      taskId: task.id
+    });
+  } finally {
+    // 標記當前任務完成
+    skillExecutionQueue.isRunning = false;
+    skillExecutionQueue.currentProcess = null;
+
+    // 執行下一個（延遲 100ms 讓系統喘口氣）
+    if (skillExecutionQueue.queue.length > 0) {
+      const nextTask = skillExecutionQueue.queue.shift();
+      const waitTime = Date.now() - nextTask.timestamp;
+      console.log(`[Queue] ⏳ 等待耗時：${waitTime}ms，準備執行下一個技能：${nextTask.skillName}`);
+      setTimeout(() => executeSkillTask(nextTask), 100);
+    } else {
+      console.log(`[Queue] ✅ 隊列已清空，系統空閒中`);
+    }
+  }
+}
+
+// Phase 12: 僵死進程清理機制
+function killChildProcesses(parentPid) {
+  try {
+    const platform = process.platform;
+
+    if (platform === 'win32') {
+      // Windows：使用 taskkill 強制結束進程樹 (/T = 子進程, /F = 強制)
+      exec(`taskkill /F /T /PID ${parentPid}`, (error) => {
+        if (error) {
+          console.log(`[Cleanup] Windows 子進程清理完成（PID ${parentPid} 可能已不存在）`);
+        } else {
+          console.log(`[Cleanup] ✅ Windows 進程樹已清理：PID ${parentPid}`);
+        }
+      });
+    } else {
+      // Linux/Mac：使用 kill 殺死進程群組（負號表示整個群組）
+      try {
+        process.kill(-parentPid, 'SIGKILL');
+        console.log(`[Cleanup] ✅ Linux/Mac 進程群組已清理：PID ${parentPid}`);
+      } catch (e) {
+        // 進程群組可能已不存在
+        console.log(`[Cleanup] 進程群組清理完成（可能已不存在）`);
+      }
+    }
+  } catch (error) {
+    console.error(`[Cleanup] ❌ 子進程清理失敗：${error.message}`);
+  }
+}
+
+// 定期清理僵死進程（每 30 秒執行一次）
+setInterval(() => {
+  const now = Date.now();
+  let cleanedCount = 0;
+
+  for (const [pid, info] of activeProcesses.entries()) {
+    const age = now - info.startTime;
+
+    // 超過 2 分鐘未完成且未被標記為已殺死
+    if (age > STALE_THRESHOLD && !info.killed) {
+      console.log(`[Cleanup] 🧹 清理僵死進程 PID: ${pid} (技能: ${info.skillName}, 存活: ${Math.floor(age / 1000)}秒)`);
+
+      try {
+        // 強制殺死主進程
+        process.kill(pid, 'SIGKILL');
+        info.killed = true;
+
+        // 清理可能殘留的子進程（Python 腳本可能啟動了子程序）
+        killChildProcesses(pid);
+
+        cleanedCount++;
+      } catch (e) {
+        // 進程可能已自然結束
+        info.killed = true;
+      }
+    }
+  }
+
+  if (cleanedCount > 0) {
+    console.log(`[Cleanup] 🎯 本次清理僵死進程：${cleanedCount} 個`);
+  }
+
+  // 清理已結束超過 5 分鐘的記錄
+  for (const [pid, info] of activeProcesses.entries()) {
+    if (info.killed && now - info.startTime > 300000) {
+      activeProcesses.delete(pid);
+    }
+  }
+}, CLEANUP_INTERVAL);
+
+// 顯示隊列狀態（除錯用）
+function getQueueStatus() {
+  return {
+    isRunning: skillExecutionQueue.isRunning,
+    queueLength: skillExecutionQueue.queue.length,
+    currentTask: skillExecutionQueue.currentProcess ? {
+      skillName: skillExecutionQueue.currentProcess.skillName,
+      id: skillExecutionQueue.currentProcess.id,
+      runningTime: Date.now() - skillExecutionQueue.currentProcess.timestamp
+    } : null,
+    activeProcesses: activeProcesses.size
+  };
+}
+
 // --- 啟動伺服器 ---
 server.listen(PORT, () => {
   console.log('\x1b[32m%s\x1b[0m', `🦞 [小龍蝦伺服器] 正式在 http://localhost:${PORT} 啟動！`);
   console.log('\x1b[36m%s\x1b[0m', '💡 [自檢說明] 在瀏覽器中開啟 miniclaw-web/index.html 即可立刻與我建立WebSocket連線。');
+  console.log('\x1b[33m%s\x1b[0m', `🔧 [Phase 12] 技能執行隊列與僵死進程清理機制已啟動（最大隊列：${skillExecutionQueue.maxQueueSize}，清理間隔：${CLEANUP_INTERVAL / 1000}秒）`);
 });
 
 // --- 9. 全域異常防護 (防止 any 未捕獲例外導致伺服器崩潰) ---

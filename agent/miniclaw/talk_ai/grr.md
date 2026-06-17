@@ -191,3 +191,98 @@ server.js 更新全域變數 gestureAutoTriggerEnabled
 34. **巨集管理員**：統一管理所有手勢對應的巨集
 35. **手勢熱區**：根據使用頻率調整手勢觸發區域
 36. **多手勢序列**：支援 M → V → O 連續手勢組合
+
+---
+
+## 本次完成：Phase 12 — 多技能併發壓力測試與邊界異常防禦
+
+### 修改檔案
+- `miniclaw-executor/app/server.js`（隊列機制 + 僵死進程清理）
+- `miniclaw-web/index.html`（時間戳更新）
+
+### 核心功能
+
+**1. 技能執行隊列與互斥鎖（Mutex Queue）**
+- 同時間只有一個 `executeSkillScript` 執行
+- 自動隊列排程（FIFO），最大隊列長度 10
+- 執行間隔 100ms 防止過載
+- 避免多個 Python 自動化腳本同時搶奪滑鼠控制權
+
+**2. 僵死進程清理機制**
+- 追蹤所有活躍的 Python 子進程（`activeProcesses` Map）
+- 每 30 秒定期清理超過 2 分鐘未完成的僵死進程
+- Windows：使用 `taskkill /F /T /PID` 清理進程樹
+- Linux/Mac：使用 `process.kill(-pid, 'SIGKILL')` 清理進程群組
+
+**3. 隊列狀態監控**
+- `getQueueStatus()` 函數回傳即時隊列狀態
+- 日誌記錄等待耗時、任務 ID、執行歷程
+
+### 關鍵程式碼
+
+**隊列機制：**
+```javascript
+const skillExecutionQueue = {
+  isRunning: false,
+  queue: [],
+  maxQueueSize: 10,
+};
+
+async function executeSkillWithQueue(skillName, args) {
+  // 檢查隊列是否已滿
+  if (skillExecutionQueue.queue.length >= skillExecutionQueue.maxQueueSize) {
+    return { success: false, error: '隊列已滿', queueFull: true };
+  }
+  
+  const task = { skillName, args, resolve, reject, timestamp: Date.now(), id: ... };
+  
+  if (skillExecutionQueue.isRunning) {
+    skillExecutionQueue.queue.push(task);  // 排隊
+    return;
+  }
+  
+  executeSkillTask(task);  // 直接執行
+}
+```
+
+**僵死進程清理：**
+```javascript
+const activeProcesses = new Map();
+const STALE_THRESHOLD = 120000;  // 2 分鐘
+const CLEANUP_INTERVAL = 30000;  // 30 秒
+
+setInterval(() => {
+  for (const [pid, info] of activeProcesses.entries()) {
+    if (now - info.startTime > STALE_THRESHOLD && !info.killed) {
+      process.kill(pid, 'SIGKILL');
+      killChildProcesses(pid);  // 清理子進程樹
+    }
+  }
+}, CLEANUP_INTERVAL);
+```
+
+### 執行流程
+```
+使用者連續觸發手勢/巨集
+    ↓
+executeSkillWithQueue() 接收任務
+    ↓
+檢查 isRunning 狀態
+    ↓
+isRunning = false → 直接執行
+isRunning = true  → 加入隊列等待
+    ↓
+執行完畢 → 自動執行下一個（延遲 100ms）
+    ↓
+定期清理僵死進程（每 30 秒）
+```
+
+### 防護機制
+1. **隊列滿載保護**：超過 10 個任務直接拒絕，回傳友善提示
+2. **超時強制終止**：60 秒超時 + SIGKILL 強制殺死
+3. **子進程樹清理**：Windows taskkill /T / Linux 進程群組
+4. **定期僵死清理**：2 分鐘未完成視為僵死，自動銷毀
+
+### 相關檔案
+- `miniclaw-executor/app/server.js` — 隊列 + 清理機制
+- `miniclaw-web/index.html` — 時間戳更新（10:24）
