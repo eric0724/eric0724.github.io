@@ -12,6 +12,6 @@ if %errorlevel% neq 0 (
     exit /b 1
 )
 echo [OK] Node.js 安裝完成！
-echo 請關閉此視窗，Watchdog 會自動繼續。
+echo 請關閉此視窗。
 pause
 exit /b 0
