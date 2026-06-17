@@ -17,8 +17,9 @@ if %errorlevel% neq 0 (
   echo installing > "%ROOT%installing.flag"
   echo [x] Node.js not found. Installing via winget...
   winget install OpenJS.NodeJS
+  set INSTALL_RESULT=!errorlevel!
   del "%ROOT%installing.flag" >nul 2>&1
-  if %errorlevel% neq 0 (
+  if !INSTALL_RESULT! neq 0 (
     echo [X] Install failed. Please visit https://nodejs.org
     pause
     exit /b 1
@@ -60,8 +61,9 @@ if %errorlevel% neq 0 (
   echo [x] ngrok not found. Installing via winget...
   echo installing > "%ROOT%installing.flag"
   winget install ngrok.ngrok
+  set INSTALL_RESULT=!errorlevel!
   del "%ROOT%installing.flag" >nul 2>&1
-  if %errorlevel% neq 0 (
+  if !INSTALL_RESULT! neq 0 (
     echo [X] ngrok install failed. Please visit https://ngrok.com/download
     pause
     exit /b 1
