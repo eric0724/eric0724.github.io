@@ -5,7 +5,7 @@ echo ============================================
 echo  📦 正在安裝 Node.js ...
 echo ============================================
 echo.
-winget install OpenJS.NodeJS
+winget install OpenJS.NodeJS --accept-source-agreements --accept-package-agreements
 echo.
 if %errorlevel% neq 0 (
     echo [X] 安裝失敗，請手動至 https://nodejs.org 下載

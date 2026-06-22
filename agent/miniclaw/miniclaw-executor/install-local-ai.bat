@@ -15,7 +15,7 @@ if %errorlevel% equ 0 (
 )
 
 echo [!] 未偵測到 Ollama，正在透過 winget 自動安裝...
-winget install Ollama.Ollama
+winget install Ollama.Ollama --accept-source-agreements --accept-package-agreements
 if %errorlevel% neq 0 (
   echo [X] winget 安裝失敗，請手動前往 https://ollama.com/download 下載安裝後再執行此腳本。
   pause

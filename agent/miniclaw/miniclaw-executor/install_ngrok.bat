@@ -5,7 +5,7 @@ echo ============================================
 echo  📦 正在安裝 ngrok ...
 echo ============================================
 echo.
-winget install ngrok.ngrok
+winget install ngrok.ngrok --accept-source-agreements --accept-package-agreements
 echo.
 if %errorlevel% neq 0 (
     echo [X] 安裝失敗，請手動至 https://ngrok.com/download 下載

@@ -17,7 +17,7 @@ where node >nul 2>&1
 if %errorlevel% neq 0 (
   echo installing > "%ROOT%installing.flag"
   echo [x] Node.js not found. Installing via winget...
-  winget install OpenJS.NodeJS
+  winget install OpenJS.NodeJS --accept-source-agreements --accept-package-agreements
   set INSTALL_RESULT=!errorlevel!
   del "%ROOT%installing.flag" >nul 2>&1
   if !INSTALL_RESULT! neq 0 (
@@ -61,7 +61,7 @@ if %errorlevel% neq 0 (
   )
   echo [!] ngrok not found. Skipping auto-install to prevent hang.
   echo     Watchdog will continue. Please install ngrok manually:
-  echo     - Run: winget install ngrok.ngrok
+  echo     - Run: winget install ngrok.ngrok --accept-source-agreements --accept-package-agreements
   echo     - Or download from: https://ngrok.com/download
   echo     Then re-run openminiclaw.bat.
   echo.
