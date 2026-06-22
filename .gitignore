@@ -9,8 +9,8 @@ agent/miniclaw/agent_review_report.md
 node_modules/
 
 # Agent 參考檔案（不上傳）
-agent/miniclaw/miniclaw-executor/
-agent/
-agent/miniclaw/ai_talk.md
+#agent/miniclaw/miniclaw-executor/
+#agent/
+#agent/miniclaw/ai_talk.md
 agent/miniclaw/agent_review_report.md
 agent/miniclaw/agent*

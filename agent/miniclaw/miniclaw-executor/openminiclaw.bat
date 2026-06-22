@@ -2,7 +2,6 @@
 chcp 65001 >nul
 setlocal enabledelayedexpansion
 set "ROOT=%~dp0"
-del "%ROOT%install_error.flag" >nul 2>&1
 set "APP_DIR=%ROOT%app"
 set "STARTUP_TIPS=%ROOT%docs\startup_tips.md"
 set "NGROK_GUIDE=%ROOT%docs\ngrok_update_guide.md"
@@ -10,11 +9,9 @@ set "NGROK_GUIDE=%ROOT%docs\ngrok_update_guide.md"
 :: 在開頭即打開提示筆記本（常見問題、重新啟動指引）
 start /b "" notepad.exe "%STARTUP_TIPS%"
 
-cd /d "%APP_DIR%"
-
 echo [1/5] Node.js check...
 where node >nul 2>&1
-if %errorlevel% neq 0 (
+if errorlevel 1 (
   echo installing > "%ROOT%installing.flag"
   echo [x] Node.js not found. Installing via winget...
   winget install OpenJS.NodeJS --accept-source-agreements --accept-package-agreements
@@ -33,15 +30,19 @@ if %errorlevel% neq 0 (
 
 echo [OK] Node.js OK
 
-if not exist node_modules (
+if not exist "%APP_DIR%node_modules" (
   echo [2/5] First run - installing packages...
+  pushd "%APP_DIR%"
   call npm install
+  popd
 )
 
 echo [OK] Packages ready
 
 echo [3/5] Starting server (background)...
-start /b node server.js >nul 2>&1
+pushd "%APP_DIR%"
+start /b "" node server.js >nul 2>&1
+popd
 
 timeout /t 2 /nobreak >nul
 
@@ -50,7 +51,7 @@ echo [OK] Server started
 echo [4/5] Checking ngrok...
 set NGROK_EXE=ngrok
 where ngrok >nul 2>&1
-if %errorlevel% neq 0 (
+if errorlevel 1 (
   if exist "%LOCALAPPDATA%\Microsoft\WinGet\Packages\Ngrok.Ngrok_Microsoft.Winget.Source_8wekyb3d8bbwe\ngrok.exe" (
     set "NGROK_EXE=%LOCALAPPDATA%\Microsoft\WinGet\Packages\Ngrok.Ngrok_Microsoft.Winget.Source_8wekyb3d8bbwe\ngrok.exe"
     goto :ngrok_found
@@ -80,14 +81,14 @@ powershell -NoProfile -ExecutionPolicy Bypass -Command "$paths=@($env:LOCALAPPDA
 
 echo [4.6] Checking ngrok authtoken...
 call :check_authtoken
-if !HAS_AUTHTOKEN!==0 (
+if "!HAS_AUTHTOKEN!"=="0" (
   echo [!] ngrok authtoken not set.
   echo     Skipping interactive setup to prevent watchdog hang.
   echo     The browser will open the ngrok token page for manual setup.
   echo     To set it manually later, run in CMD:
   echo       ngrok config add-authtoken YOUR_TOKEN
   echo.
-  start /b cmd /c "start https://dashboard.ngrok.com/get-started/your-authtoken"
+  start /b "" cmd /c "start https://dashboard.ngrok.com/get-started/your-authtoken"
   echo     Continuing without ngrok tunnel...
   goto :skip_ngrok
 )
@@ -120,10 +121,10 @@ if not "!NGROK_URL!"=="" set NGROK_URL_EMPTY=0
 if !NGROK_URL_EMPTY!==1 (
   echo [x] Could not read ngrok URL.
   echo   Check the ngrok window and paste the https URL in Step 2.
-  start /b cmd /c "start https://eric0724.github.io/agent/miniclaw/miniclaw-web/index.html"
+  start /b "" cmd /c "start https://eric0724.github.io/agent/miniclaw/miniclaw-web/index.html"
 ) else (
   echo [OK] ngrok URL: !NGROK_URL!
-  start /b cmd /c "start https://eric0724.github.io/agent/miniclaw/miniclaw-web/index.html?ngrok=!NGROK_URL!"
+  start /b "" cmd /c "start https://eric0724.github.io/agent/miniclaw/miniclaw-web/index.html?ngrok=!NGROK_URL!"
 )
 goto :running
 
@@ -131,7 +132,7 @@ goto :running
 echo.
 echo [*] Skipping ngrok tunnel. Server running on http://localhost:3000
 echo     Open the web UI manually:
-start /b cmd /c "start https://eric0724.github.io/agent/miniclaw/miniclaw-web/index.html"
+start /b "" cmd /c "start https://eric0724.github.io/agent/miniclaw/miniclaw-web/index.html"
 
 :running
 echo.
