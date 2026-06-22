@@ -59,100 +59,38 @@ if %errorlevel% neq 0 (
     set "NGROK_EXE=%LOCALAPPDATA%\Microsoft\WinGet\Packages\ngrok.ngrok_Microsoft.Winget.Source_8wekyb3d8bbwe\ngrok.exe"
     goto :ngrok_found
   )
-  echo [x] ngrok not found. Installing via winget...
-  echo installing > "%ROOT%installing.flag"
-  winget install ngrok.ngrok
-  set INSTALL_RESULT=!errorlevel!
-  del "%ROOT%installing.flag" >nul 2>&1
-  if !INSTALL_RESULT! neq 0 (
-    echo [X] ngrok install failed. Please visit https://ngrok.com/download
-    pause
-    exit /b 1
-  )
+  echo [!] ngrok not found. Skipping auto-install to prevent hang.
+  echo     Watchdog will continue. Please install ngrok manually:
+  echo     - Run: winget install ngrok.ngrok
+  echo     - Or download from: https://ngrok.com/download
+  echo     Then re-run openminiclaw.bat.
   echo.
-  echo [OK] ngrok installed.
-  echo Please close this window and run openminiclaw.bat again.
-  pause
-  exit /b 0
+  echo     For now, the server is running on http://localhost:3000
+  echo     You can still use the web UI without ngrok (local only).
+  goto :skip_ngrok
 )
 
 :ngrok_found
 echo [OK] ngrok ready: %NGROK_EXE%
 
-echo [4.4] Checking ngrok version...
-call :check_ngrok_version
-if !NGROK_VERSION_OK!==0 (
-  echo [x] ngrok is too old. Attempting to upgrade via winget...
-  echo installing > "%ROOT%installing.flag"
-  winget upgrade ngrok.ngrok
-  del "%ROOT%installing.flag" >nul 2>&1
-  
-  rem Re-check version after upgrade attempt
-  call :check_ngrok_version
-  if !NGROK_VERSION_OK!==0 goto :ngrok_too_old
-)
+echo [4.4] Skipping ngrok version check to prevent hang...
 
 echo [4.5] Resetting ngrok authtoken...
 powershell -NoProfile -ExecutionPolicy Bypass -Command "$paths=@($env:LOCALAPPDATA+'\ngrok\ngrok.yml',$env:APPDATA+'\ngrok\ngrok.yml',$env:USERPROFILE+'\.ngrok2\ngrok.yml'); foreach($p in $paths){ Remove-Item -LiteralPath $p -Force -ErrorAction SilentlyContinue }" >nul 2>&1
 
 echo [4.6] Checking ngrok authtoken...
 call :check_authtoken
-if !HAS_AUTHTOKEN!==0 goto :need_authtoken
-goto :authtoken_ok
-
-:need_authtoken
-  echo.
-  echo ============================================
-  echo  ngrok token not set
-  echo.
-  echo  The browser will open the ngrok token page.
-  echo  Copy your token, then choose A or B.
-  echo ============================================
+if !HAS_AUTHTOKEN!==0 (
+  echo [!] ngrok authtoken not set.
+  echo     Skipping interactive setup to prevent watchdog hang.
+  echo     The browser will open the ngrok token page for manual setup.
+  echo     To set it manually later, run in CMD:
+  echo       ngrok config add-authtoken YOUR_TOKEN
   echo.
   start /b cmd /c "start https://dashboard.ngrok.com/get-started/your-authtoken"
-  echo  [A] Paste token now
-  echo  [B] Use a new CMD window
-  echo.
-  choice /c AB /n /m "Choose A or B: "
-  set CHOICE_RESULT=%errorlevel%
-  if !CHOICE_RESULT!==1 (
-    echo.
-    set /p USER_TOKEN="Paste your authtoken here: "
-    set "MINICLAW_RAW_TOKEN=!USER_TOKEN!"
-    call :clean_authtoken
-    if "!USER_TOKEN!"=="" (
-      echo [X] Could not find a valid token in your input.
-      pause
-      exit /b 1
-    )
-    echo.
-    echo Setting authtoken...
-    "%NGROK_EXE%" config add-authtoken !USER_TOKEN!
-    if !errorlevel! neq 0 (
-      echo [X] Failed. Please check your token.
-      pause
-      exit /b 1
-    )
-    call :wait_for_authtoken
-    if !HAS_AUTHTOKEN!==0 (
-      echo [!] Token check is slow. Continuing anyway.
-    ) else (
-      echo [OK] Token saved.
-    )
-    echo.
-  )
-  if !CHOICE_RESULT!==2 (
-    echo.
-    echo ============================================
-    echo  In the new CMD window run:
-    echo  ngrok config add-authtoken YOUR_TOKEN
-    echo  Then run openminiclaw.bat again.
-    echo ============================================
-    echo.
-    start cmd /k "echo Run: ngrok config add-authtoken YOUR_TOKEN"
-    pause
-    exit /b 1
-  )
+  echo     Continuing without ngrok tunnel...
+  goto :skip_ngrok
+)
 
 :authtoken_ok
 echo [OK] ngrok authtoken OK
@@ -166,7 +104,7 @@ echo       If antivirus blocks it, download a newer version from https://ngrok.c
 echo.
 
 echo [5/5] Starting ngrok tunnel (new window)...
-start "" cmd /c ""%NGROK_EXE%" http 3000 & pause"
+start "" cmd /c ""%NGROK_EXE%" http 3000"
 
 echo Waiting for ngrok start (8 sec)...
 timeout /t 8 /nobreak >nul
@@ -187,7 +125,15 @@ if !NGROK_URL_EMPTY!==1 (
   echo [OK] ngrok URL: !NGROK_URL!
   start /b cmd /c "start https://eric0724.github.io/agent/miniclaw/miniclaw-web/index.html?ngrok=!NGROK_URL!"
 )
+goto :running
 
+:skip_ngrok
+echo.
+echo [*] Skipping ngrok tunnel. Server running on http://localhost:3000
+echo     Open the web UI manually:
+start /b cmd /c "start https://eric0724.github.io/agent/miniclaw/miniclaw-web/index.html"
+
+:running
 echo.
 echo ============================================
 echo  Miniclaw is running.

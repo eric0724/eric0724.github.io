@@ -346,11 +346,8 @@ function applyPlatformStep2UI() {
   if (os === 'ios') {
     const wantTerminalBtn = document.getElementById('btnWantTerminal');
     if (wantTerminalBtn) {
-      wantTerminalBtn.disabled = true;
-      wantTerminalBtn.style.opacity = '0.3';
-      wantTerminalBtn.style.cursor = 'not-allowed';
-      wantTerminalBtn.title = 'iOS 不支援本地終端';
-      wantTerminalBtn.innerHTML = '🚫 iOS 不支援終端<br><span style="font-size:0.75rem;font-weight:normal;color:rgba(255,255,255,0.6);">請選擇純 AI 對話模式</span>';
+      setButtonEnabled(wantTerminalBtn, true);
+      wantTerminalBtn.innerHTML = '🖥️ 要終端<br><span style="font-size:0.75rem;font-weight:normal;color:rgba(255,255,255,0.6);">可控制電腦、跨裝置</span>';
     }
     const dlBlock = document.getElementById('step2DownloadBlock');
     if (dlBlock) dlBlock.style.display = 'none';
@@ -515,8 +512,21 @@ function updatePanelBadge(panelName, verified, label) {
 }
 
 // --- 4. 步驟引導頁面切換與按鈕監聽 ---
+function setButtonEnabled(button, enabled, title = '') {
+  if (!button) return;
+  button.disabled = !enabled;
+  button.style.opacity = enabled ? '1' : '0.4';
+  button.style.cursor = enabled ? 'pointer' : 'not-allowed';
+  button.title = title;
+}
+
+function resetTerminalChoiceButtons() {
+  setButtonEnabled(document.getElementById('btnWantTerminal'), true);
+  setButtonEnabled(document.getElementById('btnNoTerminal'), true);
+}
 function setupStepEvents() {
   setupCollapsiblePanels();
+  resetTerminalChoiceButtons();
 
   document.getElementById('btnDetectOllama').addEventListener('click', async () => {
     const resultBox = document.getElementById('ollamaDetectResult');
@@ -663,11 +673,7 @@ function setupStepEvents() {
     document.getElementById('noTerminalMsg').style.display = 'none';
     document.getElementById('terminalGuideContent').style.display = 'block';
 
-    const nextBtn = document.getElementById('btnGoToStep3');
-    nextBtn.disabled = true;
-    nextBtn.style.opacity = '0.4';
-    nextBtn.style.cursor = 'not-allowed';
-    nextBtn.title = '請先測試並通過執行端驗證';
+    setButtonEnabled(document.getElementById('btnGoToStep3'), false, '請先測試並通過執行端驗證');
 
     const ngrokInput = document.getElementById('ngrokUrlInput');
     if (ngrokInput && ngrokInput.value.trim().startsWith('https://')) {
@@ -686,11 +692,7 @@ function setupStepEvents() {
     document.getElementById('terminalGuideContent').style.display = 'none';
     document.getElementById('noTerminalMsg').style.display = 'block';
 
-    const nextBtn = document.getElementById('btnGoToStep3');
-    nextBtn.disabled = false;
-    nextBtn.style.opacity = '1';
-    nextBtn.style.cursor = 'pointer';
-    nextBtn.title = '';
+    setButtonEnabled(document.getElementById('btnGoToStep3'), true);
 
     showToast('💬 純 AI 對話模式', '已選擇不使用終端，直接進入下一步！', '🦞');
   });
@@ -1086,6 +1088,7 @@ function goToStep(stepNum) {
   if (activePane) activePane.classList.add('active');
 
   if (stepNum === 1) {
+    resetTerminalChoiceButtons();
     applyPlatformStep2UI();
     autoDetectNgrokUrl();
   }
@@ -3321,9 +3324,6 @@ function initPanelOrder() {
 }
 
 // ===== 特殊功能面板管理 =====
-const SPECIAL_FEATURES_KEY = 'miniclaw_pinned_features';
-const DEFAULT_PINNED = ['gameAssistant', 'wakeWord'];
-
 function initSpecialFeatures() {
   const pinned = JSON.parse(localStorage.getItem(SPECIAL_FEATURES_KEY) || JSON.stringify(DEFAULT_PINNED));
 
