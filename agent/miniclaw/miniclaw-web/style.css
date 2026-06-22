@@ -1206,6 +1206,149 @@ input:checked + .slider:before {
   background: rgba(57,255,20,0.07);
 }
 
+/* ===== 特殊功能面板（Special Features Panel） ===== */
+.special-features-panel {
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 14px;
+  margin-bottom: 16px;
+}
+
+.special-features-title {
+  font-family: var(--font-title);
+  font-size: 0.85rem;
+  color: var(--neon-orange);
+  letter-spacing: 1px;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.feature-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  color: #fff;
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+}
+
+.feature-btn:hover {
+  background: rgba(255, 102, 0, 0.08);
+  border-color: rgba(255, 102, 0, 0.3);
+}
+
+.feature-btn.pinned {
+  border-color: var(--neon-orange);
+  box-shadow: 0 0 10px rgba(255, 102, 0, 0.2);
+  background: rgba(255, 102, 0, 0.06);
+}
+
+.feature-btn.dimmed {
+  opacity: 0.5;
+}
+
+.feature-btn .btn-icon {
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+
+.feature-btn .btn-label {
+  flex: 1;
+  text-align: left;
+}
+
+.feature-btn .btn-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.feature-btn .btn-pin {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 0.9rem;
+  padding: 2px;
+  transition: all 0.2s;
+}
+
+.feature-btn .btn-pin:hover {
+  color: var(--neon-orange);
+  transform: scale(1.2);
+}
+
+.feature-btn.pinned .btn-pin {
+  color: var(--neon-orange);
+}
+
+.feature-divider {
+  border: none;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  margin: 12px 0;
+}
+
+/* 確認彈窗 */
+.confirm-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+}
+
+.confirm-overlay.active {
+  display: flex;
+}
+
+.confirm-box {
+  background: var(--bg-secondary);
+  border: 1px solid var(--neon-orange);
+  border-radius: 12px;
+  padding: 24px;
+  max-width: 400px;
+  width: 90%;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
+}
+
+.confirm-title {
+  font-family: var(--font-title);
+  font-size: 1.1rem;
+  color: var(--neon-orange);
+  margin-bottom: 12px;
+}
+
+.confirm-message {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  line-height: 1.6;
+  margin-bottom: 20px;
+}
+
+.confirm-buttons {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
 /* ===== 大廳設定面板手風琴折疊（Lobby Accordion） ===== */
 .lobby-accordion {
   padding: 0 !important;

@@ -590,6 +590,73 @@
       <!-- 右欄：常駐設定面板 (Settings Panel) -->
       <aside class="settings-panel">
 
+        <!-- 特殊功能面板（置頂） -->
+        <div class="special-features-panel" id="specialFeaturesPanel">
+          <div class="special-features-title">
+            ⚡ 特殊功能
+          </div>
+          
+          <!-- 功能 1：遊戲助手（預設釘選） -->
+          <button class="feature-btn pinned" data-feature="gameAssistant" id="btnGameAssistant">
+            <span class="btn-icon">🎮</span>
+            <span class="btn-label">遊戲助手</span>
+            <div class="btn-actions">
+              <span class="btn-pin" title="釘選到主操作區">📌</span>
+            </div>
+          </button>
+          
+          <!-- 功能 2：語音喚醒（預設釘選） -->
+          <button class="feature-btn pinned" data-feature="wakeWord" id="btnWakeWord">
+            <span class="btn-icon">🎤</span>
+            <span class="btn-label">語音喚醒</span>
+            <div class="btn-actions">
+              <span class="btn-pin" title="釘選到主操作區">📌</span>
+            </div>
+          </button>
+          
+          <!-- 分隔線 -->
+          <hr class="feature-divider">
+          
+          <!-- 功能 3：一鍵清理對話紀錄 -->
+          <button class="feature-btn" data-feature="clearHistory" id="btnClearHistory">
+            <span class="btn-icon">🗑️</span>
+            <span class="btn-label">一鍵清理對話紀錄</span>
+            <div class="btn-actions">
+              <span class="btn-pin" title="釘選到主操作區">📌</span>
+            </div>
+          </button>
+          
+          <!-- 功能 4：全域緊急中斷安全鎖 -->
+          <button class="feature-btn" data-feature="emergencyStop" id="btnEmergencyStop">
+            <span class="btn-icon">🛑</span>
+            <span class="btn-label">全域緊急中斷安全鎖</span>
+            <div class="btn-actions">
+              <span class="btn-pin" title="釘選到主操作區">📌</span>
+            </div>
+          </button>
+          
+          <!-- 功能 5：啟動極速效能模式 -->
+          <button class="feature-btn" data-feature="turboMode" id="btnTurboMode">
+            <span class="btn-icon">⚡</span>
+            <span class="btn-label">啟動極速效能模式</span>
+            <div class="btn-actions">
+              <span class="btn-pin" title="釘選到主操作區">📌</span>
+            </div>
+          </button>
+        </div>
+
+        <!-- 確認彈窗 -->
+        <div class="confirm-overlay" id="confirmOverlay">
+          <div class="confirm-box">
+            <div class="confirm-title" id="confirmTitle">⚠️ 確認操作</div>
+            <div class="confirm-message" id="confirmMessage"></div>
+            <div class="confirm-buttons">
+              <button class="cyber-btn muted" id="btnConfirmCancel">取消</button>
+              <button class="cyber-btn orange" id="btnConfirmOk">確認執行</button>
+            </div>
+          </div>
+        </div>
+
         <!-- 群組 1：終端連線（最頂端） -->
         <div class="glass-box orange-accent settings-group lobby-accordion" data-panel="terminal" id="lobbyPanelTerminal">
           <div class="lobby-accordion-header">
@@ -836,7 +903,7 @@
   <!-- 固定底部資訊列 -->
   <div style="position:fixed;bottom:0;left:0;right:0;z-index:1001;background:rgba(6,5,11,0.92);backdrop-filter:blur(10px);border-top:1px solid rgba(255,102,0,0.2);padding:8px 20px;display:flex;justify-content:space-between;align-items:center;font-size:0.75rem;font-family:var(--font-mono);">
     <span style="color:var(--text-muted);">💬 有任何問題或意見，歡迎聯絡：<a href="mailto:eric940724@gmail.com" style="color:var(--neon-cyan);text-decoration:none;">eric940724@gmail.com</a></span>
-    <span style="color:#ffffff;">上次更新：2026-06-22 09:50</span>
+    <span style="color:#ffffff;">上次更新：2026-06-22 09:58</span>
   </div>
 
   <!-- 前端引導邏輯與通訊協定 -->
