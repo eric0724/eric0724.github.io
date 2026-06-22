@@ -591,8 +591,9 @@
       <aside class="settings-panel">
 
         <!-- 特殊功能面板（置頂） -->
-        <div class="special-features-panel" id="specialFeaturesPanel">
+        <div class="special-features-panel" id="specialFeaturesPanel" draggable="true">
           <div class="special-features-title">
+            <span class="drag-handle" title="拖動排序">☰</span>
             ⚡ 特殊功能
           </div>
           
@@ -658,8 +659,9 @@
         </div>
 
         <!-- 群組 1：終端連線（最頂端） -->
-        <div class="glass-box orange-accent settings-group lobby-accordion" data-panel="terminal" id="lobbyPanelTerminal">
+        <div class="glass-box orange-accent settings-group lobby-accordion" data-panel="terminal" id="lobbyPanelTerminal" draggable="true">
           <div class="lobby-accordion-header">
+            <span class="drag-handle" title="拖動排序">☰</span>
             <span class="panel-arrow" id="lobbyArrowTerminal">▶</span>
             <h3 class="settings-group-title" style="border:none;margin:0;padding:0;">🖥️ 終端連線</h3>
           </div>
@@ -699,8 +701,9 @@
         </div>
 
         <!-- 群組 0：帳號與 API 金鑰 -->
-        <div class="glass-box orange-accent settings-group lobby-accordion" data-panel="account" id="lobbyPanelAccount">
+        <div class="glass-box orange-accent settings-group lobby-accordion" data-panel="account" id="lobbyPanelAccount" draggable="true">
           <div class="lobby-accordion-header">
+            <span class="drag-handle" title="拖動排序">☰</span>
             <span class="panel-arrow" id="lobbyArrowAccount">▶</span>
             <h3 class="settings-group-title" style="border:none;margin:0;padding:0;">👤 帳號與 API 金鑰</h3>
           </div>
@@ -733,8 +736,9 @@
         </div>
 
         <!-- 群組 2：遠端平台通訊 -->
-        <div class="glass-box cyan-accent settings-group lobby-accordion" data-panel="remote" id="lobbyPanelRemote">
+        <div class="glass-box cyan-accent settings-group lobby-accordion" data-panel="remote" id="lobbyPanelRemote" draggable="true">
           <div class="lobby-accordion-header">
+            <span class="drag-handle" title="拖動排序">☰</span>
             <span class="panel-arrow" id="lobbyArrowRemote">▶</span>
             <h3 class="settings-group-title" style="border:none;margin:0;padding:0;">🌐 遠端平台通訊</h3>
           </div>
@@ -775,8 +779,9 @@
         </div>
 
         <!-- 群組 3：AI 設定 -->
-        <div class="glass-box orange-accent settings-group lobby-accordion" data-panel="ai" id="lobbyPanelAi">
+        <div class="glass-box orange-accent settings-group lobby-accordion" data-panel="ai" id="lobbyPanelAi" draggable="true">
           <div class="lobby-accordion-header">
+            <span class="drag-handle" title="拖動排序">☰</span>
             <span class="panel-arrow" id="lobbyArrowAi">▶</span>
             <h3 class="settings-group-title" style="border:none;margin:0;padding:0;">🧠 AI 設定</h3>
           </div>
@@ -819,8 +824,9 @@
         </div>
 
         <!-- 群組 4：對話管理 -->
-        <div class="glass-box cyan-accent settings-group lobby-accordion" data-panel="chat" id="lobbyPanelChat">
+        <div class="glass-box cyan-accent settings-group lobby-accordion" data-panel="chat" id="lobbyPanelChat" draggable="true">
           <div class="lobby-accordion-header">
+            <span class="drag-handle" title="拖動排序">☰</span>
             <span class="panel-arrow" id="lobbyArrowChat">▶</span>
             <h3 class="settings-group-title" style="border:none;margin:0;padding:0;">💬 對話管理</h3>
           </div>
@@ -834,8 +840,9 @@
         </div>
 
         <!-- 群組 5：外觀 -->
-        <div class="glass-box orange-accent settings-group lobby-accordion" data-panel="appearance" id="lobbyPanelAppearance">
+        <div class="glass-box orange-accent settings-group lobby-accordion" data-panel="appearance" id="lobbyPanelAppearance" draggable="true">
           <div class="lobby-accordion-header">
+            <span class="drag-handle" title="拖動排序">☰</span>
             <span class="panel-arrow" id="lobbyArrowAppearance">▶</span>
             <h3 class="settings-group-title" style="border:none;margin:0;padding:0;">🎨 外觀</h3>
           </div>
@@ -848,8 +855,9 @@
         </div>
 
         <!-- 群組 6：安全自癒與備份還原 -->
-        <div class="glass-box cyan-accent settings-group lobby-accordion" data-panel="security" id="lobbyPanelSecurity">
+        <div class="glass-box cyan-accent settings-group lobby-accordion" data-panel="security" id="lobbyPanelSecurity" draggable="true">
           <div class="lobby-accordion-header">
+            <span class="drag-handle" title="拖動排序">☰</span>
             <span class="panel-arrow" id="lobbyArrowSecurity">▶</span>
             <h3 class="settings-group-title" style="border:none;margin:0;padding:0;">🛠️ 安全防禦與還原</h3>
           </div>
@@ -871,8 +879,9 @@
         </div>
 
         <!-- 群組 7：小龍蝦技能背包（Skills Inventory） -->
-        <div class="glass-box orange-accent settings-group lobby-accordion" data-panel="skills" id="lobbyPanelSkills">
+        <div class="glass-box orange-accent settings-group lobby-accordion" data-panel="skills" id="lobbyPanelSkills" draggable="true">
           <div class="lobby-accordion-header">
+            <span class="drag-handle" title="拖動排序">☰</span>
             <span class="panel-arrow" id="lobbyArrowSkills">▶</span>
             <h3 class="settings-group-title" style="border:none;margin:0;padding:0;">🎒 小龍蝦技能背包</h3>
           </div>
@@ -903,7 +912,7 @@
   <!-- 固定底部資訊列 -->
   <div style="position:fixed;bottom:0;left:0;right:0;z-index:1001;background:rgba(6,5,11,0.92);backdrop-filter:blur(10px);border-top:1px solid rgba(255,102,0,0.2);padding:8px 20px;display:flex;justify-content:space-between;align-items:center;font-size:0.75rem;font-family:var(--font-mono);">
     <span style="color:var(--text-muted);">💬 有任何問題或意見，歡迎聯絡：<a href="mailto:eric940724@gmail.com" style="color:var(--neon-cyan);text-decoration:none;">eric940724@gmail.com</a></span>
-    <span style="color:#ffffff;">上次更新：2026-06-22 09:58</span>
+    <span style="color:#ffffff;">上次更新：2026-06-22 10:03</span>
   </div>
 
   <!-- 前端引導邏輯與通訊協定 -->

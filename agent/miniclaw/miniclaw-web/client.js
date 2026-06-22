@@ -3217,3 +3217,112 @@ function toggleTurboMode() {
 
 // 初始化特殊功能面板
 document.addEventListener('DOMContentLoaded', initSpecialFeatures);
+
+// ===== 拖拽排序系統 =====
+let draggedPanel = null;
+let draggedPanelId = null;
+
+function initDragAndDrop() {
+  const panels = document.querySelectorAll('.special-features-panel, .lobby-accordion');
+  
+  panels.forEach(panel => {
+    panel.setAttribute('draggable', 'true');
+    
+    // dragstart - 開始拖拽
+    panel.addEventListener('dragstart', (e) => {
+      draggedPanel = panel;
+      draggedPanelId = panel.id;
+      panel.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', panel.id);
+    });
+    
+    // dragover - 拖拽經過其他面板
+    panel.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      
+      // 移除其他面板的 drag-over
+      panels.forEach(p => p.classList.remove('drag-over'));
+      
+      // 加入當前面板的 drag-over
+      if (draggedPanel && draggedPanel !== panel) {
+        panel.classList.add('drag-over');
+      }
+    });
+    
+    // dragleave - 離開面板
+    panel.addEventListener('dragleave', () => {
+      panel.classList.remove('drag-over');
+    });
+    
+    // drop - 放開滑鼠
+    panel.addEventListener('drop', (e) => {
+      e.preventDefault();
+      panel.classList.remove('drag-over');
+      
+      if (draggedPanel && draggedPanel !== panel) {
+        // 判斷插入位置（before 或 after）
+        const rect = panel.getBoundingClientRect();
+        const midY = rect.top + rect.height / 2;
+        const isBefore = e.clientY < midY;
+        
+        if (isBefore) {
+          panel.parentNode.insertBefore(draggedPanel, panel);
+        } else {
+          panel.parentNode.insertBefore(draggedPanel, panel.nextSibling);
+        }
+        
+        // 儲存新順序
+        savePanelOrder();
+      }
+    });
+    
+    // dragend - 拖拽結束
+    panel.addEventListener('dragend', () => {
+      panel.classList.remove('dragging');
+      panels.forEach(p => p.classList.remove('drag-over'));
+      draggedPanel = null;
+      draggedPanelId = null;
+    });
+  });
+}
+
+function savePanelOrder() {
+  const panels = document.querySelectorAll('.special-features-panel, .lobby-accordion');
+  const order = Array.from(panels).map(p => p.id);
+  localStorage.setItem('miniclaw_panel_order', JSON.stringify(order));
+}
+
+function initPanelOrder() {
+  const saved = localStorage.getItem('miniclaw_panel_order');
+  const defaultOrder = [
+    'specialFeaturesPanel',
+    'lobbyPanelTerminal',
+    'lobbyPanelAccount',
+    'lobbyPanelRemote',
+    'lobbyPanelAi',
+    'lobbyPanelChat',
+    'lobbyPanelAppearance',
+    'lobbyPanelSecurity',
+    'lobbyPanelSkills'
+  ];
+  
+  const order = saved ? JSON.parse(saved) : defaultOrder;
+  
+  // 依序重新排列 DOM
+  const container = document.querySelector('.settings-panel');
+  if (!container) return;
+  
+  order.forEach(panelId => {
+    const panel = document.getElementById(panelId);
+    if (panel) container.appendChild(panel);
+  });
+}
+
+// 在 DOMContentLoaded 中初始化拖拽排序
+const originalDOMContentLoaded = window.DOMContentLoaded;
+window.addEventListener('DOMContentLoaded', () => {
+  initPanelOrder();
+  initDragAndDrop();
+});

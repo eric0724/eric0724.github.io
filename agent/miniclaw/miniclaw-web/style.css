@@ -1349,6 +1349,39 @@ input:checked + .slider:before {
   justify-content: flex-end;
 }
 
+/* ===== 拖拽排序樣式 ===== */
+.drag-handle {
+  cursor: grab;
+  padding: 4px 8px;
+  color: var(--text-muted);
+  font-size: 1.2rem;
+  user-select: none;
+  transition: color 0.2s;
+  flex-shrink: 0;
+}
+
+.drag-handle:hover {
+  color: var(--neon-orange);
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+}
+
+/* 拖拽中的面板 */
+.special-features-panel.dragging,
+.lobby-accordion.dragging {
+  opacity: 0.4;
+  transform: scale(0.98);
+}
+
+/* 拖拽經過的插入指示器 */
+.special-features-panel.drag-over,
+.lobby-accordion.drag-over {
+  border: 2px dashed var(--neon-orange) !important;
+  background: rgba(255, 102, 0, 0.05) !important;
+}
+
 /* ===== 大廳設定面板手風琴折疊（Lobby Accordion） ===== */
 .lobby-accordion {
   padding: 0 !important;
