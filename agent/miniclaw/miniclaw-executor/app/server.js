@@ -14,9 +14,6 @@ const BACKUP_PATH = path.join(__dirname, 'server.js.bak');
 const args = process.argv.slice(2);
 const RUN_INTEGRATION_TEST = args.includes('--test');
 
-// Phase 11: 手勢自動觸發巨集開關（全域狀態）
-let gestureAutoTriggerEnabled = false;  // 預設關閉
-
 // Phase 12: 技能執行隊列與互斥鎖（防止併發搶奪滑鼠控制權）
 const skillExecutionQueue = {
   isRunning: false,
@@ -370,10 +367,6 @@ function handleClientMessage(msg, socket) {
     testRemoteCredentials(msg.data, socket);
   } else if (msg.type === 'multi-file-write') {
     handleMultiFileWrite(msg.data, socket);
-  } else if (msg.type === 'sync-gesture-setting') {
-    // Phase 11: 同步手勢自動觸發開關狀態
-    gestureAutoTriggerEnabled = msg.data.enabled;
-    console.log(`🎯 [手勢設定] 自動觸發巨集：${gestureAutoTriggerEnabled ? '啟用' : '關閉'}`);
   }
 }
 
@@ -848,39 +841,6 @@ async function callAIModelWithFailover(prompt, socket, clientPlatform) {
         if (result.success) {
           skillExecutionResults.push(`✅ [${tag.skillName}] 執行成功：\n${result.output}`);
           
-          // Phase 9: 手勢辨識 → 巨集自動觸發聯動（Phase 11 加入開關判斷）
-          if (tag.skillName === 'gesture-recognizer' && result.output) {
-            const matchedMatch = result.output.match(/\[MATCHED\]\s*([MWOV])/i);
-            if (matchedMatch) {
-              const gestureChar = matchedMatch[1].toUpperCase();
-              
-              // Phase 11: 檢查開關狀態
-              if (!gestureAutoTriggerEnabled) {
-                console.log(`ℹ️ [Phase 9] 手勢辨識到 [${gestureChar}]，但自動觸發功能已關閉`);
-                skillExecutionResults.push(`ℹ️ 手勢辨識成功：[MATCHED] ${gestureChar}（自動觸發已關閉）`);
-              } else {
-                const macroName = `遊戲手勢_${gestureChar}`;
-                console.log(`🎯 [Phase 9] 手勢辨識匹配到 [${gestureChar}]，自動觸發巨集：${macroName}`);
-                
-                // 延遲 500ms 讓使用者看到手勢辨識結果
-                await new Promise(resolve => setTimeout(resolve, 500));
-                
-                // Phase 12: 巨集觸發也使用隊列
-                const macroResult = await executeSkillWithQueue('macro-recorder', `play ${macroName}`);
-                if (macroResult.success) {
-                  skillExecutionResults.push(`✅ [macro-recorder] 手勢巨集觸發成功：\n${macroResult.output}`);
-                } else {
-                  // 防錯機制：巨集不存在時提供友善提示
-                  const errorMsg = macroResult.error || '';
-                  if (errorMsg.includes('找不到巨集') || errorMsg.includes('找不到')) {
-                    skillExecutionResults.push(`ℹ️ [macro-recorder] 手勢辨識成功，但系統內未找到名為「${macroName}」的預錄巨集，請先使用 macro-recorder 進行錄製。`);
-                  } else {
-                    skillExecutionResults.push(`❌ [macro-recorder] 巨集執行失敗：\n${macroResult.error}`);
-                  }
-                }
-              }
-            }
-          }
         } else {
           skillExecutionResults.push(`❌ [${tag.skillName}] 執行失敗：\n${result.error}`);
         }

@@ -616,6 +616,7 @@ header {
     grid-column: 1 / -1;
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    justify-content: center;
     align-items: start;
   }
 }
@@ -629,6 +630,7 @@ header {
     grid-column: 1 / -1;
     display: flex;
     flex-direction: column;
+    align-items: center;
   }
 }
 
@@ -976,6 +978,79 @@ input:checked + .slider:before {
   padding: 6px 10px;
   font-family: var(--font-mono);
   outline: none;
+}
+
+/* ===== Tooltip 提示系統 ===== */
+.tooltip-wrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  margin-left: 6px;
+  flex-shrink: 0;
+}
+
+.tooltip-icon {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: #fff;
+  font-size: 11px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: help;
+  transition: all 0.2s;
+  user-select: none;
+  flex-shrink: 0;
+}
+
+.tooltip-icon:hover {
+  background: var(--neon-orange);
+  border-color: var(--neon-orange);
+  box-shadow: 0 0 8px rgba(255, 102, 0, 0.4);
+}
+
+.tooltip-bubble {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%) scale(0.9);
+  background: rgba(14, 11, 22, 0.95);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid var(--neon-orange);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 0.78rem;
+  color: #fff;
+  line-height: 1.5;
+  white-space: normal;
+  width: 280px;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.2s ease;
+  z-index: 1000;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
+  pointer-events: none;
+}
+
+.tooltip-bubble::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-top-color: var(--neon-orange);
+}
+
+.tooltip-wrapper:hover .tooltip-bubble {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) scale(1);
 }
 
 /* 還原列表與備份項 */

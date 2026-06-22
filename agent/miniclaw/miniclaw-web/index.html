@@ -155,6 +155,12 @@
               <span class="panel-arrow">▶</span>
               <span class="panel-title">🔗 方式 D：手動模式（自行傳給網頁 AI）</span>
               <span class="panel-badge unverified" id="badgeManual">未啟用</span>
+              <div class="tooltip-wrapper">
+                <span class="tooltip-icon">?</span>
+                <div class="tooltip-bubble">
+                  【手動模式指引】在輸入框打字送出後，系統會自動將完整規則與紀錄複製到您的剪貼簿，請直接貼到網頁版 AI，再將 AI 的回覆複製貼回本輸入框即可！
+                </div>
+              </div>
             </div>
             <div class="panel-body" id="panelBodyManual">
               <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:14px;line-height:1.6;">
@@ -551,15 +557,21 @@
           <!-- + 號上傳按鈕 -->
           <button type="button" id="btnUpload" class="cyber-btn muted" style="padding:6px 10px;font-size:1rem;flex-shrink:0;" title="上傳檔案/圖片/影片">+</button>
           <input type="file" id="fileUploadInput" style="display:none;" accept="image/*,video/*,.txt,.json,.py,.md,.pdf">
-          <!-- AI 廠商下拉 -->
-          <select id="selectAIProvider" class="cyber-select" style="flex:1;padding:6px 8px;font-size:0.78rem;">
-            <option value="auto">🤖 自動</option>
-            <option value="gemini">🟦 Gemini</option>
-            <option value="openrouter">🟧 OpenRouter</option>
-            <option value="openai">🟩 OpenAI</option>
-            <option value="ollama">🖥️ 本地 Ollama</option>
-            <option value="manual">🔗 自行傳給網路上的 AI</option>
-          </select>
+          <!-- AI 廠商下拉 + Tooltip -->
+          <div class="tooltip-wrapper" style="flex:1;">
+            <select id="selectAIProvider" class="cyber-select" style="width:100%;padding:6px 8px;font-size:0.78rem;">
+              <option value="auto">🤖 自動</option>
+              <option value="gemini">🟦 Gemini</option>
+              <option value="openrouter">🟧 OpenRouter</option>
+              <option value="openai">🟩 OpenAI</option>
+              <option value="ollama">🖥️ 本地 Ollama</option>
+              <option value="manual">🔗 自行傳給網路上的 AI</option>
+            </select>
+            <div class="tooltip-icon" style="position:absolute;right:-22px;top:50%;transform:translateY(-50%);">?</div>
+            <div class="tooltip-bubble" style="width:240px;">
+              顯示當前 API 賸餘點數、額度與可用模型資訊。
+            </div>
+          </div>
           <!-- 模型版本下拉 -->
           <select id="selectModelVersion" class="cyber-select" style="flex:1;padding:6px 8px;font-size:0.78rem;">
             <option value="auto">自動選擇</option>
@@ -824,7 +836,7 @@
   <!-- 固定底部資訊列 -->
   <div style="position:fixed;bottom:0;left:0;right:0;z-index:1001;background:rgba(6,5,11,0.92);backdrop-filter:blur(10px);border-top:1px solid rgba(255,102,0,0.2);padding:8px 20px;display:flex;justify-content:space-between;align-items:center;font-size:0.75rem;font-family:var(--font-mono);">
     <span style="color:var(--text-muted);">💬 有任何問題或意見，歡迎聯絡：<a href="mailto:eric940724@gmail.com" style="color:var(--neon-cyan);text-decoration:none;">eric940724@gmail.com</a></span>
-    <span style="color:#ffffff;">上次更新：2026-06-17 13:07</span>
+    <span style="color:#ffffff;">上次更新：2026-06-22 09:50</span>
   </div>
 
   <!-- 前端引導邏輯與通訊協定 -->
