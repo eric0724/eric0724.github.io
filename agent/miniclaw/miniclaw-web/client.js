@@ -3064,6 +3064,54 @@ async function saveChatToGDrive() {
 // ===== 特殊功能面板管理 =====
 const SPECIAL_FEATURES_KEY = 'miniclaw_pinned_features';
 const DEFAULT_PINNED = ['gameAssistant', 'wakeWord'];
+const FEATURE_SHORTCUTS = {
+  gameAssistant: { label: '🎮 遊戲助手', buttonId: 'btnGameAssist', terminalRequired: true },
+  wakeWord: { label: '🎤 語音喚醒' },
+  clearHistory: { label: '🗑️ 清理紀錄' },
+  emergencyStop: { label: '🛑 緊急中斷' },
+  turboMode: { label: '⚡ 極速模式' }
+};
+
+function getPinnedFeatures() {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(SPECIAL_FEATURES_KEY) || JSON.stringify(DEFAULT_PINNED));
+    return Array.isArray(parsed) ? parsed : [...DEFAULT_PINNED];
+  } catch (e) {
+    return [...DEFAULT_PINNED];
+  }
+}
+
+function savePinnedFeatures(pinned) {
+  localStorage.setItem(SPECIAL_FEATURES_KEY, JSON.stringify([...new Set(pinned)]));
+}
+
+function renderPinnedFeatureShortcuts() {
+  const pinned = getPinnedFeatures();
+  const actionBar = document.getElementById('pinnedFeatureActions');
+  if (!actionBar) return;
+
+  Object.entries(FEATURE_SHORTCUTS).forEach(([featureId, config]) => {
+    const isPinned = pinned.includes(featureId);
+    const shortcutId = `btnPinnedFeature_${featureId}`;
+    let btn = config.buttonId ? document.getElementById(config.buttonId) : document.getElementById(shortcutId);
+
+    if (!btn && isPinned) {
+      btn = document.createElement('button');
+      btn.type = 'button';
+      btn.id = shortcutId;
+      btn.className = 'cyber-btn muted pinned-feature-shortcut';
+      btn.style.cssText = 'font-size:0.72rem;padding:3px 10px;';
+      btn.dataset.featureShortcut = featureId;
+      btn.textContent = config.label;
+      btn.addEventListener('click', () => executeFeature(featureId));
+      actionBar.appendChild(btn);
+    }
+
+    if (!btn) return;
+
+    btn.style.display = isPinned ? '' : 'none';
+  });
+}
 
 function initSpecialFeatures() {
   // 從 LocalStorage 讀取釘選狀態
@@ -3325,7 +3373,7 @@ function initPanelOrder() {
 
 // ===== 特殊功能面板管理 =====
 function initSpecialFeatures() {
-  const pinned = JSON.parse(localStorage.getItem(SPECIAL_FEATURES_KEY) || JSON.stringify(DEFAULT_PINNED));
+  const pinned = getPinnedFeatures();
 
   document.querySelectorAll('.feature-btn').forEach(btn => {
     const feature = btn.dataset.feature;
@@ -3337,6 +3385,8 @@ function initSpecialFeatures() {
   });
 
   document.querySelectorAll('.btn-pin').forEach(pinBtn => {
+    if (pinBtn.dataset.bound === '1') return;
+    pinBtn.dataset.bound = '1';
     pinBtn.addEventListener('click', (e) => {
       e.stopPropagation();
       const featureBtn = pinBtn.closest('.feature-btn');
@@ -3345,14 +3395,18 @@ function initSpecialFeatures() {
   });
 
   document.querySelectorAll('.feature-btn').forEach(btn => {
+    if (btn.dataset.bound === '1') return;
+    btn.dataset.bound = '1';
     btn.addEventListener('click', () => {
       executeFeature(btn.dataset.feature);
     });
   });
+
+  renderPinnedFeatureShortcuts();
 }
 
 function togglePin(featureId) {
-  const pinned = JSON.parse(localStorage.getItem(SPECIAL_FEATURES_KEY) || JSON.stringify(DEFAULT_PINNED));
+  const pinned = getPinnedFeatures();
   const btn = document.querySelector(`[data-feature="${featureId}"]`);
 
   if (pinned.includes(featureId)) {
@@ -3364,7 +3418,8 @@ function togglePin(featureId) {
     btn.classList.add('pinned');
   }
 
-  localStorage.setItem(SPECIAL_FEATURES_KEY, JSON.stringify(pinned));
+  savePinnedFeatures(pinned);
+  renderPinnedFeatureShortcuts();
 }
 
 function executeFeature(featureId) {

@@ -135,3 +135,4 @@ Miniclaw（小龍蝦）：一個讓玩家透過自然語言指令操控電腦的
 [2026-06-22 11:39] 修復 watchdog.bat 因 ngrok 下載/authtoken 互動提示卡住問題 | openminiclaw.bat 跳過 winget install ngrok（改提示手動安裝）| 跳過 authtoken 互動選單（無 token 時直接跳過 ngrok）| ngrok 啟動移除 & pause 避免卡住 | 無 ngrok 時仍可啟動 server 與網頁（local only）
 [2026-06-22 12:25] Step1 終端選擇按鈕可點修復 | iOS 不再禁用要終端 | 全域圓角 UI 變數 | 移除重複 const 避免前端載入失敗 | index.html 時間戳更新 | GOGO push
 [2026-06-22 12:35] 遊戲助手特殊功能按鈕修復 | showToast 預設 icon 避免 undefined | Step2 tooltip 改向下顯示避免被彈窗裁切
+[2026-06-22 12:43] 特殊功能釘選同步修復 | 釘選功能會出現在主操作列 | 取消釘選會從主操作列隱藏 | 避免重複初始化綁定事件
