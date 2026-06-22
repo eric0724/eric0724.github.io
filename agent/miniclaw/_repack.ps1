@@ -1,6 +1,6 @@
-$src = 'c:\Users\fff\Downloads\TT\antigravity\antigravity\_github_clone\agent\miniclaw\miniclaw-executor'
-$out = 'c:\Users\fff\Downloads\TT\antigravity\antigravity\_github_clone\agent\miniclaw\miniclaw-executor.zip'
-$tmp = 'c:\Users\fff\Downloads\TT\antigravity\antigravity\_github_clone\agent\miniclaw\_zip_tmp'
+$src = Join-Path $PSScriptRoot 'miniclaw-executor'
+$out = Join-Path $PSScriptRoot 'miniclaw-executor.zip'
+$tmp = Join-Path $PSScriptRoot '_zip_tmp'
 
 if (Test-Path $out) { Remove-Item $out -Force }
 if (Test-Path $tmp) { Remove-Item $tmp -Recurse -Force }

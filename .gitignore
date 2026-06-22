@@ -2,5 +2,15 @@
 agent/miniclaw/miniclaw-executor/app/credentials/auth-profiles.json
 agent/miniclaw/miniclaw-executor/app/server.js.bak
 
+# Agent 架構分析報告（不追蹤）
+agent/miniclaw/agent_review_report.md
+
 # Node
 node_modules/
+
+# Agent 參考檔案（不上傳）
+agent/miniclaw/miniclaw-executor/
+agent/
+agent/miniclaw/ai_talk.md
+agent/miniclaw/agent_review_report.md
+agent/miniclaw/agent*

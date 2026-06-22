@@ -1,6 +1,6 @@
-$src = 'C:\Users\user\Downloads\g\agent\miniclaw\miniclaw-executor'
-$out = 'C:\Users\user\Downloads\g\agent\miniclaw\miniclaw-executor.zip'
-$tmp = 'C:\Users\user\Downloads\g\agent\miniclaw\_zip_tmp'
+$src = Join-Path $PSScriptRoot 'miniclaw-executor'
+$out = Join-Path $PSScriptRoot 'miniclaw-executor.zip'
+$tmp = Join-Path $PSScriptRoot '_zip_tmp'
 
 if (Test-Path $out) { Remove-Item $out -Force }
 if (Test-Path $tmp) { Remove-Item $tmp -Recurse -Force }

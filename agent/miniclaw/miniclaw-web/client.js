@@ -3320,9 +3320,156 @@ function initPanelOrder() {
   });
 }
 
+// ===== 特殊功能面板管理 =====
+const SPECIAL_FEATURES_KEY = 'miniclaw_pinned_features';
+const DEFAULT_PINNED = ['gameAssistant', 'wakeWord'];
+
+function initSpecialFeatures() {
+  const pinned = JSON.parse(localStorage.getItem(SPECIAL_FEATURES_KEY) || JSON.stringify(DEFAULT_PINNED));
+
+  document.querySelectorAll('.feature-btn').forEach(btn => {
+    const feature = btn.dataset.feature;
+    if (pinned.includes(feature)) {
+      btn.classList.add('pinned');
+    } else {
+      btn.classList.remove('pinned');
+    }
+  });
+
+  document.querySelectorAll('.btn-pin').forEach(pinBtn => {
+    pinBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const featureBtn = pinBtn.closest('.feature-btn');
+      togglePin(featureBtn.dataset.feature);
+    });
+  });
+
+  document.querySelectorAll('.feature-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      executeFeature(btn.dataset.feature);
+    });
+  });
+}
+
+function togglePin(featureId) {
+  const pinned = JSON.parse(localStorage.getItem(SPECIAL_FEATURES_KEY) || JSON.stringify(DEFAULT_PINNED));
+  const btn = document.querySelector(`[data-feature="${featureId}"]`);
+
+  if (pinned.includes(featureId)) {
+    const index = pinned.indexOf(featureId);
+    pinned.splice(index, 1);
+    btn.classList.remove('pinned');
+  } else {
+    pinned.push(featureId);
+    btn.classList.add('pinned');
+  }
+
+  localStorage.setItem(SPECIAL_FEATURES_KEY, JSON.stringify(pinned));
+}
+
+function executeFeature(featureId) {
+  switch (featureId) {
+    case 'gameAssistant':
+      toggleGameAssistant();
+      break;
+    case 'wakeWord':
+      toggleWakeWord();
+      break;
+    case 'clearHistory':
+      showConfirm(
+        '【紀錄清理】',
+        '一鍵清空大廳當前的所有網頁對話日誌與快取，釋放網頁瀏覽器記憶體並保護隱私。',
+        clearChatHistory
+      );
+      break;
+    case 'emergencyStop':
+      showConfirm(
+        '【安全煞車】',
+        '當腳本異常無限循環、滑鼠被卡死時，點擊此處或長按 Esc 可由網頁端獨立執行緒透過 WebSocket 強行物理終止後端 Python 佇列。',
+        emergencyStop
+      );
+      break;
+    case 'turboMode':
+      toggleTurboMode();
+      break;
+  }
+}
+
+function showConfirm(title, message, callback) {
+  document.getElementById('confirmTitle').textContent = title;
+  document.getElementById('confirmMessage').textContent = message;
+  document.getElementById('confirmOverlay').classList.add('active');
+
+  const confirmBtn = document.getElementById('btnConfirmOk');
+  const cancelBtn = document.getElementById('btnConfirmCancel');
+
+  const cleanup = () => {
+    document.getElementById('confirmOverlay').classList.remove('active');
+    confirmBtn.removeEventListener('click', onConfirm);
+    cancelBtn.removeEventListener('click', onCancel);
+  };
+
+  const onConfirm = () => {
+    cleanup();
+    callback();
+  };
+
+  const onCancel = () => {
+    cleanup();
+  };
+
+  confirmBtn.addEventListener('click', onConfirm);
+  cancelBtn.addEventListener('click', onCancel);
+}
+
+function toggleGameAssistant() {
+  console.log('切換遊戲助手');
+  showToast('🎮 遊戲助手', '功能開發中，敬請期待！');
+}
+
+function toggleWakeWord() {
+  console.log('切換語音喚醒');
+  showToast('🎤 語音喚醒', '功能開發中，敬請期待！');
+}
+
+function clearChatHistory() {
+  const container = document.getElementById('chatHistoryContainer');
+  if (container) {
+    container.innerHTML = `
+      <div id="featureCards" style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:16px;padding:20px;">
+        <div style="font-size:2rem;margin-bottom:4px;">🦞</div>
+        <div style="font-size:1rem;color:#fff;font-weight:bold;letter-spacing:1px;">小龍蝦控制中樞</div>
+        <div style="font-size:0.82rem;color:var(--text-muted);margin-bottom:8px;">選擇功能或直接輸入指令開始</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%;max-width:360px;">
+          <button class="feature-card-btn" onclick="sendQuickCommand('幫我截圖目前畫面')">🖥️<br><span>畫面監控</span></button>
+          <button class="feature-card-btn" onclick="sendQuickCommand('列出桌面的檔案')">📁<br><span>檔案管理</span></button>
+          <button class="feature-card-btn" onclick="sendQuickCommand('幫我診斷網路連線狀態')">🌐<span>網路診斷</span></button>
+          <button class="feature-card-btn" onclick="sendQuickCommand('查看下載資料夾的內容')">⬇️<br><span>查看下載</span></button>
+        </div>
+      </div>
+    `;
+  }
+  showToast('🗑️ 紀錄清理', '對話紀錄已清空！');
+}
+
+function emergencyStop() {
+  if (webState.ws && webState.ws.readyState === WebSocket.OPEN) {
+    webState.ws.send(JSON.stringify({ type: 'emergency-stop' }));
+    showToast('🛑 安全煞車', '已發送緊急中斷指令！');
+  } else {
+    showToast('⚠️ 連線失敗', '無法連接至執行器，請確認終端連線狀態。');
+  }
+}
+
+function toggleTurboMode() {
+  document.body.classList.toggle('turbo-mode');
+  const isTurbo = document.body.classList.contains('turbo-mode');
+  showToast('⚡ 極速模式', isTurbo ? '已啟用極速效能模式' : '已關閉極速效能模式');
+}
+
 // 在 DOMContentLoaded 中初始化拖拽排序
-const originalDOMContentLoaded = window.DOMContentLoaded;
 window.addEventListener('DOMContentLoaded', () => {
   initPanelOrder();
   initDragAndDrop();
+  initSpecialFeatures();
 });
