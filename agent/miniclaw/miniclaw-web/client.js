@@ -2854,7 +2854,7 @@ function updateAIStatusUI() {
   txt.style.color = color;
 }
 
-function showToast(title, desc, icon) {
+function showToast(title, desc = '', icon = '🦞') {
   const container = document.getElementById('toastContainer');
   const toast = document.createElement('div');
   toast.className = 'toast';
@@ -3423,8 +3423,15 @@ function showConfirm(title, message, callback) {
 }
 
 function toggleGameAssistant() {
-  console.log('切換遊戲助手');
-  showToast('🎮 遊戲助手', '功能開發中，敬請期待！');
+  const gameBtn = document.getElementById('btnGameAssist');
+  if (!gameBtn) return;
+
+  if (!webState.isTerminalConnected) {
+    showToast('🎮 遊戲助手', '需要先連上終端才能使用。', '🎮');
+    return;
+  }
+
+  gameBtn.click();
 }
 
 function toggleWakeWord() {
