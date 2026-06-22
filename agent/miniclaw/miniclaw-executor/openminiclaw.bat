@@ -6,6 +6,8 @@ set "APP_DIR=%ROOT%app"
 set "STARTUP_TIPS=%ROOT%docs\startup_tips.md"
 set "NGROK_GUIDE=%ROOT%docs\ngrok_update_guide.md"
 
+cd /d "%TEMP%"
+
 :: 在開頭即打開提示筆記本（常見問題、重新啟動指引）
 start /b "" notepad.exe "%STARTUP_TIPS%"
 
