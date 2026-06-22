@@ -1425,3 +1425,10 @@ input:checked + .slider:before {
 .lobby-accordion .panel-arrow.open {
   transform: rotate(90deg);
 }
+
+/* 語音喚醒亮起輸入框 */
+.wake-active-highlight {
+  border-color: var(--neon-cyan) !important;
+  box-shadow: var(--neon-cyan-glow) !important;
+  background: rgba(0, 240, 255, 0.08) !important;
+}

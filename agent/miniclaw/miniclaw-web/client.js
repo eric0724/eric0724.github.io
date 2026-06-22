@@ -3428,9 +3428,315 @@ function toggleGameAssistant() {
 }
 
 function toggleWakeWord() {
-  console.log('切換語音喚醒');
-  showToast('🎤 語音喚醒', '功能開發中，敬請期待！');
+  const chk = document.getElementById('chkWakeWord');
+  if (chk) {
+    chk.checked = !chk.checked;
+    chk.dispatchEvent(new Event('change'));
+  }
 }
+
+// ===== 零 AI 消耗自訂語音喚醒功能核心引擎 =====
+const wakeWordEngine = {
+  recognition: null,
+  isListening: false,
+  wakeWord: 'Ok Miniclaw',
+  state: 'idle', // 'idle', 'listening_wake', 'listening_cmd'
+  cmdTimeout: null,
+
+  init() {
+    this.wakeWord = localStorage.getItem('miniclaw_wakeword') || 'Ok Miniclaw';
+    const savedState = localStorage.getItem('miniclaw_wake_enabled') === 'true';
+    
+    // 顯示當前喚醒詞
+    const lbl = document.getElementById('lblCurrentWakeWord');
+    if (lbl) lbl.textContent = this.wakeWord;
+
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      console.warn('SpeechRecognition is not supported in this browser.');
+      const btnSet = document.getElementById('btnSetWakeWord');
+      if (btnSet) {
+        btnSet.disabled = true;
+        btnSet.textContent = '❌ 瀏覽器不支援語音辨識';
+      }
+      return;
+    }
+
+    this.recognition = new SpeechRecognition();
+    this.recognition.continuous = true;
+    this.recognition.interimResults = false;
+    this.recognition.lang = 'zh-TW';
+
+    this.recognition.onstart = () => {
+      console.log('語音喚醒：啟動背景監聽中...');
+      this.updateUIStatus(true);
+    };
+
+    this.recognition.onerror = (event) => {
+      console.error('語音喚醒錯誤：', event.error);
+      if (event.error === 'not-allowed') {
+        showToast('⚠️ 麥克風權限', '請允許網頁存取麥克風以使用語音喚醒功能。');
+        this.stop();
+      }
+    };
+
+    this.recognition.onend = () => {
+      console.log('語音喚醒：監聽結束。');
+      // 如果處於啟用狀態且未手動關閉，則重啟
+      if (this.isListening) {
+        try {
+          this.recognition.start();
+        } catch (e) {
+          console.error('語音喚醒：重啟失敗', e);
+        }
+      } else {
+        this.updateUIStatus(false);
+      }
+    };
+
+    this.recognition.onresult = (event) => {
+      const resultIndex = event.resultIndex;
+      const transcript = event.results[resultIndex][0].transcript.trim();
+      console.log('語音辨識結果：', transcript);
+
+      if (this.state === 'listening_wake') {
+        const cleanText = transcript.replace(/\s+/g, '').toLowerCase();
+        const cleanWake = this.wakeWord.replace(/\s+/g, '').toLowerCase();
+
+        if (cleanText.includes(cleanWake)) {
+          console.log('語音喚醒：觸發喚醒成功！');
+          this.triggerWakeUp();
+        }
+      } else if (this.state === 'listening_cmd') {
+        this.handleCommand(transcript);
+      }
+    };
+
+    // 綁定 Checkbox 的 change 事件
+    const chk = document.getElementById('chkWakeWord');
+    if (chk) {
+      chk.checked = savedState;
+      chk.addEventListener('change', () => {
+        if (chk.checked) {
+          this.start();
+        } else {
+          this.stop();
+        }
+      });
+      // 如果預設為開啟，則延時自動啟動
+      if (savedState) {
+        setTimeout(() => this.start(), 1000);
+      }
+    }
+
+    // 綁定設定按鈕
+    const btnSet = document.getElementById('btnSetWakeWord');
+    if (btnSet) {
+      btnSet.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.promptWakeWordSetting();
+      });
+    }
+  },
+
+  start() {
+    if (!this.recognition) {
+      showToast('⚠️ 語音喚醒', '此瀏覽器不支援 SpeechRecognition 語音辨識。');
+      return;
+    }
+    this.isListening = true;
+    this.state = 'listening_wake';
+    try {
+      this.recognition.start();
+    } catch (e) {
+      // 可能已在執行中
+    }
+    localStorage.setItem('miniclaw_wake_enabled', 'true');
+    
+    const settingsDiv = document.getElementById('wakeWordSettings');
+    if (settingsDiv) settingsDiv.style.display = 'block';
+  },
+
+  stop() {
+    this.isListening = false;
+    this.state = 'idle';
+    if (this.recognition) {
+      try {
+        this.recognition.stop();
+      } catch (e) {
+        // 可能已停止
+      }
+    }
+    this.clearHighlight();
+    localStorage.setItem('miniclaw_wake_enabled', 'false');
+    this.updateUIStatus(false);
+    
+    const settingsDiv = document.getElementById('wakeWordSettings');
+    if (settingsDiv) settingsDiv.style.display = 'none';
+  },
+
+  triggerWakeUp() {
+    this.state = 'listening_cmd';
+    this.playNotificationSound();
+
+    const input = document.getElementById('chatInput') || document.querySelector('.chat-input');
+    if (input) {
+      input.focus();
+      input.classList.add('wake-active-highlight');
+      showToast('🎤 語音喚醒', '我在聽，請說出您的指令...');
+    }
+
+    if (this.cmdTimeout) clearTimeout(this.cmdTimeout);
+    this.cmdTimeout = setTimeout(() => {
+      if (this.state === 'listening_cmd') {
+        console.log('語音監聽：等待指令超合，恢復喚醒模式。');
+        this.state = 'listening_wake';
+        this.clearHighlight();
+        showToast('🎤 語音喚醒', '未偵測到指令，已恢復喚醒詞監聽。');
+      }
+    }, 8000);
+  },
+
+  handleCommand(command) {
+    if (this.cmdTimeout) clearTimeout(this.cmdTimeout);
+    this.clearHighlight();
+
+    const input = document.getElementById('chatInput') || document.querySelector('.chat-input');
+    if (input) {
+      input.value = command;
+      const sendBtn = document.getElementById('btnSendMessage') || document.querySelector('.btn-send');
+      if (sendBtn) {
+        sendBtn.click();
+      } else {
+        const event = new KeyboardEvent('keydown', { key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true });
+        input.dispatchEvent(event);
+      }
+    }
+
+    this.state = 'listening_wake';
+  },
+
+  clearHighlight() {
+    const input = document.getElementById('chatInput') || document.querySelector('.chat-input');
+    if (input) {
+      input.classList.remove('wake-active-highlight');
+    }
+  },
+
+  playNotificationSound() {
+    try {
+      const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const oscillator = audioCtx.createOscillator();
+      const gainNode = audioCtx.createGain();
+
+      oscillator.connect(gainNode);
+      gainNode.connect(audioCtx.destination);
+
+      oscillator.type = 'sine';
+      oscillator.frequency.setValueAtTime(523.25, audioCtx.currentTime); // C5
+      oscillator.frequency.exponentialRampToValueAtTime(783.99, audioCtx.currentTime + 0.15); // G5
+
+      gainNode.gain.setValueAtTime(0.08, audioCtx.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.005, audioCtx.currentTime + 0.3);
+
+      oscillator.start();
+      oscillator.stop(audioCtx.currentTime + 0.3);
+    } catch (e) {
+      console.warn('AudioContext 播放逼聲失敗:', e);
+    }
+  },
+
+  updateUIStatus(isActive) {
+    const dot = document.getElementById('listeningStatusDot');
+    const text = document.getElementById('listeningStatusText');
+    const chk = document.getElementById('chkWakeWord');
+    const settingsDiv = document.getElementById('wakeWordSettings');
+
+    if (chk) chk.checked = isActive;
+    if (settingsDiv) settingsDiv.style.display = isActive ? 'block' : 'none';
+
+    if (dot && text) {
+      if (isActive) {
+        dot.style.background = '#39FF14'; // bright neon green
+        dot.style.boxShadow = '0 0 8px #39FF14';
+        text.textContent = '常駐監聽中';
+        text.style.color = '#39FF14';
+      } else {
+        dot.style.background = '#9CA3AF';
+        dot.style.boxShadow = 'none';
+        text.textContent = '已關閉';
+        text.style.color = '#9CA3AF';
+      }
+    }
+  },
+
+  promptWakeWordSetting() {
+    const result = prompt('請輸入自訂喚醒詞，或留下空白以啟動語音錄製模式（將錄製您接下來說的第一句話）：', this.wakeWord);
+    
+    if (result === null) return;
+
+    if (result.trim() !== '') {
+      const word = result.trim();
+      this.wakeWord = word;
+      localStorage.setItem('miniclaw_wakeword', word);
+      
+      const lbl = document.getElementById('lblCurrentWakeWord');
+      if (lbl) lbl.textContent = word;
+      showToast('✅ 喚醒詞設定', `喚醒詞已成功自訂為："${word}"`);
+    } else {
+      this.recordWakeWord();
+    }
+  },
+
+  recordWakeWord() {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      showToast('⚠️ 瀏覽器限制', '此瀏覽器不支援語音辨識。');
+      return;
+    }
+
+    const wasListening = this.isListening;
+    if (wasListening && this.recognition) {
+      try { this.recognition.stop(); } catch(e){}
+    }
+
+    const tempRec = new SpeechRecognition();
+    tempRec.lang = 'zh-TW';
+    tempRec.continuous = false;
+    tempRec.interimResults = false;
+
+    showToast('🎤 錄製喚醒詞', '請在逼聲後說出您設定的喚醒詞...');
+    
+    setTimeout(() => {
+      this.playNotificationSound();
+      
+      tempRec.onresult = (event) => {
+        const recorded = event.results[0][0].transcript.trim();
+        if (recorded) {
+          this.wakeWord = recorded;
+          localStorage.setItem('miniclaw_wakeword', recorded);
+          const lbl = document.getElementById('lblCurrentWakeWord');
+          if (lbl) lbl.textContent = recorded;
+          showToast('✅ 錄製成功', `喚醒詞已設定為："${recorded}"`);
+        }
+        if (wasListening) this.start();
+      };
+
+      tempRec.onerror = (e) => {
+        console.error('錄製喚醒詞錯誤：', e);
+        showToast('❌ 錄製失敗', '未偵測到清晰語音，已恢復原喚醒詞。');
+        if (wasListening) this.start();
+      };
+
+      try {
+        tempRec.start();
+      } catch (e) {
+        console.error(e);
+        if (wasListening) this.start();
+      }
+    }, 500);
+  }
+};
 
 function clearChatHistory() {
   const container = document.getElementById('chatHistoryContainer');
@@ -3472,4 +3778,5 @@ window.addEventListener('DOMContentLoaded', () => {
   initPanelOrder();
   initDragAndDrop();
   initSpecialFeatures();
+  wakeWordEngine.init();
 });

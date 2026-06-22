@@ -607,13 +607,42 @@
           </button>
           
           <!-- 功能 2：語音喚醒（預設釘選） -->
-          <button class="feature-btn pinned" data-feature="wakeWord" id="btnWakeWord">
-            <span class="btn-icon">🎤</span>
-            <span class="btn-label">語音喚醒</span>
-            <div class="btn-actions">
-              <span class="btn-pin" title="釘選到主操作區">📌</span>
+          <div class="feature-btn pinned" data-feature="wakeWord" id="btnWakeWord" style="flex-direction: column; align-items: stretch; gap: 4px; cursor: default;">
+            <div style="display: flex; align-items: center; gap: 8px; width: 100%;">
+              <span class="btn-icon">🎤</span>
+              <span class="btn-label" style="flex: 1; text-align: left;">語音喚醒</span>
+              
+              <!-- Checkbox -->
+              <input type="checkbox" id="chkWakeWord" style="cursor: pointer;" onclick="event.stopPropagation();">
+              <label for="chkWakeWord" style="font-size: 0.72rem; cursor: pointer; user-select: none;" onclick="event.stopPropagation();">開啟</label>
+              
+              <!-- Tooltip -->
+              <div class="tooltip-wrapper" style="position: relative; display: inline-flex;" onclick="event.stopPropagation();">
+                <span class="tooltip-icon" style="cursor: pointer; background: rgba(255,255,255,0.08); border-radius: 50%; width: 16px; height: 16px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.68rem;">?</span>
+                <div class="tooltip-bubble" style="width: 250px; bottom: 125%; left: 50%; transform: translateX(-50%); white-space: normal;">
+                  【語音喚醒】開啟後系統將在背景常駐聆聽。只要喊出您設定的專屬名稱，輸入框將自動亮起並聚焦，免去手動點擊滑鼠的麻煩！
+                </div>
+              </div>
+              
+              <div class="btn-actions" style="margin-left: 6px;">
+                <span class="btn-pin" title="釘選到主操作區">📌</span>
+              </div>
             </div>
-          </button>
+            
+            <!-- 智慧連動設定區域 -->
+            <div id="wakeWordSettings" style="display: none; margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.08);" onclick="event.stopPropagation();">
+              <div style="font-size: 0.72rem; display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+                <span>喚醒詞：<strong id="lblCurrentWakeWord" style="color: var(--neon-cyan);">Ok Miniclaw</strong></span>
+                <span id="listeningStatus" style="font-size: 0.68rem; display: flex; align-items: center; gap: 4px;">
+                  <span style="display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #9CA3AF;" id="listeningStatusDot"></span>
+                  <span id="listeningStatusText" style="color: #9CA3AF;">已關閉</span>
+                </span>
+              </div>
+              <button id="btnSetWakeWord" style="width: 100%; padding: 4px 8px; font-size: 0.7rem; border: 1px solid var(--neon-cyan); background: rgba(0, 240, 255, 0.05); color: var(--neon-cyan); border-radius: 2px; cursor: pointer; font-family: var(--font-body); transition: all 0.2s;">
+                ⚙️ 設定專屬喚醒詞（例如：Ok Miniclaw）
+              </button>
+            </div>
+          </div>
           
           <!-- 分隔線 -->
           <hr class="feature-divider">
@@ -912,7 +941,7 @@
   <!-- 固定底部資訊列 -->
   <div style="position:fixed;bottom:0;left:0;right:0;z-index:1001;background:rgba(6,5,11,0.92);backdrop-filter:blur(10px);border-top:1px solid rgba(255,102,0,0.2);padding:8px 20px;display:flex;justify-content:space-between;align-items:center;font-size:0.75rem;font-family:var(--font-mono);">
     <span style="color:var(--text-muted);">💬 有任何問題或意見，歡迎聯絡：<a href="mailto:eric940724@gmail.com" style="color:var(--neon-cyan);text-decoration:none;">eric940724@gmail.com</a></span>
-    <span style="color:#ffffff;">上次更新：2026-06-22 11:09</span>
+    <span style="color:#ffffff;">上次更新：2026-06-22 11:21</span>
   </div>
 
   <!-- 前端引導邏輯與通訊協定 -->

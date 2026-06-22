@@ -1,4 +1,5 @@
 @echo off
+chcp 65001 >nul
 setlocal enabledelayedexpansion
 set "ROOT=%~dp0"
 del "%ROOT%install_error.flag" >nul 2>&1
