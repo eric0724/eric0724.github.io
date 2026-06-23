@@ -91,8 +91,12 @@ if %errorlevel% neq 0 (
   echo  需要設定 ngrok authtoken 才能使用遠端連線
   echo ============================================
   echo.
-  echo 請至 https://dashboard.ngrok.com/get-started/your-authtoken
-  echo 登入後複製您的 authtoken（以 ngrok_ 開頭）
+  echo 正在為您開啟 ngrok authtoken 頁面...
+  start /b "" cmd /c "start https://dashboard.ngrok.com/get-started/your-authtoken"
+  echo 正在為您開啟更新說明記事本...
+  start /b "" notepad.exe "%NGROK_GUIDE%"
+  echo.
+  echo 請至上方瀏覽器頁面登入後複製您的 authtoken（以 ngrok_ 開頭）
   echo.
   set /p NGROK_TOKEN="請輸入 ngrok authtoken（或直接按 Enter 跳過）: "
   if not "!NGROK_TOKEN!"=="" (
