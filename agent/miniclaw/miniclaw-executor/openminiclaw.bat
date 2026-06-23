@@ -97,29 +97,7 @@ timeout /t 3 /nobreak >nul
 
 :done
 echo.
-echo [*] openminiclaw.bat finished.
-echo [*] watchdog will open the web browser after confirming node.exe is running.
+echo [*] openminiclaw.bat done. watchdog is managing the process.
+echo [*] Server running on http://localhost:3000
 echo.
-
-:running
-echo.
-echo ============================================
-echo  Miniclaw is running.
-echo  Finish setup in the browser.
-echo ============================================
-echo.
-echo  You can switch to the browser now. You do NOT need to type N.
-echo  Type Y and press Enter only when you want to stop node and ngrok.
-echo.
-set /p STOP_INPUT="Stop services? (Y, or Enter to keep running): "
-if /i "!STOP_INPUT!"=="Y" (
-  taskkill /f /im node.exe >nul 2>&1
-  taskkill /f /im ngrok.exe >nul 2>&1
-  echo [OK] All services stopped.
-  echo 3秒後自動關閉...
-  timeout /t 3 /nobreak >nul
-  exit /b 0
-)
-echo [OK] Still running. Close this window anytime.
-timeout /t 3 /nobreak >nul
 exit /b 0
