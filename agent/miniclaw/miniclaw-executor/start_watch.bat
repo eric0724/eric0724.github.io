@@ -3,37 +3,40 @@ chcp 65001 >nul
 setlocal enabledelayedexpansion
 
 :: ============================================
-:: Miniclaw Watchdog v5 — 無限重試啟動模式
+:: Miniclaw Watchdog v6 — 全新啟動流程
 :: ============================================
-::  不自己做安裝，不檢查 ngrok
-::  只做一件事：不斷重試開啟 openminiclaw.bat
-::  直到 node.exe 成功啟動為止
-::  如果 node.exe 後來停止，也自動重啟
+::  1. 啟動 openminiclaw.bat（安裝 Node.js + 啟動 server）
+::  2. 等待 node.exe 啟動
+::  3. 啟動 setup_ngrok.bat（新視窗讓玩家設定 ngrok + API key）
+::  4. 等待 setup_ngrok.bat 關閉（玩家完成設定）
+::  5. 啟動 ngrok 隧道
+::  6. 開啟瀏覽器
+::  7. 監控 node.exe，停止就重啟
 :: ============================================
 
 set "ROOT=%~dp0"
 set "BAT_PATH=%ROOT%openminiclaw.bat"
+set "SETUP_PATH=%ROOT%setup_ngrok.bat"
 
 echo ============================================
-echo  🦞 Miniclaw Watchdog v5
+echo  🦞 Miniclaw Watchdog v6
 echo ============================================
-echo  自動重試啟動 openminiclaw.bat
-echo  直到 node.exe 正常執行
+echo  自動啟動 server 及設定 ngrok/API
 echo ============================================
 echo.
-echo  提示：第一次執行安裝 Node.js 或 ngrok 時
-echo        安裝完成會自動關閉視窗，
-echo        Watchdog 會自動再次啟動。
-echo        不需要手動關閉任何東西！
+echo  提示：第一次執行會先安裝必要元件
+echo        安裝完成後會開啟設定視窗
+echo        請在設定視窗中輸入 ngrok authtoken 和 API Key
+echo ============================================
 echo.
 
 :startup
 
-:: 啟動 openminiclaw.bat（新視窗，不卡住 watchdog）
+:: ─── Step 1: 啟動 openminiclaw.bat ────────
 echo [*] 啟動 openminiclaw.bat...
-start "Miniclaw" "%BAT_PATH%"
+start "Miniclaw-Server" "%BAT_PATH%"
 
-:: 等待 node.exe 出現（最多等 60 秒）
+:: ─── Step 2: 等待 node.exe ────────────────
 echo [*] 等待 node.exe 啟動（60 秒內）...
 set WAIT=0
 :wait_node_start
@@ -41,11 +44,9 @@ timeout /t 3 /nobreak >nul
 if exist "%ROOT%install_error.flag" (
     echo.
     echo ============================================
-    echo  [X] 偵測到關鍵安裝錯誤（例如 ngrok 版本過舊）
-    echo      自動監控已停止。請參考已開啟的說明文件，
-    echo      手動更新後再重新執行 watchdog.bat。
+    echo  [X] 偵測到關鍵安裝錯誤
+    echo      請參考已開啟的說明文件手動處理。
     echo ============================================
-    echo.
     echo 5秒後自動關閉...
     timeout /t 5 /nobreak >nul
     exit /b 1
@@ -53,12 +54,7 @@ if exist "%ROOT%install_error.flag" (
 tasklist /fi "imagename eq node.exe" 2>nul | find /i "node.exe" >nul
 if !errorlevel! equ 0 (
     echo [OK] node.exe 已啟動！
-    if not defined BROWSER_OPENED (
-        set BROWSER_OPENED=1
-        echo [*] 正在開啟網頁...
-        start /b "" cmd /c "start https://eric0724.github.io/agent/miniclaw/miniclaw-web/index.html"
-    )
-    goto :monitor
+    goto :setup_ngrok_step
 )
 set /a WAIT+=3
 if !WAIT! geq 60 (
@@ -67,20 +63,51 @@ if !WAIT! geq 60 (
         set WAIT=0
         goto :wait_node_start
     )
-    echo [!] node.exe 未啟動（已等 60 秒且無安裝活動）
-    echo     可能是正在安裝，或安裝卡住
+    echo [!] node.exe 未啟動（已等 60 秒）
     echo     將關閉視窗並重試...
-    taskkill /f /fi "WINDOWTITLE eq Miniclaw" >nul 2>&1
+    taskkill /f /fi "WINDOWTITLE eq Miniclaw-Server" >nul 2>&1
     taskkill /f /im node.exe >nul 2>&1
-    taskkill /f /im ngrok.exe >nul 2>&1
     timeout /t 2 /nobreak >nul
     goto :startup
 )
 goto :wait_node_start
 
-:: ─── 監控模式 ────────────────────────────
+:: ─── Step 3: 啟動 setup_ngrok.bat ──────
+:setup_ngrok_step
+echo.
+echo [*] 開啟設定視窗（ngrok + API Key）...
+echo     請完成設定後關閉該視窗，watchdog 會繼續。
+echo.
+start /w "Miniclaw-Setup" "%SETUP_PATH%"
+
+:: ─── Step 4: 啟動 ngrok 隧道 ────────────
+echo [*] 啟動 ngrok 隧道...
+where ngrok >nul 2>&1
+if %errorlevel% equ 0 (
+    ngrok config check >nul 2>&1
+    if !errorlevel! equ 0 (
+        start /b "" ngrok http 3000 >nul 2>&1
+        echo [OK] ngrok 已啟動
+    ) else (
+        echo [*] ngrok 尚未設定 authtoken，跳過隧道
+    )
+) else (
+    echo [*] ngrok 未安裝，跳過隧道
+)
+
+:: ─── Step 5: 開啟瀏覽器 ────────────────
+echo [*] 正在開啟網頁...
+start /b "" cmd /c "start https://eric0724.github.io/agent/miniclaw/miniclaw-web/index.html"
+
+:: ─── Step 6: 監控模式 ──────────────────
 :monitor
+echo.
 echo [*] 進入監控模式，每 5 秒檢查 node.exe...
+echo.
+echo  ============================================
+echo   Miniclaw is running.
+echo   Close this window to stop all services.
+echo  ============================================
 
 :monitor_loop
 timeout /t 5 /nobreak >nul
@@ -93,13 +120,6 @@ if !errorlevel! neq 0 (
     taskkill /f /im ngrok.exe >nul 2>&1
     timeout /t 2 /nobreak >nul
     goto :startup
-)
-
-:: 顯示狀態（每 30 秒顯示一次）
-set /a COUNT+=1
-if !COUNT! geq 6 (
-    set COUNT=0
-    echo [!TIME!] 監控中：node.exe ✅ 執行中
 )
 
 goto :monitor_loop

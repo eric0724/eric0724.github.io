@@ -4,7 +4,6 @@ setlocal enabledelayedexpansion
 set "ROOT=%~dp0"
 set "APP_DIR=%ROOT%app"
 set "STARTUP_TIPS=%ROOT%docs\startup_tips.md"
-set "NGROK_GUIDE=%ROOT%docs\ngrok_update_guide.md"
 
 cd /d "%TEMP%"
 
@@ -50,54 +49,9 @@ timeout /t 2 /nobreak >nul
 
 echo [OK] Server started
 
-echo [4/5] Checking ngrok...
-where ngrok >nul 2>&1
-if %errorlevel% neq 0 (
-  echo.
-  echo [*] ngrok not found. Skipping ngrok setup.
-  echo [*] Server will run on http://localhost:3000 (local only)
-  echo.
-  goto :done
-)
-
-echo [*] ngrok found. Checking authtoken...
-ngrok config check >nul 2>&1
-if %errorlevel% neq 0 (
-  echo.
-  echo ============================================
-  echo  需要設定 ngrok authtoken 才能使用遠端連線
-  echo ============================================
-  echo.
-  echo 正在為您開啟 ngrok authtoken 頁面...
-  start /b "" cmd /c "start https://dashboard.ngrok.com/get-started/your-authtoken"
-  echo 正在為您開啟更新說明記事本...
-  start /b "" notepad.exe "%NGROK_GUIDE%"
-  echo.
-  echo 請至上方瀏覽器頁面登入後複製您的 authtoken（以 ngrok_ 開頭）
-  echo.
-  set /p NGROK_TOKEN="請輸入 ngrok authtoken（或直接按 Enter 跳過）: "
-  if not "!NGROK_TOKEN!"=="" (
-    echo [!] 正在設定 authtoken...
-    ngrok config add-authtoken !NGROK_TOKEN!
-    if !errorlevel! equ 0 (
-      echo [OK] ngrok authtoken 設定完成！
-    ) else (
-      echo [X] authtoken 設定失敗，將跳過 ngrok 通道
-      goto :done
-    )
-  ) else (
-    echo [*] 跳過 ngrok 通道設定
-    goto :done
-  )
-)
-
-echo [OK] ngrok configured. Starting tunnel...
-start /b "" ngrok http 3000 >nul 2>&1
-timeout /t 3 /nobreak >nul
-
-:done
+:: ngrok 和 API key 設定由 setup_ngrok.bat 處理
+echo [*] ngrok and API setup will be handled by setup_ngrok.bat
 echo.
-echo [*] openminiclaw.bat done. watchdog is managing the process.
-echo [*] Server running on http://localhost:3000
+echo [*] openminiclaw.bat done. Server running on http://localhost:3000
 echo.
 exit /b 0
