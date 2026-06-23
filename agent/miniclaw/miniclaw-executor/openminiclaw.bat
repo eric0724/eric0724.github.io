@@ -51,11 +51,12 @@ timeout /t 2 /nobreak >nul
 echo [OK] Server started
 
 echo [4/5] Checking ngrok...
+set "NGROK_CMD=ngrok"
 where ngrok >nul 2>&1
 if %errorlevel% neq 0 (
   echo.
   echo ============================================
-  echo  ngrok not found. Checking common locations...
+  echo  ngrok not found in PATH. Checking common locations...
   echo ============================================
   echo.
   
@@ -63,19 +64,24 @@ if %errorlevel% neq 0 (
   set "NGROK_FOUND=0"
   
   :: Check winget default path
-  if exist "%LOCALAPPDATA%\Microsoft\WinGet\Packages\*ngrok*" (
-    echo [*] Found ngrok in WinGet packages
-    set "NGROK_FOUND=1"
+  for /d %%i in ("%LOCALAPPDATA%\Microsoft\WinGet\Packages\*ngrok*") do (
+    if exist "%%i\ngrok.exe" (
+      echo [*] Found ngrok in WinGet packages: %%i\ngrok.exe
+      set "NGROK_CMD=%%i\ngrok.exe"
+      set "NGROK_FOUND=1"
+    )
   )
   
   :: Check common install locations
   if exist "C:\ngrok\ngrok.exe" (
     echo [*] Found ngrok at C:\ngrok\ngrok.exe
+    set "NGROK_CMD=C:\ngrok\ngrok.exe"
     set "NGROK_FOUND=1"
   )
   
   if exist "%USERPROFILE%\ngrok\ngrok.exe" (
     echo [*] Found ngrok at %USERPROFILE%\ngrok\ngrok.exe
+    set "NGROK_CMD=%USERPROFILE%\ngrok\ngrok.exe"
     set "NGROK_FOUND=1"
   )
   
@@ -86,10 +92,13 @@ if %errorlevel% neq 0 (
     start /b "" notepad.exe "%NGROK_GUIDE%"
     echo.
     set /p CONTINUE_INPUT="Installed? Press Y to continue, or close window: "
+    if /i "!CONTINUE_INPUT!"=="Y" (
+      goto :check_ngrok_again
+    ) else (
+      goto :skip_ngrok
+    )
   ) else (
-    echo [*] ngrok found but not in PATH. Please add it to PATH or copy ngrok.exe to the same folder as openminiclaw.bat
-    echo.
-    set /p CONTINUE_INPUT="Fixed? Press Y to continue, or close window: "
+    echo [*] Using ngrok from: %NGROK_CMD%
   )
 )
   if /i "!CONTINUE_INPUT!"=="Y" (
@@ -100,14 +109,14 @@ if %errorlevel% neq 0 (
 )
 
 :check_ngrok_again
-where ngrok >nul 2>&1
+where %NGROK_CMD% >nul 2>&1
 if %errorlevel% neq 0 (
   echo [!] 仍未偵測到 ngrok，將跳過遠端連線設定
   goto :skip_ngrok
 )
 
 echo [*] ngrok found. Checking authtoken...
-ngrok config check >nul 2>&1
+%NGROK_CMD% config check >nul 2>&1
 if %errorlevel% neq 0 (
   echo.
   echo ============================================
@@ -124,7 +133,7 @@ if %errorlevel% neq 0 (
   set /p NGROK_TOKEN="請輸入 ngrok authtoken（或直接按 Enter 跳過）: "
   if not "!NGROK_TOKEN!"=="" (
     echo [!] 正在設定 authtoken...
-    ngrok config add-authtoken !NGROK_TOKEN!
+    %NGROK_CMD% config add-authtoken !NGROK_TOKEN!
     if !errorlevel! equ 0 (
       echo [OK] ngrok authtoken 設定完成！
     ) else (
@@ -138,7 +147,7 @@ if %errorlevel% neq 0 (
 )
 
 echo [OK] ngrok configured. Starting tunnel...
-start /b "" ngrok http 3000 >nul 2>&1
+start /b "" %NGROK_CMD% http 3000 >nul 2>&1
 timeout /t 3 /nobreak >nul
 
 :skip_ngrok
@@ -161,6 +170,7 @@ set /p STOP_INPUT="Stop services? (Y, or Enter to keep running): "
 if /i "!STOP_INPUT!"=="Y" (
   taskkill /f /im node.exe >nul 2>&1
   taskkill /f /im ngrok.exe >nul 2>&1
+  taskkill /f /im "%NGROK_CMD%" >nul 2>&1
   echo [OK] All services stopped.
   echo 3秒後自動關閉...
   timeout /t 3 /nobreak >nul

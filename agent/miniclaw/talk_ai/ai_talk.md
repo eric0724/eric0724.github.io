@@ -144,3 +144,4 @@ Miniclaw（小龍蝦）：一個讓玩家透過自然語言指令操控電腦的
 [2026-06-23 11:06] 统一玩家入口为start_watch.bat | index.html更新说明文字(Windows改用start_watch.bat) | 执行_repack_local.ps1压缩 | index.html时间戳更新
 [2026-06-23 11:10] 修复openminiclaw.bat中文echo乱码问题 | ngrok未安装提示改为英文 | 自动打开ngrok_update_guide.md记事本 | 执行_repack_local.ps1压缩 | index.html时间戳更新
 [2026-06-23 11:20] 更新ngrok_update_guide.md添加PATH说明(三种方法) | openminiclaw.bat增强ngrok检测(常见路径) | 执行_repack_local.ps1压缩 | index.html时间戳更新
+[2026-06-23 11:23] openminiclaw.bat自动使用找到的ngrok路径(NGROK_CMD变量) | 执行_repack_local.ps1压缩 | index.html时间戳更新
