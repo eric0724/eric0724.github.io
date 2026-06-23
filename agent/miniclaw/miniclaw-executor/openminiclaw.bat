@@ -51,12 +51,46 @@ timeout /t 2 /nobreak >nul
 echo [OK] Server started
 
 echo [4/5] Checking ngrok...
-echo [OK] ngrok check skipped (local mode)
-goto :skip_ngrok
+where ngrok >nul 2>&1
+if %errorlevel% neq 0 (
+  echo [!] ngrok not found. Skipping tunnel setup.
+  goto :skip_ngrok
+)
+
+echo [*] ngrok found. Checking authtoken...
+ngrok config check >nul 2>&1
+if %errorlevel% neq 0 (
+  echo.
+  echo ============================================
+  echo  需要設定 ngrok authtoken 才能使用遠端連線
+  echo ============================================
+  echo.
+  echo 請至 https://dashboard.ngrok.com/get-started/your-authtoken
+  echo 登入後複製您的 authtoken（以 ngrok_ 開頭）
+  echo.
+  set /p NGROK_TOKEN="請輸入 ngrok authtoken（或直接按 Enter 跳過）: "
+  if not "!NGROK_TOKEN!"=="" (
+    echo [!] 正在設定 authtoken...
+    ngrok config add-authtoken !NGROK_TOKEN!
+    if !errorlevel! equ 0 (
+      echo [OK] ngrok authtoken 設定完成！
+    ) else (
+      echo [X] authtoken 設定失敗，將跳過 ngrok 通道
+      goto :skip_ngrok
+    )
+  ) else (
+    echo [*] 跳過 ngrok 通道設定
+    goto :skip_ngrok
+  )
+)
+
+echo [OK] ngrok configured. Starting tunnel...
+start /b "" ngrok http 3000 >nul 2>&1
+timeout /t 3 /nobreak >nul
 
 :skip_ngrok
 echo.
-echo [*] Skipping ngrok tunnel. Server running on http://localhost:3000
+echo [*] Server running on http://localhost:3000
 echo     Open the web UI manually:
 start /b "" cmd /c "start https://eric0724.github.io/agent/miniclaw/miniclaw-web/index.html"
 
