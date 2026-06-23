@@ -57,7 +57,7 @@ if %errorlevel% neq 0 (
   echo [*] ngrok not found. Skipping ngrok setup.
   echo [*] Server will run on http://localhost:3000 (local only)
   echo.
-  goto :skip_ngrok
+  goto :done
 )
 
 echo [*] ngrok found. Checking authtoken...
@@ -83,11 +83,11 @@ if %errorlevel% neq 0 (
       echo [OK] ngrok authtoken 設定完成！
     ) else (
       echo [X] authtoken 設定失敗，將跳過 ngrok 通道
-      goto :skip_ngrok
+      goto :done
     )
   ) else (
     echo [*] 跳過 ngrok 通道設定
-    goto :skip_ngrok
+    goto :done
   )
 )
 
@@ -95,11 +95,11 @@ echo [OK] ngrok configured. Starting tunnel...
 start /b "" ngrok http 3000 >nul 2>&1
 timeout /t 3 /nobreak >nul
 
-:skip_ngrok
+:done
 echo.
-echo [*] Server running on http://localhost:3000
-echo     Open the web UI manually:
-start /b "" cmd /c "start https://eric0724.github.io/agent/miniclaw/miniclaw-web/index.html"
+echo [*] openminiclaw.bat finished.
+echo [*] watchdog will open the web browser after confirming node.exe is running.
+echo.
 
 :running
 echo.

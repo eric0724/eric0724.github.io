@@ -53,6 +53,11 @@ if exist "%ROOT%install_error.flag" (
 tasklist /fi "imagename eq node.exe" 2>nul | find /i "node.exe" >nul
 if !errorlevel! equ 0 (
     echo [OK] node.exe 已啟動！
+    if not defined BROWSER_OPENED (
+        set BROWSER_OPENED=1
+        echo [*] 正在開啟網頁...
+        start /b "" cmd /c "start https://eric0724.github.io/agent/miniclaw/miniclaw-web/index.html"
+    )
     goto :monitor
 )
 set /a WAIT+=3
