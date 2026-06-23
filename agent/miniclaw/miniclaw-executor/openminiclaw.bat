@@ -55,13 +55,43 @@ where ngrok >nul 2>&1
 if %errorlevel% neq 0 (
   echo.
   echo ============================================
-  echo  ngrok not found. Please install it first.
+  echo  ngrok not found. Checking common locations...
   echo ============================================
   echo.
-  echo Opening installation guide...
-  start /b "" notepad.exe "%NGROK_GUIDE%"
-  echo.
-  set /p CONTINUE_INPUT="Installed? Press Y to continue, or close window: "
+  
+  :: Check common ngrok installation paths
+  set "NGROK_FOUND=0"
+  
+  :: Check winget default path
+  if exist "%LOCALAPPDATA%\Microsoft\WinGet\Packages\*ngrok*" (
+    echo [*] Found ngrok in WinGet packages
+    set "NGROK_FOUND=1"
+  )
+  
+  :: Check common install locations
+  if exist "C:\ngrok\ngrok.exe" (
+    echo [*] Found ngrok at C:\ngrok\ngrok.exe
+    set "NGROK_FOUND=1"
+  )
+  
+  if exist "%USERPROFILE%\ngrok\ngrok.exe" (
+    echo [*] Found ngrok at %USERPROFILE%\ngrok\ngrok.exe
+    set "NGROK_FOUND=1"
+  )
+  
+  if %NGROK_FOUND% equ 0 (
+    echo [!] ngrok not found in common locations.
+    echo.
+    echo Opening installation guide...
+    start /b "" notepad.exe "%NGROK_GUIDE%"
+    echo.
+    set /p CONTINUE_INPUT="Installed? Press Y to continue, or close window: "
+  ) else (
+    echo [*] ngrok found but not in PATH. Please add it to PATH or copy ngrok.exe to the same folder as openminiclaw.bat
+    echo.
+    set /p CONTINUE_INPUT="Fixed? Press Y to continue, or close window: "
+  )
+)
   if /i "!CONTINUE_INPUT!"=="Y" (
     goto :check_ngrok_again
   ) else (
