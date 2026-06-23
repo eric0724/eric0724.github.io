@@ -64,11 +64,13 @@ if %errorlevel% neq 0 (
   set "NGROK_FOUND=0"
   
   :: Check winget default path
-  for /d %%i in ("%LOCALAPPDATA%\Microsoft\WinGet\Packages\*ngrok*") do (
-    if exist "%%i\ngrok.exe" (
-      echo [*] Found ngrok in WinGet packages: %%i\ngrok.exe
-      set "NGROK_CMD=%%i\ngrok.exe"
-      set "NGROK_FOUND=1"
+  if exist "%LOCALAPPDATA%\Microsoft\WinGet\Packages" (
+    for /d %%i in ("%LOCALAPPDATA%\Microsoft\WinGet\Packages\*ngrok*") do (
+      if exist "%%i\ngrok.exe" (
+        echo [*] Found ngrok in WinGet packages: %%i\ngrok.exe
+        set "NGROK_CMD=%%i\ngrok.exe"
+        set "NGROK_FOUND=1"
+      )
     )
   )
   
@@ -85,7 +87,7 @@ if %errorlevel% neq 0 (
     set "NGROK_FOUND=1"
   )
   
-  if %NGROK_FOUND% equ 0 (
+  if "!NGROK_FOUND!"=="0" (
     echo [!] ngrok not found in common locations.
     echo.
     echo Opening installation guide...
