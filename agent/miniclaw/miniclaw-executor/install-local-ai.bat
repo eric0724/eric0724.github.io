@@ -44,4 +44,6 @@ echo  模型：gemma3:3b 已就緒
 echo  回到小龍蝦網頁，點「偵測本地 AI」即可使用。
 echo ============================================
 echo.
-pause
+echo 3秒後自動關閉...
+timeout /t 3 /nobreak >nul
+exit /b 0

@@ -46,7 +46,8 @@ if exist "%ROOT%install_error.flag" (
     echo      手動更新後再重新執行 watchdog.bat。
     echo ============================================
     echo.
-    pause
+    echo 5秒後自動關閉...
+    timeout /t 5 /nobreak >nul
     exit /b 1
 )
 tasklist /fi "imagename eq node.exe" 2>nul | find /i "node.exe" >nul

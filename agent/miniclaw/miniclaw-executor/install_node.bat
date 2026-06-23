@@ -13,6 +13,6 @@ if %errorlevel% neq 0 (
     exit /b 1
 )
 echo [OK] Node.js 安裝完成！
-echo 請關閉此視窗。
-pause
+echo 3秒後自動關閉...
+timeout /t 3 /nobreak >nul
 exit /b 0

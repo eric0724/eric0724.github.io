@@ -25,8 +25,8 @@ if %errorlevel% neq 0 (
     exit /b 1
   )
   echo [OK] Node.js installed.
-  echo Close this window and run openminiclaw.bat again.
-  pause
+  echo 3秒後自動關閉，請重新執行 openminiclaw.bat...
+  timeout /t 3 /nobreak >nul
   exit /b 0
 )
 
@@ -75,9 +75,10 @@ if /i "!STOP_INPUT!"=="Y" (
   taskkill /f /im node.exe >nul 2>&1
   taskkill /f /im ngrok.exe >nul 2>&1
   echo [OK] All services stopped.
-  pause
+  echo 3秒後自動關閉...
+  timeout /t 3 /nobreak >nul
   exit /b 0
 )
-echo [OK] Still running. Close this window anytime, or press a key below.
-pause
+echo [OK] Still running. Close this window anytime.
+timeout /t 3 /nobreak >nul
 exit /b 0
