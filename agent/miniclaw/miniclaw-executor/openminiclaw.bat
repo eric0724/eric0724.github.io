@@ -60,57 +60,36 @@ if %errorlevel% neq 0 (
   echo ============================================
   echo.
   
-  :: Check common ngrok installation paths
-  set "NGROK_FOUND=0"
-  
-  :: Check winget default path
-  if exist "%LOCALAPPDATA%\Microsoft\WinGet\Packages" (
-    for /d %%i in ("%LOCALAPPDATA%\Microsoft\WinGet\Packages\*ngrok*") do (
-      if exist "%%i\ngrok.exe" (
-        echo [*] Found ngrok in WinGet packages: %%i\ngrok.exe
-        set "NGROK_CMD=%%i\ngrok.exe"
-        set "NGROK_FOUND=1"
-      )
-    )
-  )
-  
   :: Check common install locations
   if exist "C:\ngrok\ngrok.exe" (
     echo [*] Found ngrok at C:\ngrok\ngrok.exe
     set "NGROK_CMD=C:\ngrok\ngrok.exe"
-    set "NGROK_FOUND=1"
+    goto :ngrok_found
   )
   
   if exist "%USERPROFILE%\ngrok\ngrok.exe" (
     echo [*] Found ngrok at %USERPROFILE%\ngrok\ngrok.exe
     set "NGROK_CMD=%USERPROFILE%\ngrok\ngrok.exe"
-    set "NGROK_FOUND=1"
+    goto :ngrok_found
   )
   
-  if "!NGROK_FOUND!"=="0" (
-    echo [!] ngrok not found in common locations.
-    echo.
-    echo Opening installation guide...
-    start /b "" notepad.exe "%NGROK_GUIDE%"
-    echo.
-    set /p CONTINUE_INPUT="Installed? Press Y to continue, or close window: "
-    if /i "!CONTINUE_INPUT!"=="Y" (
-      goto :check_ngrok_again
-    ) else (
-      goto :skip_ngrok
-    )
-  ) else (
-    echo [*] Using ngrok from: %NGROK_CMD%
-  )
-)
+  echo [!] ngrok not found in common locations.
+  echo.
+  echo Opening installation guide...
+  start /b "" notepad.exe "%NGROK_GUIDE%"
+  echo.
+  set /p CONTINUE_INPUT="Installed? Press Y to continue, or close window: "
   if /i "!CONTINUE_INPUT!"=="Y" (
     goto :check_ngrok_again
   ) else (
-    exit /b 0
+    goto :skip_ngrok
   )
 )
 
-:check_ngrok_again
+:ngrok_found
+echo [*] Using ngrok from: %NGROK_CMD%
+
+:check_authtoken
 where %NGROK_CMD% >nul 2>&1
 if %errorlevel% neq 0 (
   echo [!] 仍未偵測到 ngrok，將跳過遠端連線設定

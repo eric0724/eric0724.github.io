@@ -146,3 +146,4 @@ Miniclaw（小龍蝦）：一個讓玩家透過自然語言指令操控電腦的
 [2026-06-23 11:20] 更新ngrok_update_guide.md添加PATH说明(三种方法) | openminiclaw.bat增强ngrok检测(常见路径) | 执行_repack_local.ps1压缩 | index.html时间戳更新
 [2026-06-23 11:23] openminiclaw.bat自动使用找到的ngrok路径(NGROK_CMD变量) | 执行_repack_local.ps1压缩 | index.html时间戳更新
 [2026-06-23 11:31] 修复for /d循环语法错误(添加路径存在检查) | 修复NGROK_FOUND变量比较问题 | 执行_repack_local.ps1压缩 | index.html时间戳更新
+[2026-06-23 11:35] 完全重写openminiclaw.bat ngrok检测逻辑(移除for /d循环) | 执行_repack_local.ps1压缩 | index.html时间戳更新
