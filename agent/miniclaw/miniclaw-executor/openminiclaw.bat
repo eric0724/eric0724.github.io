@@ -51,53 +51,17 @@ timeout /t 2 /nobreak >nul
 echo [OK] Server started
 
 echo [4/5] Checking ngrok...
-set "NGROK_CMD=ngrok"
 where ngrok >nul 2>&1
 if %errorlevel% neq 0 (
   echo.
-  echo ============================================
-  echo  ngrok not found in PATH. Checking common locations...
-  echo ============================================
+  echo [*] ngrok not found. Skipping ngrok setup.
+  echo [*] Server will run on http://localhost:3000 (local only)
   echo.
-  
-  :: Check common install locations
-  if exist "C:\ngrok\ngrok.exe" (
-    echo [*] Found ngrok at C:\ngrok\ngrok.exe
-    set "NGROK_CMD=C:\ngrok\ngrok.exe"
-    goto :ngrok_found
-  )
-  
-  if exist "%USERPROFILE%\ngrok\ngrok.exe" (
-    echo [*] Found ngrok at %USERPROFILE%\ngrok\ngrok.exe
-    set "NGROK_CMD=%USERPROFILE%\ngrok\ngrok.exe"
-    goto :ngrok_found
-  )
-  
-  echo [!] ngrok not found in common locations.
-  echo.
-  echo Opening installation guide...
-  start /b "" notepad.exe "%NGROK_GUIDE%"
-  echo.
-  set /p CONTINUE_INPUT="Installed? Press Y to continue, or close window: "
-  if /i "!CONTINUE_INPUT!"=="Y" (
-    goto :check_ngrok_again
-  ) else (
-    goto :skip_ngrok
-  )
-)
-
-:ngrok_found
-echo [*] Using ngrok from: %NGROK_CMD%
-
-:check_authtoken
-where %NGROK_CMD% >nul 2>&1
-if %errorlevel% neq 0 (
-  echo [!] 仍未偵測到 ngrok，將跳過遠端連線設定
   goto :skip_ngrok
 )
 
 echo [*] ngrok found. Checking authtoken...
-%NGROK_CMD% config check >nul 2>&1
+ngrok config check >nul 2>&1
 if %errorlevel% neq 0 (
   echo.
   echo ============================================
@@ -114,7 +78,7 @@ if %errorlevel% neq 0 (
   set /p NGROK_TOKEN="請輸入 ngrok authtoken（或直接按 Enter 跳過）: "
   if not "!NGROK_TOKEN!"=="" (
     echo [!] 正在設定 authtoken...
-    %NGROK_CMD% config add-authtoken !NGROK_TOKEN!
+    ngrok config add-authtoken !NGROK_TOKEN!
     if !errorlevel! equ 0 (
       echo [OK] ngrok authtoken 設定完成！
     ) else (
@@ -128,7 +92,7 @@ if %errorlevel% neq 0 (
 )
 
 echo [OK] ngrok configured. Starting tunnel...
-start /b "" %NGROK_CMD% http 3000 >nul 2>&1
+start /b "" ngrok http 3000 >nul 2>&1
 timeout /t 3 /nobreak >nul
 
 :skip_ngrok
@@ -151,7 +115,6 @@ set /p STOP_INPUT="Stop services? (Y, or Enter to keep running): "
 if /i "!STOP_INPUT!"=="Y" (
   taskkill /f /im node.exe >nul 2>&1
   taskkill /f /im ngrok.exe >nul 2>&1
-  taskkill /f /im "%NGROK_CMD%" >nul 2>&1
   echo [OK] All services stopped.
   echo 3秒後自動關閉...
   timeout /t 3 /nobreak >nul
