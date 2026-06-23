@@ -55,20 +55,13 @@ where ngrok >nul 2>&1
 if %errorlevel% neq 0 (
   echo.
   echo ============================================
-  echo  未偵測到 ngrok，需要安裝才能使用遠端連線
+  echo  ngrok not found. Please install it first.
   echo ============================================
   echo.
-  echo 安裝步驟：
-  echo   1. 開啟 PowerShell（系統管理員身分）
-  echo   2. 執行：winget install ngrok.ngrok
-  echo   3. 註冊並取得 authtoken：
-  echo      https://dashboard.ngrok.com/get-started/your-authtoken
-  echo   4. 設定 authtoken：
-  echo      ngrok config add-authtoken ^<你的token^>
+  echo Opening installation guide...
+  start /b "" notepad.exe "%NGROK_GUIDE%"
   echo.
-  echo 安裝完成後，請重新執行 openminiclaw.bat
-  echo.
-  set /p CONTINUE_INPUT="已安裝完成？按 Y 繼續，或直接關閉視窗: "
+  set /p CONTINUE_INPUT="Installed? Press Y to continue, or close window: "
   if /i "!CONTINUE_INPUT!"=="Y" (
     goto :check_ngrok_again
   ) else (
