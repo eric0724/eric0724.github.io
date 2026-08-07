@@ -75,7 +75,7 @@ if !errorlevel! equ 0 (
 :: ─── Step 4: 開啟瀏覽器 ─────────────────────
 :open_browser
 echo [*] 開啟瀏覽器...
-start /b "" cmd /c "start https://eric0724.github.io/agent/miniclaw/miniclaw-web/index.html"
+start https://eric0724.github.io/agent/miniclaw/miniclaw-web/index.html
 echo.
 
 :: ─── Step 5: 監控模式 ───────────────────────

@@ -160,7 +160,7 @@ echo ============================================
 echo  需要 ngrok authtoken 才能使用遠端連線
 echo  瀏覽器將自動開啟 ngrok 取得 token 頁面
 echo ============================================
-start /b "" cmd /c "start https://dashboard.ngrok.com/get-started/your-authtoken"
+start https://dashboard.ngrok.com/get-started/your-authtoken
 echo.
 set /p NGROK_TOKEN="  請貼上 authtoken（直接按 Enter 可跳過）: "
 if not "!NGROK_TOKEN!"=="" (
