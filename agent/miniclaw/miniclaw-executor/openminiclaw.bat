@@ -93,7 +93,7 @@ if not exist "%APP_DIR%\platform\win.js" (
 :: ============================================
 echo [3/5] 啟動 server...
 pushd "%APP_DIR%"
-start /b "" node server.js >nul 2>&1
+start "Miniclaw-Server" node server.js
 popd
 timeout /t 2 /nobreak >nul
 echo [OK] Server 啟動中（http://localhost:3000）
