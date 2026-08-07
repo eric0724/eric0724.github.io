@@ -152,7 +152,7 @@ echo [4.1] 檢查 ngrok authtoken...
 call :check_authtoken
 if !HAS_TOKEN!==1 (
     echo [OK] authtoken 已設定，跳過
-    goto :step_api
+    goto :done
 )
 
 echo.
@@ -174,38 +174,6 @@ if not "!NGROK_TOKEN!"=="" (
     echo [*] 跳過 authtoken 設定（僅本地連線）
 )
 echo.
-
-:: ============================================
-:: Step 5: API Key 設定
-:: ============================================
-:step_api
-echo [5/5] 檢查 API Key...
-
-:: 如果 .env 已有 key 就跳過
-set "HAS_API=0"
-if exist "%APP_DIR%\.env" (
-    findstr /i "GEMINI_API_KEY=" "%APP_DIR%\.env" >nul 2>&1
-    if !errorlevel! equ 0 set "HAS_API=1"
-)
-if !HAS_API!==1 (
-    echo [OK] API Key 已設定，跳過
-    goto :done
-)
-
-echo.
-echo ============================================
-echo  設定 Gemini API Key（AI 對話功能用）
-echo  瀏覽器將自動開啟 AI Studio 取得 Key 頁面
-echo ============================================
-start /b "" cmd /c "start https://aistudio.google.com/apikey"
-echo.
-set /p API_KEY="  請貼上 Gemini API Key（直接按 Enter 可跳過）: "
-if not "!API_KEY!"=="" (
-    echo GEMINI_API_KEY=!API_KEY!> "%APP_DIR%\.env"
-    echo [OK] API Key 已儲存
-) else (
-    echo [*] 跳過 API Key 設定
-)
 
 :: ============================================
 :: 完成
