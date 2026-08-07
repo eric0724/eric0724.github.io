@@ -219,7 +219,7 @@
                style="width:100%;display:block;text-decoration:none;text-align:center;box-sizing:border-box;">
               📥 點這裡下載執行器（miniclaw-executor.zip）
             </a>
-            <p style="font-size:0.8rem;color:var(--text-muted);margin-top:8px;">解壓後最外層只需認 <code style="color:var(--neon-green);">openminiclaw.bat</code>（Windows）或 <code style="color:var(--neon-cyan);">start.sh</code>（Mac/Linux）；其餘程式在 <code style="color:var(--neon-cyan);">app</code> 資料夾，不用手動開。</p>
+            <p style="font-size:0.8rem;color:var(--text-muted);margin-top:8px;">解壓後最外層只需認 <code style="color:var(--neon-green);">start_watch.bat</code>（Windows）或 <code style="color:var(--neon-cyan);">start.sh</code>（Mac/Linux）；其餘程式在 <code style="color:var(--neon-cyan);">app</code> 資料夾，不用手動開。</p>
           </div>
 
           <!-- 步驟 2：點兩下啟動腳本（主要方式） -->
@@ -235,16 +235,16 @@
               <p style="font-size:0.82rem;color:#fff;">🐧 <strong>Linux：</strong>點兩下 <code style="color:var(--neon-cyan);">start.sh</code></p>
             </div>
             <div style="background:rgba(255,165,0,0.08);border:1px solid rgba(255,165,0,0.35);border-radius:6px;padding:8px 12px;font-size:0.8rem;color:var(--neon-orange);line-height:1.7;margin-bottom:8px;">
-              ⚠️ <strong>第一次執行常會自動安裝元件</strong>（例如 Node.js、ngrok）。若視窗關掉、沒有繼續跑、出現錯誤：直接<strong>重新點兩下</strong> <code style="color:var(--neon-green);">start_watch.bat</code> 即可，它會自動重試。首次設定有時需重開 <strong>1～2 次</strong> 才會正常啟動並開啟網頁。
+              ⚡ <strong>首次執行會自動安裝 Node.js 與 ngrok 環境</strong>。過程請勿關閉視窗，安裝完成後系統會自動開啟網頁並無縫連線！
             </div>
             <div style="background:rgba(0,255,100,0.08);border:1px solid rgba(0,255,100,0.2);border-radius:6px;padding:8px 12px;font-size:0.8rem;color:var(--neon-green);">
-              ✅ 看到「[OK] Server started」或「[OK] node.exe 已啟動」就代表成功了！
+              ✅ 看到「[OK] node.exe 已啟動」並自動開頁面就代表成功了！
             </div>
           </div>
 
           <!-- 備用：手動步驟（折疊） -->
           <details style="margin-bottom:14px;">
-            <summary style="cursor:pointer;font-size:0.82rem;color:var(--text-muted);padding:8px 12px;background:rgba(0,0,0,0.2);border-radius:8px;border:1px solid rgba(255,255,255,0.07);">⚙️ openminiclaw.bat 無法執行？點這裡展開手動步驟</summary>
+            <summary style="cursor:pointer;font-size:0.82rem;color:var(--text-muted);padding:8px 12px;background:rgba(0,0,0,0.2);border-radius:8px;border:1px solid rgba(255,255,255,0.07);">⚙️ start_watch.bat 無法執行？點這裡展開手動步驟</summary>
             <div style="padding:14px;background:rgba(0,0,0,0.2);border-radius:0 0 8px 8px;border:1px solid rgba(255,255,255,0.07);border-top:none;font-size:0.82rem;color:var(--text-muted);line-height:1.8;">
               <strong style="color:var(--neon-orange);">① 安裝 Node.js（只需做一次）</strong><br>
               <p style="font-size:0.75rem;color:var(--neon-cyan);margin-top:4px;">⚠️ 成功安裝後，請重新開啟本頁面以確保功能正常。</p>
@@ -946,7 +946,7 @@
   <!-- 固定底部資訊列 -->
   <div style="position:fixed;bottom:0;left:0;right:0;z-index:1001;background:rgba(6,5,11,0.92);backdrop-filter:blur(10px);border-top:1px solid rgba(255,102,0,0.2);padding:8px 20px;display:flex;justify-content:space-between;align-items:center;font-size:0.75rem;font-family:var(--font-mono);">
     <span style="color:var(--text-muted);">💬 有任何問題或意見，歡迎聯絡：<a href="mailto:eric940724@gmail.com" style="color:var(--neon-cyan);text-decoration:none;">eric940724@gmail.com</a></span>
-    <span style="color:#ffffff;">上次更新：2026-08-07 16:32</span>
+    <span style="color:#ffffff;">上次更新：2026-08-07 17:31</span>
   </div>
 
   <!-- 前端引導邏輯與通訊協定 -->
