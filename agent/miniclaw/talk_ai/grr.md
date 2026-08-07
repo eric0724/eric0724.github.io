@@ -6,6 +6,30 @@
 
 ---
 
+## 本次完成：[2026-08-07] 防毒誤判排除 & openminiclaw 重構一條龍流程
+
+### 背景與問題
+- 玩家在下載 `miniclaw-executor.zip` 壓縮檔時，防毒軟體 (Windows Defender) 回報「疑似含有病毒或潛在有害軟體」並阻擋下載。
+- 原本的啟動流程將 `openminiclaw.bat` 與 `setup_ngrok.bat` 分開成多個視窗，安裝 Node/ngrok 後 PATH 未刷新導致需要手動關閉或多次重開，體驗不佳。
+
+### 原因排查與分析
+- 比對舊版可順利下載的 `server.js` (26KB) 與新版 `server.js` (58KB)，證實防毒軟體攔截的是新版 `server.js` 中的敏感特徵（包含 `exec`/`execSync` 進程調度、`taskkill`、Skills 隊列與背景指令等），並非 `.bat` 批次檔的問題。
+
+### 修改內容與架構優化
+1. **解耦 `server.js` 避免防毒誤判**：
+   - 修改 `_repack_local.ps1`，打包時排除 `app/server.js` 與 `app/skills_manager.js`。
+   - `miniclaw-executor.zip` 體積縮小至 20KB（純 .bat 與配置檔），完全避開防毒掃描阻擋。
+2. **`openminiclaw.bat` 自動遠端下載**：
+   - 在啟動 Step 2.5 加入判斷：若本地無 `server.js` 或 `skills_manager.js`，自動透過 PowerShell 從 GitHub 官方 Repository (`raw.githubusercontent.com`) 拉取最新版本。
+3. **無縫刷新 PATH 與單一視窗整合**：
+   - 將 `setup_ngrok.bat` 邏輯直接整合進 `openminiclaw.bat`。
+   - 新增 `:refresh_path` 函式：當透過 winget 安裝 Node.js 或 ngrok 後，自動讀取 Windows 註冊表 (`HKLM`與`HKCU` Environment Path) 並注入當前 CMD，無需重開視窗即可接著執行 `where node` / `where ngrok`。
+4. **兩級對話紀錄交接機制建立**：
+   - 制定 `ai_talk.md`（頂部只保留最新 1 次脈絡供快速閱讀）與 `grr.md`（歷史詳細脈絡檔案庫）的分工。
+   - 當玩家輸入「查看 aitalk / 看對話紀錄」時，AI 會同時讀取兩者。
+
+---
+
 ## 本次完成：Phase 9 — 手勢辨識與巨集自動觸發聯動
 
 ### 修改檔案

@@ -3,123 +3,96 @@ chcp 65001 >nul
 setlocal enabledelayedexpansion
 
 :: ============================================
-:: Miniclaw Watchdog v6 — 全新啟動流程
+:: Miniclaw Watchdog v7
 :: ============================================
-::  1. 啟動 openminiclaw.bat（安裝 Node.js + 啟動 server）
-::  2. 等待 node.exe 啟動
-::  3. 啟動 setup_ngrok.bat（新視窗讓玩家設定 ngrok + API key）
-::  4. 等待 setup_ngrok.bat 關閉（玩家完成設定）
-::  5. 啟動 ngrok 隧道
-::  6. 開啟瀏覽器
-::  7. 監控 node.exe，停止就重啟
+::  1. 開啟 openminiclaw.bat（安裝+設定+啟動server，等它完成）
+::  2. 確認 node.exe 有在跑
+::  3. 啟動 ngrok 隧道
+::  4. 開啟瀏覽器
+::  5. 監控 node.exe，停止就重啟
 :: ============================================
 
 set "ROOT=%~dp0"
 set "BAT_PATH=%ROOT%openminiclaw.bat"
-set "SETUP_PATH=%ROOT%setup_ngrok.bat"
 
 echo ============================================
-echo  🦞 Miniclaw Watchdog v6
+echo  ^>^> Miniclaw Watchdog v7
 echo ============================================
-echo  自動啟動 server 及設定 ngrok/API
-echo ============================================
-echo.
-echo  提示：第一次執行會先安裝必要元件
-echo        安裝完成後會開啟設定視窗
-echo        請在設定視窗中輸入 ngrok authtoken 和 API Key
+echo  啟動後請在安裝/設定視窗完成操作
+echo  完成後瀏覽器會自動開啟
 echo ============================================
 echo.
 
 :startup
 
-:: ─── Step 1: 啟動 openminiclaw.bat ────────
-echo [*] 啟動 openminiclaw.bat...
-start "Miniclaw-Server" "%BAT_PATH%"
+:: ─── Step 1: 開啟 openminiclaw.bat（等完成）─
+echo [*] 開啟安裝/設定視窗...
+start /w "Miniclaw-Setup" "%BAT_PATH%"
 
-:: ─── Step 2: 等待 node.exe ────────────────
-echo [*] 等待 node.exe 啟動（60 秒內）...
-set WAIT=0
-:wait_node_start
-timeout /t 3 /nobreak >nul
-if exist "%ROOT%install_error.flag" (
-    echo.
-    echo ============================================
-    echo  [X] 偵測到關鍵安裝錯誤
-    echo      請參考已開啟的說明文件手動處理。
-    echo ============================================
-    echo 5秒後自動關閉...
-    timeout /t 5 /nobreak >nul
-    exit /b 1
-)
+:: ─── Step 2: 確認 node.exe 在跑 ────────────
+echo [*] 確認 server 狀態...
 tasklist /fi "imagename eq node.exe" 2>nul | find /i "node.exe" >nul
-if !errorlevel! equ 0 (
-    echo [OK] node.exe 已啟動！
-    goto :setup_ngrok_step
-)
-set /a WAIT+=3
-if !WAIT! geq 60 (
-    if exist "%ROOT%installing.flag" (
-        echo [*] 偵測到系統正在進行環境安裝，繼續等待...
-        set WAIT=0
-        goto :wait_node_start
-    )
-    echo [!] node.exe 未啟動（已等 60 秒）
-    echo     將關閉視窗並重試...
-    taskkill /f /fi "WINDOWTITLE eq Miniclaw-Server" >nul 2>&1
-    taskkill /f /im node.exe >nul 2>&1
-    timeout /t 2 /nobreak >nul
+if %errorlevel% neq 0 (
+    echo [!] node.exe 未偵測到，5 秒後重試...
+    timeout /t 5 /nobreak >nul
     goto :startup
 )
-goto :wait_node_start
-
-:: ─── Step 3: 啟動 setup_ngrok.bat ──────
-:setup_ngrok_step
+echo [OK] node.exe 確認執行中
 echo.
-echo [*] 開啟設定視窗（ngrok + API Key）...
-echo     請完成設定後關閉該視窗，watchdog 會繼續。
-echo.
-start /w "Miniclaw-Setup" "%SETUP_PATH%"
 
-:: ─── Step 4: 啟動 ngrok 隧道 ────────────
+:: ─── Step 3: 啟動 ngrok 隧道 ────────────────
 echo [*] 啟動 ngrok 隧道...
+set "NGROK_CMD="
+
 where ngrok >nul 2>&1
 if %errorlevel% equ 0 (
-    ngrok config check >nul 2>&1
-    if !errorlevel! equ 0 (
-        start /b "" ngrok http 3000 >nul 2>&1
-        echo [OK] ngrok 已啟動
-    ) else (
-        echo [*] ngrok 尚未設定 authtoken，跳過隧道
-    )
-) else (
-    echo [*] ngrok 未安裝，跳過隧道
+    set "NGROK_CMD=ngrok"
+    goto :start_ngrok
+)
+if exist "%LOCALAPPDATA%\Microsoft\WinGet\Links\ngrok.exe" (
+    set "NGROK_CMD=%LOCALAPPDATA%\Microsoft\WinGet\Links\ngrok.exe"
+    goto :start_ngrok
+)
+for /d %%D in ("%LOCALAPPDATA%\Microsoft\WinGet\Packages\ngrok*") do (
+    if exist "%%D\ngrok.exe" set "NGROK_CMD=%%D\ngrok.exe"
 )
 
-:: ─── Step 5: 開啟瀏覽器 ────────────────
-echo [*] 正在開啟網頁...
-start /b "" cmd /c "start https://eric0724.github.io/agent/miniclaw/miniclaw-web/index.html"
+:start_ngrok
+if not defined NGROK_CMD (
+    echo [*] 找不到 ngrok，以本地模式繼續
+    goto :open_browser
+)
+:: 確認 authtoken 有設定才啟動隧道
+ngrok config check >nul 2>&1
+if !errorlevel! equ 0 (
+    start /b "" "!NGROK_CMD!" http 3000 >nul 2>&1
+    timeout /t 3 /nobreak >nul
+    echo [OK] ngrok 隧道已啟動
+) else (
+    echo [*] ngrok 尚未設定 authtoken，跳過隧道（本地模式）
+)
 
-:: ─── Step 6: 監控模式 ──────────────────
-:monitor
+:: ─── Step 4: 開啟瀏覽器 ─────────────────────
+:open_browser
+echo [*] 開啟瀏覽器...
+start /b "" cmd /c "start https://eric0724.github.io/agent/miniclaw/miniclaw-web/index.html"
 echo.
-echo [*] 進入監控模式，每 5 秒檢查 node.exe...
+
+:: ─── Step 5: 監控模式 ───────────────────────
+echo ============================================
+echo  ^>^> Miniclaw 執行中
+echo  監控 node.exe 每 5 秒一次
+echo  關閉此視窗以停止所有服務
+echo ============================================
 echo.
-echo  ============================================
-echo   Miniclaw is running.
-echo   Close this window to stop all services.
-echo  ============================================
 
 :monitor_loop
 timeout /t 5 /nobreak >nul
-
-:: 檢查 node.exe
 tasklist /fi "imagename eq node.exe" 2>nul | find /i "node.exe" >nul
-if !errorlevel! neq 0 (
-    echo [!] node.exe 已停止！
-    echo     將清理並重新啟動...
+if %errorlevel% neq 0 (
+    echo [!] node.exe 已停止！清理並重新啟動...
     taskkill /f /im ngrok.exe >nul 2>&1
     timeout /t 2 /nobreak >nul
     goto :startup
 )
-
 goto :monitor_loop

@@ -68,9 +68,25 @@ Miniclaw（小龍蝦）：一個讓玩家透過自然語言指令操控電腦的
 - 如果提示詞中有不清楚的地方，仍可提問確認，但不要推翻已確定的修改方向
 - 所有對話仍須遵守本文件的互動規則（步驟限制、時間戳、紀錄規則等）
 
-### 紀錄規則
-- 每次對話結束補一行 `[YYYY-MM-DD HH:MM] 關鍵字 | 關鍵字`（有改程式才記）
-- ai_talk.md 路徑：`_github_clone/agent/miniclaw/talk_ai/ai_talk.md`
+### 紀錄規則與兩級交接
+- **`ai_talk.md` (輕量入口 + 最新脈絡)**：
+  - 頂部【最新對話脈絡區塊】**僅保留最近 1 次對話**的「背景問題/原因分析/解決方案」，每次完成工作直接**覆蓋**，避免 Token 膨脹。
+  - 底部【對話紀錄】僅保留極簡單行 Index (`[YYYY-MM-DD HH:MM] 關鍵字`)。
+- **`grr.md` (全歷史重點庫)**：
+  - 每次工作完成時，將詳細對話脈絡**追加 (Append)** 到 `grr.md` 存檔。
+- **觸發條件（重要）**：
+  - **當玩家主動說「查看 aitalk」、「看 aitalk」或「看對話紀錄」時，AI 必須連同 `grr.md` 一併讀取**，以獲得完整歷史脈絡！
+
+---
+
+## 最新對話脈絡 (Latest Summary)
+
+- **【背景問題】**：玩家下載 `miniclaw-executor.zip` 時被瀏覽器/Windows Defender 判定為「疑似有病毒」阻擋下載；同時原啟動檔多視窗切換導致體驗不佳。
+- **【原因分析】**：新版 `server.js` (58KB) 包含 Process 管理、Skills 隊列與 taskkill 等自動化特徵觸發防毒誤判，非 .bat 檔之問題；舊版 `server.js` (26KB) 則無此問題。
+- **【解決方案】**：
+  1. **zip 解耦 server.js**：`_repack_local.ps1` 壓縮時排除 `server.js` (壓縮檔降至 20KB 乾淨免誤判)。
+  2. **openminiclaw.bat 自動下載**：啟動時若本地無 `server.js`，自動從 GitHub 遠端拉取最新版。
+  3. **合併腳本與 Registry 刷新**：將 `setup_ngrok.bat` 邏輯整合進 `openminiclaw.bat`，安裝 Node/ngrok 後從註冊表刷新 PATH，免重開視窗一條龍完成。
 
 ---
 
@@ -149,3 +165,4 @@ Miniclaw（小龍蝦）：一個讓玩家透過自然語言指令操控電腦的
 [2026-06-23 11:35] 完全重写openminiclaw.bat ngrok检测逻辑(移除for /d循环) | 执行_repack_local.ps1压缩 | index.html时间戳更新
 [2026-06-23 11:43] 简化openminiclaw.bat ngrok检测:找不到直接跳过 | 执行_repack_local.ps1压缩 | index.html时间戳更新
 [2026-06-23 11:48] 修复启动顺序:openminiclaw.bat不再自动开浏览器 | start_watch.bat确认node.exe启动后才开浏览器 | 执行_repack_local.ps1压缩 | index.html时间戳更新
+[2026-08-07 16:32] 合併openminiclaw/setup_ngrok與PATH免重開刷新 | 排除壓縮檔內server.js避免防毒誤判下載 | 實作openminiclaw自動遠端拉取server.js | index.html時間戳更新
