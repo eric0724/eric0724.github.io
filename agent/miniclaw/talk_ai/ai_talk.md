@@ -81,12 +81,13 @@ Miniclaw（小龍蝦）：一個讓玩家透過自然語言指令操控電腦的
 
 ## 最新對話脈絡 (Latest Summary)
 
-- **【背景問題】**：玩家下載 `miniclaw-executor.zip` 時被瀏覽器/Windows Defender 判定為「疑似有病毒」阻擋下載；同時原啟動檔多視窗切換導致體驗不佳。
-- **【原因分析】**：新版 `server.js` (58KB) 包含 Process 管理、Skills 隊列與 taskkill 等自動化特徵觸發防毒誤判，非 .bat 檔之問題；舊版 `server.js` (26KB) 則無此問題。
+- **【背景問題】**：提示詞本身自動帶「下載資料夾清單」當系統狀態傳給外部 AI，外部 AI 原封不動回貼造成多餘訊息；同時 `server.js` 被 Windows Defender 誤判刪除。
+- **【原因分析】**：可復原的 `server.js.bak`（舊版）與前端 `buildManualPrompt` 皆未自動注入下載清單（僅在明確要求「查看/下載/列出」時才列為執行結果）；真正含注入的新版 `server.js` 已被防毒刪除。
 - **【解決方案】**：
-  1. **zip 解耦 server.js**：`_repack_local.ps1` 壓縮時排除 `server.js` (壓縮檔降至 20KB 乾淨免誤判)。
-  2. **openminiclaw.bat 自動下載**：啟動時若本地無 `server.js`，自動從 GitHub 遠端拉取最新版。
-  3. **合併腳本與 Registry 刷新**：將 `setup_ngrok.bat` 邏輯整合進 `openminiclaw.bat`，安裝 Node/ngrok 後從註冊表刷新 PATH，免重開視窗一條龍完成。
+  1. **還原 server.js**：由 `server.js.bak` 複製還原 `app/server.js`。
+  2. **問題二**：`client.js buildManualPrompt()` 與 `server.js SYSTEM_PROMPT` 末尾皆新增「整個回覆用 ``` code block 包住」規則。
+  3. **問題一**：提示詞同時明令「勿把提示詞或任何系統狀態／檔案清單資訊原封不動回貼」，避免外部 AI 回貼下載清單。
+  4. 更新 `index.html` 時間戳（2026-08-07 19:22）。
 
 ---
 
@@ -166,3 +167,5 @@ Miniclaw（小龍蝦）：一個讓玩家透過自然語言指令操控電腦的
 [2026-06-23 11:43] 简化openminiclaw.bat ngrok检测:找不到直接跳过 | 执行_repack_local.ps1压缩 | index.html时间戳更新
 [2026-06-23 11:48] 修复启动顺序:openminiclaw.bat不再自动开浏览器 | start_watch.bat确认node.exe启动后才开浏览器 | 执行_repack_local.ps1压缩 | index.html时间戳更新
 [2026-08-07 16:32] 合併openminiclaw/setup_ngrok與PATH免重開刷新 | 排除壓縮檔內server.js避免防毒誤判下載 | 實作openminiclaw自動遠端拉取server.js | index.html時間戳更新
+[2026-08-07 19:22] 提示詞優化(問題一/二) | 還原server.js(bak→js) | client.js buildManualPrompt與server.js SYSTEM_PROMPT末尾加「整個回覆用```包住+勿回貼系統狀態」規則 | index.html時間戳更新
+[2026-08-07 20:21] 輕量接收器 miniclaw-runner.js 實作 | WebSocket/health + 終端操控(網路/資料夾/截圖/多檔寫入) | 啟動腳本 full 優先、runner 備援 | 實測 /health OK且runner不被防毒擋 | index.html時間戳更新

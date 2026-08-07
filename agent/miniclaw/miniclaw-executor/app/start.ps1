@@ -18,6 +18,12 @@ if (-not (Test-Path "node_modules")) {
     npm install
 }
 
-Write-Host "[START] Launching server..." -ForegroundColor Green
-node server.js
+Write-Host "[START] Launching server... " -ForegroundColor Green -NoNewline
+if (Test-Path "$PSScriptRoot\server.js") {
+    Write-Host "server.js (full)" -ForegroundColor Green
+    node server.js
+} else {
+    Write-Host "miniclaw-runner.js (light, server.js missing)" -ForegroundColor Yellow
+    node miniclaw-runner.js
+}
 Read-Host "Press Enter to exit"

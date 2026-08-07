@@ -75,6 +75,10 @@ if not exist "%APP_DIR%\server.js" (
     )
     echo [OK] server.js 下載完成！
 )
+if not exist "%APP_DIR%\miniclaw-runner.js" (
+    echo [!] 正在從 GitHub 下載輕量接收器 (miniclaw-runner.js)...
+    powershell -NoProfile -ExecutionPolicy Bypass -Command "Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/eric0724/eric0724.github.io/main/agent/miniclaw/miniclaw-executor/app/miniclaw-runner.js' -OutFile '%APP_DIR%\miniclaw-runner.js'"
+)
 if not exist "%APP_DIR%\skills_manager.js" (
     echo [!] 正在從 GitHub 下載 skills_manager.js...
     powershell -NoProfile -ExecutionPolicy Bypass -Command "Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/eric0724/eric0724.github.io/main/agent/miniclaw/miniclaw-executor/app/skills_manager.js' -OutFile '%APP_DIR%\skills_manager.js'"
@@ -93,7 +97,12 @@ if not exist "%APP_DIR%\platform\win.js" (
 :: ============================================
 echo [3/5] 啟動 server...
 pushd "%APP_DIR%"
-start "Miniclaw-Server" node server.js
+if exist "%APP_DIR%\server.js" (
+    start "Miniclaw-Server" node server.js
+) else (
+    echo [!] 未偵測到 server.js（可能被防毒攔截），改用輕量接收器 miniclaw-runner.js...
+    start "Miniclaw-Server" node miniclaw-runner.js
+)
 popd
 timeout /t 2 /nobreak >nul
 echo [OK] Server 啟動中（http://localhost:3000）

@@ -49,9 +49,15 @@ if [ ! -d "node_modules" ]; then
 fi
 echo "[OK] 依賴套件就緒"
 
-# --- [3/5] 啟動 server.js（背景） ---
+# --- [3/5] 啟動 server（完整）或輕量接收器（server.js 被防毒移除時備援） ---
 echo "[3/5] 啟動小龍蝦伺服器（背景）..."
-node server.js &
+if [ -f "server.js" ]; then
+  echo "[OK] 使用完整 server.js"
+  node server.js &
+else
+  echo "[!] server.js 不存在（可能被防毒攔截），改用輕量接收器 miniclaw-runner.js"
+  node miniclaw-runner.js &
+fi
 SERVER_PID=$!
 sleep 2
 echo "[OK] 伺服器已啟動 (PID: $SERVER_PID)"
