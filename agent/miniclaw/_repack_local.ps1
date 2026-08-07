@@ -10,6 +10,8 @@ Copy-Item $src $tmp -Recurse
 Remove-Item (Join-Path $tmp 'app\credentials\auth-profiles.json') -Force -ErrorAction SilentlyContinue
 Remove-Item (Join-Path $tmp 'app\server.js') -Force -ErrorAction SilentlyContinue
 Remove-Item (Join-Path $tmp 'app\skills_manager.js') -Force -ErrorAction SilentlyContinue
+Remove-Item (Join-Path $tmp 'app\platform') -Recurse -Force -ErrorAction SilentlyContinue
+Remove-Item (Join-Path $tmp 'app\scripts') -Recurse -Force -ErrorAction SilentlyContinue
 Remove-Item (Join-Path $tmp 'app\server.js.bak') -Force -ErrorAction SilentlyContinue
 Remove-Item (Join-Path $tmp 'app\node_modules') -Recurse -Force -ErrorAction SilentlyContinue
 
