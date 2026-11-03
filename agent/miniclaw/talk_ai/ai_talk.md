@@ -82,9 +82,9 @@ Miniclaw（小龍蝦）：一個讓玩家透過自然語言指令操控電腦的
 
 ## 最新對話脈絡 (Latest Summary)
 
-- **【背景問題】**：① server.js `/ollama-status` 只認 gemma3，用其他模型偵測失敗；② install-local-ai.bat LF 換行無 BOM 導致中文 echo 亂碼；③ openminiclaw.bat 長行在 zip 被折斷。
-- **【原因分析】**：server.js hasGemma 未隨 client.js 更新；bat 存成 LF 非 CRLF+BOM；Compress-Archive 折斷長行。
-- **【解決方案】**：① server.js ollama-status 改為 models.length > 0；② install-local-ai.bat 轉 CRLF+BOM；③ openminiclaw.bat 用 _RAW 變數縮短行長；④ 新增 stop_all.bat 和 uninstall.bat（選單式卸載）；⑤ index.html 下載按鈕下加說明；⑥ ai_talk.md 新增每個問題分開回答規則。repack zip，時間戳 2026-11-03 17:30。
+- **【背景問題】**：install-local-ai.bat @echo off 因雙 BOM 未生效；for 迴圈內指令被印出；fetchOllamaAPI 寫死 gemma3:3b 不讀 local_model.txt。
+- **【原因分析】**：多次修 BOM 造成重複；CMD echo 狀態在 for 迴圈後重置；fetchOllamaAPI 未同步更新。
+- **【解決方案】**：① Python 修正單一 BOM；② for 迴圈前加 @echo off；③ fetchOllamaAPI 改讀 local_model.txt（fallback gemma3:4b）。repack zip，時間戳 2026-11-03 18:30。
 
 ---
 
@@ -169,3 +169,5 @@ Miniclaw（小龍蝦）：一個讓玩家透過自然語言指令操控電腦的
 [2026-11-03 15:03] install-local-ai.bat移回根目錄(dev/刪除舊版) | 重寫bat(ollama list查詢+模型選單+儲存local_model.txt) | Ollama面板改三步驟UI+偵測按鈕改文字 | client.js接受任意模型+不自動跳步驟 | repack zip | index.html時間戳更新
 [2026-11-03 15:30] 修正openminiclaw.bat Step2.5巢狀if+mkdir CMD語法錯誤 | 改用if not exist path\ md指令 | repack zip(17KB) | index.html時間戳更新
 [2026-11-03 17:30] server.js ollama-status支援任意模型 | install-local-ai.bat CRLF+BOM修正 | openminiclaw.bat _RAW變數縮短行長 | 新增stop_all.bat+uninstall.bat | index.html下載按鈕加說明 | ai_talk.md新增分開回答規則
+[2026-11-03 18:30] install-local-ai.bat雙BOM修正(Python) | for迴圈前加@echo off | fetchOllamaAPI改讀local_model.txt
+[2026-11-03 18:30] install-local-ai.bat雙BOM修正(Python) | for迴圈前加@echo off | fetchOllamaAPI改讀local_model.txt
