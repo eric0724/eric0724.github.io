@@ -530,16 +530,20 @@ function setupStepEvents() {
 
   document.getElementById('btnDetectOllama').addEventListener('click', async () => {
     const resultBox = document.getElementById('ollamaDetectResult');
+    const detectBtn = document.getElementById('btnDetectOllama');
 
     resultBox.style.display = 'block';
     resultBox.style.background = 'rgba(255,102,0,0.1)';
     resultBox.style.border = '1px solid rgba(255,102,0,0.3)';
     resultBox.style.color = 'var(--neon-orange)';
     resultBox.innerHTML = '⏳ 正在偵測本地 AI...';
+    detectBtn.disabled = true;
 
     let ollamaReady = false;
     let modelList = [];
+    let chosenModel = '';
 
+    // 優先透過終端偵測
     if (webState.ngrokUrl && webState.isTerminalConnected) {
       try {
         const res = await fetch(`${webState.ngrokUrl}/ollama-status`, {
@@ -551,35 +555,48 @@ function setupStepEvents() {
       } catch (e) {}
     }
 
+    // 備援：直接打 localhost:11434
     if (!ollamaReady) {
       try {
         const res = await fetch('http://127.0.0.1:11434/api/tags');
         if (res.ok) {
           const data = await res.json();
           modelList = (data.models || []).map(m => m.name);
-          ollamaReady = modelList.some(m => m.includes('gemma3'));
+          ollamaReady = modelList.length > 0;
         }
       } catch (e) {}
     }
 
-    if (ollamaReady) {
+    detectBtn.disabled = false;
+
+    if (ollamaReady && modelList.length > 0) {
+      // 優先用 local_model.txt 記錄的模型，否則用第一個
+      chosenModel = modelList[0];
+
       resultBox.style.background = 'rgba(0,255,100,0.08)';
       resultBox.style.border = '1px solid rgba(0,255,100,0.3)';
       resultBox.style.color = 'var(--neon-green)';
-      resultBox.innerHTML = `✅ 本地 AI 偵測成功！模型：${modelList.join(', ')}<br>已綁定至小龍蝦，可作為備援 AI。`;
+      resultBox.innerHTML = `✅ 偵測成功！<br>
+        <span style="font-size:0.8rem;line-height:1.8;">
+          可用模型：<strong>${modelList.join('、')}</strong><br>
+          將使用：<strong style="color:var(--neon-cyan);">${chosenModel}</strong>
+        </span>`;
+
       webState.apiMode = 'ollama';
+      webState.ollamaModel = chosenModel;
       localStorage.setItem('miniclaw_api_mode', 'ollama');
       localStorage.setItem('miniclaw_ollama_ready', 'true');
+      localStorage.setItem('miniclaw_ollama_model', chosenModel);
       updateAIStatusUI();
       updatePanelBadge('ollama', true, '✅ 已驗證');
       updateStep2NextButton();
-      showToast('🖥️ 本地 AI 已綁定', '小龍蝦將優先使用本地 AI，不消耗任何點數！', '🦞');
-      setTimeout(() => { initWebSocketConnection(); goToStep(3); }, 800);
-    } else if (modelList.length > 0) {
+      showToast('🖥️ 本地 AI 已綁定', `小龍蝦將使用 ${chosenModel}，不消耗任何點數！`, '🦞');
+      // 不自動跳步驟，讓玩家自己按下一步
+    } else if (modelList.length === 0 && ollamaReady) {
       resultBox.style.background = 'rgba(255,102,0,0.1)';
       resultBox.style.border = '1px solid rgba(255,102,0,0.3)';
       resultBox.style.color = 'var(--neon-orange)';
-      resultBox.innerHTML = '⚠️ Ollama 已啟動，但找不到 gemma3 模型。請確認 install-local-ai.bat 已執行完成。';
+      resultBox.innerHTML = '⚠️ Ollama 已啟動，但尚未下載任何模型。<br><span style="font-size:0.8rem;">請回到 install-local-ai.bat 選擇並下載一個模型後再試。</span>';
     } else {
       resultBox.style.background = 'rgba(255,0,0,0.1)';
       resultBox.style.border = '1px solid rgba(255,0,0,0.3)';
@@ -587,7 +604,7 @@ function setupStepEvents() {
       resultBox.innerHTML = `❌ 未偵測到本地 AI。<br>
         <span style="font-size:0.8rem;line-height:1.8;">
         請確認：<br>
-        1. 已執行 <code>install-local-ai.bat</code> 且安裝完成<br>
+        1. 已執行 <code>install-local-ai.bat</code> 且完成選擇<br>
         2. 若使用終端模式，請先完成 Step 1 連線後再偵測<br>
         3. 若直接在本機開啟網頁（非 GitHub Pages），可直接偵測
         </span>`;

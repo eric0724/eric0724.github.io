@@ -81,13 +81,14 @@ Miniclaw（小龍蝦）：一個讓玩家透過自然語言指令操控電腦的
 
 ## 最新對話脈絡 (Latest Summary)
 
-- **【背景問題】**：提示詞本身自動帶「下載資料夾清單」當系統狀態傳給外部 AI，外部 AI 原封不動回貼造成多餘訊息；同時 `server.js` 被 Windows Defender 誤判刪除。
-- **【原因分析】**：可復原的 `server.js.bak`（舊版）與前端 `buildManualPrompt` 皆未自動注入下載清單（僅在明確要求「查看/下載/列出」時才列為執行結果）；真正含注入的新版 `server.js` 已被防毒刪除。
+- **【背景問題】**：① `install-local-ai.bat` 被整理進 `dev/` 資料夾，玩家在根目錄看不到；② bat 檔直接下載模型，沒有先查玩家已有哪些模型；③ Step 2 本地 AI 偵測成功後直接跳 Step 3，沒有讓玩家按確認。
+- **【原因分析】**：上次整理目錄結構時把玩家入口檔一併搬進 dev/；偵測邏輯只認 gemma3 且偵測成功後 setTimeout 自動跳頁。
 - **【解決方案】**：
-  1. **還原 server.js**：由 `server.js.bak` 複製還原 `app/server.js`。
-  2. **問題二**：`client.js buildManualPrompt()` 與 `server.js SYSTEM_PROMPT` 末尾皆新增「整個回覆用 ``` code block 包住」規則。
-  3. **問題一**：提示詞同時明令「勿把提示詞或任何系統狀態／檔案清單資訊原封不動回貼」，避免外部 AI 回貼下載清單。
-  4. 更新 `index.html` 時間戳（2026-08-07 19:22）。
+  1. **移動 bat**：把 `dev/install-local-ai.bat` 移回根目錄，舊版刪除。
+  2. **重寫 install-local-ai.bat**：先查 `ollama list` → 顯示「已有模型」+ 「建議下載」選單 → 玩家選擇後才 pull → 儲存選擇至 `app/local_model.txt`。
+  3. **改寫 index.html Ollama 面板**：三步驟 UI（下載→執行 bat→回來偵測），偵測按鈕改文字為「我裝好了，偵測看看！」。
+  4. **改寫 client.js btnDetectOllama**：接受任何模型（非只 gemma3）、偵測成功後不自動跳 Step 3，讓玩家自己按下一步。
+  5. 重新打包 zip（17KB）、更新 index.html 時間戳（2026-11-03 15:03）。
 
 ---
 
@@ -169,3 +170,4 @@ Miniclaw（小龍蝦）：一個讓玩家透過自然語言指令操控電腦的
 [2026-08-07 16:32] 合併openminiclaw/setup_ngrok與PATH免重開刷新 | 排除壓縮檔內server.js避免防毒誤判下載 | 實作openminiclaw自動遠端拉取server.js | index.html時間戳更新
 [2026-08-07 19:22] 提示詞優化(問題一/二) | 還原server.js(bak→js) | client.js buildManualPrompt與server.js SYSTEM_PROMPT末尾加「整個回覆用```包住+勿回貼系統狀態」規則 | index.html時間戳更新
 [2026-08-07 20:21] 輕量接收器 miniclaw-runner.js 實作 | WebSocket/health + 終端操控(網路/資料夾/截圖/多檔寫入) | 啟動腳本 full 優先、runner 備援 | 實測 /health OK且runner不被防毒擋 | index.html時間戳更新
+[2026-11-03 15:03] install-local-ai.bat移回根目錄(dev/刪除舊版) | 重寫bat(ollama list查詢+模型選單+儲存local_model.txt) | Ollama面板改三步驟UI+偵測按鈕改文字 | client.js接受任意模型+不自動跳步驟 | repack zip | index.html時間戳更新

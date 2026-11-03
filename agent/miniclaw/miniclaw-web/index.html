@@ -137,15 +137,47 @@
             </div>
             <div class="panel-body" id="panelBodyOllama">
               <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:14px;line-height:1.6;">
-                在你的電腦上跑 AI 模型，不需要任何 API Key，也不會消耗點數。需要先安裝 Ollama（約 2GB，只需下載一次）。<br>
+                在你的電腦上跑 AI 模型，不需要任何 API Key，也不會消耗點數。需要先安裝 Ollama（只需下載一次）。<br>
                 <span style="color:var(--neon-orange);font-size:0.8rem;">⚠️ 偵測方式：有終端 → 先完成 Step 1 連線再偵測；直接在本機開啟網頁 → 可直接偵測。</span>
               </p>
-              <a href="https://raw.githubusercontent.com/eric0724/eric0724.github.io/main/agent/miniclaw/miniclaw-executor.zip" class="cyber-btn muted" download="miniclaw-executor.zip" style="display:block;text-align:center;text-decoration:none;margin-bottom:10px;font-size:0.82rem;padding:8px;">
-                📥 下載執行器（內含 install-local-ai.bat）
-              </a>
-              <p style="font-size:0.8rem;color:var(--text-muted);margin-bottom:10px;">解壓縮後，點兩下 <code style="color:var(--neon-green);">install-local-ai.bat</code> 自動安裝。安裝完成後點下方按鈕偵測。</p>
-              <button class="cyber-btn orange" id="btnDetectOllama" style="width:100%;padding:10px;">🔍 偵測本地 AI</button>
-              <div id="ollamaDetectResult" style="display:none;margin-top:10px;padding:10px 14px;border-radius:8px;font-size:0.85rem;font-family:var(--font-mono);"></div>
+
+              <!-- 步驟 1：下載執行器 -->
+              <div style="background:rgba(0,0,0,0.25);border-radius:10px;padding:14px;margin-bottom:12px;border:1px solid rgba(255,255,255,0.07);">
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+                  <span style="background:var(--neon-orange);color:#000;font-weight:bold;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:0.8rem;">1</span>
+                  <strong style="color:#fff;font-size:0.88rem;">下載執行器（已下載可跳過）</strong>
+                </div>
+                <a href="https://raw.githubusercontent.com/eric0724/eric0724.github.io/main/agent/miniclaw/miniclaw-executor.zip" class="cyber-btn muted" download="miniclaw-executor.zip" style="display:block;text-align:center;text-decoration:none;font-size:0.82rem;padding:8px;">
+                  📥 下載 miniclaw-executor.zip
+                </a>
+              </div>
+
+              <!-- 步驟 2：執行 bat -->
+              <div style="background:rgba(57,255,20,0.05);border-radius:10px;padding:14px;margin-bottom:12px;border:1px solid rgba(57,255,20,0.2);">
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+                  <span style="background:var(--neon-green);color:#000;font-weight:bold;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:0.8rem;">2</span>
+                  <strong style="color:var(--neon-green);font-size:0.88rem;">解壓縮後點兩下啟動</strong>
+                </div>
+                <p style="font-size:0.8rem;color:var(--text-muted);margin-bottom:6px;line-height:1.7;">
+                  解壓後，在最外層資料夾找到 <code style="color:var(--neon-green);">install-local-ai.bat</code> 點兩下執行。<br>
+                  腳本會自動檢查你已有的模型，並讓你選擇要用哪一個（或下載新的）。
+                </p>
+                <div style="background:rgba(0,255,100,0.07);border:1px solid rgba(0,255,100,0.2);border-radius:6px;padding:8px 12px;font-size:0.79rem;color:var(--neon-green);">
+                  ✅ 看到「請回到小龍蝦網頁，點偵測按鈕」就代表完成了！
+                </div>
+              </div>
+
+              <!-- 步驟 3：偵測 -->
+              <div style="background:rgba(0,0,0,0.25);border-radius:10px;padding:14px;border:1px solid rgba(255,255,255,0.07);">
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+                  <span style="background:var(--neon-orange);color:#000;font-weight:bold;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:0.8rem;">3</span>
+                  <strong style="color:#fff;font-size:0.88rem;">回來後按這裡確認</strong>
+                </div>
+                <button class="cyber-btn orange" id="btnDetectOllama" style="width:100%;padding:10px;font-size:0.9rem;">
+                  ✅ 我裝好了，偵測看看！
+                </button>
+                <div id="ollamaDetectResult" style="display:none;margin-top:10px;padding:10px 14px;border-radius:8px;font-size:0.85rem;font-family:var(--font-mono);"></div>
+              </div>
             </div>
           </div>
 
@@ -946,7 +978,7 @@
   <!-- 固定底部資訊列 -->
   <div style="position:fixed;bottom:0;left:0;right:0;z-index:1001;background:rgba(6,5,11,0.92);backdrop-filter:blur(10px);border-top:1px solid rgba(255,102,0,0.2);padding:8px 20px;display:flex;justify-content:space-between;align-items:center;font-size:0.75rem;font-family:var(--font-mono);">
     <span style="color:var(--text-muted);">💬 有任何問題或意見，歡迎聯絡：<a href="mailto:eric940724@gmail.com" style="color:var(--neon-cyan);text-decoration:none;">eric940724@gmail.com</a></span>
-    <span style="color:#ffffff;">上次更新：2026-08-07 20:21</span>
+    <span style="color:#ffffff;">上次更新：2026-11-03 15:03</span>
   </div>
 
   <!-- 前端引導邏輯與通訊協定 -->
