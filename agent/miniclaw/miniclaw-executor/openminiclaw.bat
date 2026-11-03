@@ -68,7 +68,8 @@ echo [2.5/5] 檢查伺服器核心檔 (server.js)...
 
 if exist "%APP_DIR%\server.js" goto :skip_server
 echo [!] 本地缺乏 server.js，正在從 GitHub 下載最新版本...
-powershell -NoProfile -ExecutionPolicy Bypass -Command "Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/eric0724/eric0724.github.io/main/agent/miniclaw/miniclaw-executor/app/server.js' -OutFile '%APP_DIR%\server.js'"
+set "_RAW=https://raw.githubusercontent.com/eric0724/eric0724.github.io/main/agent/miniclaw/miniclaw-executor/app"
+powershell -NoProfile -ExecutionPolicy Bypass -Command "Invoke-WebRequest -Uri '%_RAW%/server.js' -OutFile '%APP_DIR%\server.js'"
 if exist "%APP_DIR%\server.js" goto :server_ok
 echo [X] server.js 下載失敗！請確認網路連線。
 pause
@@ -79,21 +80,21 @@ echo [OK] server.js 下載完成！
 
 if exist "%APP_DIR%\miniclaw-runner.js" goto :skip_runner
 echo [!] 正在從 GitHub 下載輕量接收器 (miniclaw-runner.js)...
-powershell -NoProfile -ExecutionPolicy Bypass -Command "Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/eric0724/eric0724.github.io/main/agent/miniclaw/miniclaw-executor/app/miniclaw-runner.js' -OutFile '%APP_DIR%\miniclaw-runner.js'"
+powershell -NoProfile -ExecutionPolicy Bypass -Command "Invoke-WebRequest -Uri '%_RAW%/miniclaw-runner.js' -OutFile '%APP_DIR%\miniclaw-runner.js'"
 :skip_runner
 
 if exist "%APP_DIR%\skills_manager.js" goto :skip_skills
 echo [!] 正在從 GitHub 下載 skills_manager.js...
-powershell -NoProfile -ExecutionPolicy Bypass -Command "Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/eric0724/eric0724.github.io/main/agent/miniclaw/miniclaw-executor/app/skills_manager.js' -OutFile '%APP_DIR%\skills_manager.js'"
+powershell -NoProfile -ExecutionPolicy Bypass -Command "Invoke-WebRequest -Uri '%_RAW%/skills_manager.js' -OutFile '%APP_DIR%\skills_manager.js'"
 :skip_skills
 
 if exist "%APP_DIR%\platform\win.js" goto :skip_platform
 echo [!] 正在拉取 platform 模組...
 if not exist "%APP_DIR%\platform" md "%APP_DIR%\platform"
-powershell -NoProfile -ExecutionPolicy Bypass -Command "Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/eric0724/eric0724.github.io/main/agent/miniclaw/miniclaw-executor/app/platform/win.js' -OutFile '%APP_DIR%\platform\win.js'"
-powershell -NoProfile -ExecutionPolicy Bypass -Command "Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/eric0724/eric0724.github.io/main/agent/miniclaw/miniclaw-executor/app/platform/mac.js' -OutFile '%APP_DIR%\platform\mac.js'"
-powershell -NoProfile -ExecutionPolicy Bypass -Command "Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/eric0724/eric0724.github.io/main/agent/miniclaw/miniclaw-executor/app/platform/linux.js' -OutFile '%APP_DIR%\platform\linux.js'"
-powershell -NoProfile -ExecutionPolicy Bypass -Command "Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/eric0724/eric0724.github.io/main/agent/miniclaw/miniclaw-executor/app/platform/android.js' -OutFile '%APP_DIR%\platform\android.js'"
+powershell -NoProfile -ExecutionPolicy Bypass -Command "Invoke-WebRequest -Uri '%_RAW%/platform/win.js' -OutFile '%APP_DIR%\platform\win.js'"
+powershell -NoProfile -ExecutionPolicy Bypass -Command "Invoke-WebRequest -Uri '%_RAW%/platform/mac.js' -OutFile '%APP_DIR%\platform\mac.js'"
+powershell -NoProfile -ExecutionPolicy Bypass -Command "Invoke-WebRequest -Uri '%_RAW%/platform/linux.js' -OutFile '%APP_DIR%\platform\linux.js'"
+powershell -NoProfile -ExecutionPolicy Bypass -Command "Invoke-WebRequest -Uri '%_RAW%/platform/android.js' -OutFile '%APP_DIR%\platform\android.js'"
 :skip_platform
 
 :: ============================================
