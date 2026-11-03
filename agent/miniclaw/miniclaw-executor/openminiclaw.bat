@@ -65,27 +65,29 @@ if not exist "%APP_DIR%\node_modules" (
 :: Step 2.5: 下載 / 更新 server.js 與核心 JS
 :: ============================================
 echo [2.5/5] 檢查伺服器核心檔 (server.js)...
-if not exist "%APP_DIR%\server.js" (
-    echo [!] 本地缺乏 server.js，正在從 GitHub 下載最新版本...
-    powershell -NoProfile -ExecutionPolicy Bypass -Command "Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/eric0724/eric0724.github.io/main/agent/miniclaw/miniclaw-executor/app/server.js' -OutFile '%APP_DIR%\server.js'"
-    if not exist "%APP_DIR%\server.js" (
-        echo [X] server.js 下載失敗！請確認網路連線。
-        pause
-        exit /b 1
-    )
-    echo [OK] server.js 下載完成！
-)
-if not exist "%APP_DIR%\miniclaw-runner.js" (
-    echo [!] 正在從 GitHub 下載輕量接收器 (miniclaw-runner.js)...
-    powershell -NoProfile -ExecutionPolicy Bypass -Command "Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/eric0724/eric0724.github.io/main/agent/miniclaw/miniclaw-executor/app/miniclaw-runner.js' -OutFile '%APP_DIR%\miniclaw-runner.js'"
-)
-if not exist "%APP_DIR%\skills_manager.js" (
-    echo [!] 正在從 GitHub 下載 skills_manager.js...
-    powershell -NoProfile -ExecutionPolicy Bypass -Command "Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/eric0724/eric0724.github.io/main/agent/miniclaw/miniclaw-executor/app/skills_manager.js' -OutFile '%APP_DIR%\skills_manager.js'"
-)
-if not exist "%APP_DIR%\platform\win.js" goto :download_platform
-goto :skip_platform
-:download_platform
+
+if exist "%APP_DIR%\server.js" goto :skip_server
+echo [!] 本地缺乏 server.js，正在從 GitHub 下載最新版本...
+powershell -NoProfile -ExecutionPolicy Bypass -Command "Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/eric0724/eric0724.github.io/main/agent/miniclaw/miniclaw-executor/app/server.js' -OutFile '%APP_DIR%\server.js'"
+if exist "%APP_DIR%\server.js" goto :server_ok
+echo [X] server.js 下載失敗！請確認網路連線。
+pause
+exit /b 1
+:server_ok
+echo [OK] server.js 下載完成！
+:skip_server
+
+if exist "%APP_DIR%\miniclaw-runner.js" goto :skip_runner
+echo [!] 正在從 GitHub 下載輕量接收器 (miniclaw-runner.js)...
+powershell -NoProfile -ExecutionPolicy Bypass -Command "Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/eric0724/eric0724.github.io/main/agent/miniclaw/miniclaw-executor/app/miniclaw-runner.js' -OutFile '%APP_DIR%\miniclaw-runner.js'"
+:skip_runner
+
+if exist "%APP_DIR%\skills_manager.js" goto :skip_skills
+echo [!] 正在從 GitHub 下載 skills_manager.js...
+powershell -NoProfile -ExecutionPolicy Bypass -Command "Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/eric0724/eric0724.github.io/main/agent/miniclaw/miniclaw-executor/app/skills_manager.js' -OutFile '%APP_DIR%\skills_manager.js'"
+:skip_skills
+
+if exist "%APP_DIR%\platform\win.js" goto :skip_platform
 echo [!] 正在拉取 platform 模組...
 if not exist "%APP_DIR%\platform" md "%APP_DIR%\platform"
 powershell -NoProfile -ExecutionPolicy Bypass -Command "Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/eric0724/eric0724.github.io/main/agent/miniclaw/miniclaw-executor/app/platform/win.js' -OutFile '%APP_DIR%\platform\win.js'"
