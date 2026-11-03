@@ -1019,12 +1019,22 @@ async function fetchOpenRouterAPI(prompt, key, model) {
 }
 
 async function fetchOllamaAPI(prompt) {
+  // 讀取玩家選擇的模型，fallback 到 gemma3:4b
+  let ollamaModel = 'gemma3:4b';
+  try {
+    const modelFile = path.join(__dirname, 'local_model.txt');
+    if (fs.existsSync(modelFile)) {
+      const m = fs.readFileSync(modelFile, 'utf8').trim();
+      if (m) ollamaModel = m;
+    }
+  } catch(e) {}
+  console.log('[Ollama] 使用模型:', ollamaModel);
   const url = 'http://127.0.0.1:11434/api/generate';
   const response = await fetchWithTimeout(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      model: 'gemma3:3b',
+      model: ollamaModel,
       prompt: `${SYSTEM_PROMPT}\n\n使用者指令: ${prompt} (請簡明扼要，控制在 100 字內)`,
       stream: false
     })
