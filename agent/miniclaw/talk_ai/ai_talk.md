@@ -170,4 +170,3 @@ Miniclaw（小龍蝦）：一個讓玩家透過自然語言指令操控電腦的
 [2026-11-03 15:30] 修正openminiclaw.bat Step2.5巢狀if+mkdir CMD語法錯誤 | 改用if not exist path\ md指令 | repack zip(17KB) | index.html時間戳更新
 [2026-11-03 17:30] server.js ollama-status支援任意模型 | install-local-ai.bat CRLF+BOM修正 | openminiclaw.bat _RAW變數縮短行長 | 新增stop_all.bat+uninstall.bat | index.html下載按鈕加說明 | ai_talk.md新增分開回答規則
 [2026-11-03 18:30] install-local-ai.bat雙BOM修正(Python) | for迴圈前加@echo off | fetchOllamaAPI改讀local_model.txt
-[2026-11-03 18:30] install-local-ai.bat雙BOM修正(Python) | for迴圈前加@echo off | fetchOllamaAPI改讀local_model.txt

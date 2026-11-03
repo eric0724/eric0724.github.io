@@ -474,3 +474,30 @@ performHealthCheck() 執行
 - `miniclaw-web/index.html` 時間戳（2026-08-07 20:21）
 
 
+
+
+---
+
+## 本次完成：[2026-11-03] Ollama 本地 AI 全面修復
+
+### 問題與修復清單
+1. **openminiclaw.bat Step2.5 語法錯誤**：括號內巢狀 if/mkdir、貨幣在 zip 被折行 → 改用 goto label + _RAW 變數縮短行長
+2. **install-local-ai.bat 編碼問題**：雙 BOM 導致 @echo off 未生效，for 迢圈內指令被印出 → Python 修正單一 BOM，迢圈前加 @echo off
+3. **server.js ollama-status 只認 gemma3**：導致其他模型偵測失敗 → 改為 models.length > 0
+4. **server.js fetchOllamaAPI 寫死 gemma3:3b**：不讀 local_model.txt → 改讀檔，fallback gemma3:4b
+5. **新增 stop_all.bat + uninstall.bat**：關閉所有服務 / 選單式卸載
+6. **index.html**：下載按鈕下加 stop_all/uninstall 說明文字，時間戳更新為 2026-11-03 18:30
+7. **ai_talk.md**：新增「每個問題分開回答」規則
+
+
+---
+
+## [2026-11-03] Ollama 本地 AI 全面修復
+
+1. openminiclaw.bat Step2.5 語法錯誤：巢狀 if/mkdir、行折斷 → goto label + _RAW 變數
+2. install-local-ai.bat 雙 BOM：@echo off 未生效、for 迴圈印出指令 → Python 修正單 BOM + 加 @echo off
+3. server.js ollama-status 只認 gemma3 → models.length > 0
+4. fetchOllamaAPI 寫死 gemma3:3b → 改讀 local_model.txt，fallback gemma3:4b
+5. 新增 stop_all.bat、uninstall.bat（選單式）
+6. index.html 下載按鈕下加說明文字，時間戳 2026-11-03 18:30
+7. ai_talk.md 新增每個問題分開回答規則
