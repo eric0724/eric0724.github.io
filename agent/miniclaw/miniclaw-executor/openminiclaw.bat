@@ -85,7 +85,7 @@ if not exist "%APP_DIR%\skills_manager.js" (
 )
 if not exist "%APP_DIR%\platform\win.js" (
     echo [!] 正在拉取 platform 模組...
-    if not exist "%APP_DIR%\platform" mkdir "%APP_DIR%\platform"
+    if not exist "%APP_DIR%\platform\" md "%APP_DIR%\platform"
     powershell -NoProfile -ExecutionPolicy Bypass -Command "Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/eric0724/eric0724.github.io/main/agent/miniclaw/miniclaw-executor/app/platform/win.js' -OutFile '%APP_DIR%\platform\win.js'"
     powershell -NoProfile -ExecutionPolicy Bypass -Command "Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/eric0724/eric0724.github.io/main/agent/miniclaw/miniclaw-executor/app/platform/mac.js' -OutFile '%APP_DIR%\platform\mac.js'"
     powershell -NoProfile -ExecutionPolicy Bypass -Command "Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/eric0724/eric0724.github.io/main/agent/miniclaw/miniclaw-executor/app/platform/linux.js' -OutFile '%APP_DIR%\platform\linux.js'"

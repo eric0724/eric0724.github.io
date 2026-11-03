@@ -81,14 +81,9 @@ Miniclaw（小龍蝦）：一個讓玩家透過自然語言指令操控電腦的
 
 ## 最新對話脈絡 (Latest Summary)
 
-- **【背景問題】**：① `install-local-ai.bat` 被整理進 `dev/` 資料夾，玩家在根目錄看不到；② bat 檔直接下載模型，沒有先查玩家已有哪些模型；③ Step 2 本地 AI 偵測成功後直接跳 Step 3，沒有讓玩家按確認。
-- **【原因分析】**：上次整理目錄結構時把玩家入口檔一併搬進 dev/；偵測邏輯只認 gemma3 且偵測成功後 setTimeout 自動跳頁。
-- **【解決方案】**：
-  1. **移動 bat**：把 `dev/install-local-ai.bat` 移回根目錄，舊版刪除。
-  2. **重寫 install-local-ai.bat**：先查 `ollama list` → 顯示「已有模型」+ 「建議下載」選單 → 玩家選擇後才 pull → 儲存選擇至 `app/local_model.txt`。
-  3. **改寫 index.html Ollama 面板**：三步驟 UI（下載→執行 bat→回來偵測），偵測按鈕改文字為「我裝好了，偵測看看！」。
-  4. **改寫 client.js btnDetectOllama**：接受任何模型（非只 gemma3）、偵測成功後不自動跳 Step 3，讓玩家自己按下一步。
-  5. 重新打包 zip（17KB）、更新 index.html 時間戳（2026-11-03 15:03）。
+- **【背景問題】**：`openminiclaw.bat` Step 2.5 執行時出現 `... was unexpected at this time.` 錯誤，卡在下載 platform 模組那段。
+- **【原因分析】**：括號區塊內有巢狀 `if not exist ... mkdir`，CMD 解析時產生語法衝突。
+- **【解決方案】**：將 `if not exist "%APP_DIR%\platform" mkdir` 改為 `if not exist "%APP_DIR%\platform\" md`，用 `\` 結尾判斷資料夾、改用 `md` 指令，避免 CMD 解析歧義。重新 repack zip（17KB）、更新 index.html 時間戳（2026-11-03 15:30）。
 
 ---
 
@@ -171,3 +166,4 @@ Miniclaw（小龍蝦）：一個讓玩家透過自然語言指令操控電腦的
 [2026-08-07 19:22] 提示詞優化(問題一/二) | 還原server.js(bak→js) | client.js buildManualPrompt與server.js SYSTEM_PROMPT末尾加「整個回覆用```包住+勿回貼系統狀態」規則 | index.html時間戳更新
 [2026-08-07 20:21] 輕量接收器 miniclaw-runner.js 實作 | WebSocket/health + 終端操控(網路/資料夾/截圖/多檔寫入) | 啟動腳本 full 優先、runner 備援 | 實測 /health OK且runner不被防毒擋 | index.html時間戳更新
 [2026-11-03 15:03] install-local-ai.bat移回根目錄(dev/刪除舊版) | 重寫bat(ollama list查詢+模型選單+儲存local_model.txt) | Ollama面板改三步驟UI+偵測按鈕改文字 | client.js接受任意模型+不自動跳步驟 | repack zip | index.html時間戳更新
+[2026-11-03 15:30] 修正openminiclaw.bat Step2.5巢狀if+mkdir CMD語法錯誤 | 改用if not exist path\ md指令 | repack zip(17KB) | index.html時間戳更新
