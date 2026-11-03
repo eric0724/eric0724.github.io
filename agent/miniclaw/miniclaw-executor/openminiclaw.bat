@@ -65,10 +65,10 @@ if not exist "%APP_DIR%\node_modules" (
 :: Step 2.5: 下載 / 更新 server.js 與核心 JS
 :: ============================================
 echo [2.5/5] 檢查伺服器核心檔 (server.js)...
+set "_RAW=https://raw.githubusercontent.com/eric0724/eric0724.github.io/main/agent/miniclaw/miniclaw-executor/app"
 
 if exist "%APP_DIR%\server.js" goto :skip_server
 echo [!] 本地缺乏 server.js，正在從 GitHub 下載最新版本...
-set "_RAW=https://raw.githubusercontent.com/eric0724/eric0724.github.io/main/agent/miniclaw/miniclaw-executor/app"
 powershell -NoProfile -ExecutionPolicy Bypass -Command "Invoke-WebRequest -Uri '%_RAW%/server.js' -OutFile '%APP_DIR%\server.js'"
 if exist "%APP_DIR%\server.js" goto :server_ok
 echo [X] server.js 下載失敗！請確認網路連線。
