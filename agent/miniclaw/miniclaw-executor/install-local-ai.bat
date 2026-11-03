@@ -60,6 +60,7 @@ echo.
 set "HAVE_MODELS=0"
 set "MODEL_COUNT=0"
 
+@echo off
 for /f "skip=1 tokens=1" %%M in ('ollama list 2^>nul') do (
   set /a MODEL_COUNT+=1
   set "EXISTING_!MODEL_COUNT!=%%M"
