@@ -1,4 +1,4 @@
-# Miniclaw AI 對話紀錄
+﻿# Miniclaw AI 對話紀錄
 
 > 每次新對話開始時請先讀此檔。
 
@@ -54,6 +54,7 @@ Miniclaw（小龍蝦）：一個讓玩家透過自然語言指令操控電腦的
 - **Git 指令：** `"C:\Program Files\Git\bin\git.exe"`
 - **Repo：** `https://github.com/eric0724/eric0724.github.io.git`
 - **Pull 後：** 必須先讀 ai_talk.md 了解背景再繼續
+- **每個問題分開回答：** 玩家每個問號（或每個獨立問題）都算一個問題，AI 必須逐一分開回答或解釋，可以一起處理但要分開說明
 
 ### 提示詞助手（Prompt Assistant）工作流程
 玩家現在會使用 **另一個 AI** 來輔助整理與優化提示詞，再將最終版本傳遞給主要執行 AI（你或其他 Agent）進行檔案修改。
@@ -81,9 +82,9 @@ Miniclaw（小龍蝦）：一個讓玩家透過自然語言指令操控電腦的
 
 ## 最新對話脈絡 (Latest Summary)
 
-- **【背景問題】**：`openminiclaw.bat` Step 2.5 執行時出現 `... was unexpected at this time.` 錯誤，卡在下載 platform 模組那段。
-- **【原因分析】**：括號區塊內有巢狀 `if not exist ... mkdir`，CMD 解析時產生語法衝突。
-- **【解決方案】**：將 `if not exist "%APP_DIR%\platform" mkdir` 改為 `if not exist "%APP_DIR%\platform\" md`，用 `\` 結尾判斷資料夾、改用 `md` 指令，避免 CMD 解析歧義。重新 repack zip（17KB）、更新 index.html 時間戳（2026-11-03 15:30）。
+- **【背景問題】**：① server.js `/ollama-status` 只認 gemma3，用其他模型偵測失敗；② install-local-ai.bat LF 換行無 BOM 導致中文 echo 亂碼；③ openminiclaw.bat 長行在 zip 被折斷。
+- **【原因分析】**：server.js hasGemma 未隨 client.js 更新；bat 存成 LF 非 CRLF+BOM；Compress-Archive 折斷長行。
+- **【解決方案】**：① server.js ollama-status 改為 models.length > 0；② install-local-ai.bat 轉 CRLF+BOM；③ openminiclaw.bat 用 _RAW 變數縮短行長；④ 新增 stop_all.bat 和 uninstall.bat（選單式卸載）；⑤ index.html 下載按鈕下加說明；⑥ ai_talk.md 新增每個問題分開回答規則。repack zip，時間戳 2026-11-03 17:30。
 
 ---
 
@@ -167,3 +168,4 @@ Miniclaw（小龍蝦）：一個讓玩家透過自然語言指令操控電腦的
 [2026-08-07 20:21] 輕量接收器 miniclaw-runner.js 實作 | WebSocket/health + 終端操控(網路/資料夾/截圖/多檔寫入) | 啟動腳本 full 優先、runner 備援 | 實測 /health OK且runner不被防毒擋 | index.html時間戳更新
 [2026-11-03 15:03] install-local-ai.bat移回根目錄(dev/刪除舊版) | 重寫bat(ollama list查詢+模型選單+儲存local_model.txt) | Ollama面板改三步驟UI+偵測按鈕改文字 | client.js接受任意模型+不自動跳步驟 | repack zip | index.html時間戳更新
 [2026-11-03 15:30] 修正openminiclaw.bat Step2.5巢狀if+mkdir CMD語法錯誤 | 改用if not exist path\ md指令 | repack zip(17KB) | index.html時間戳更新
+[2026-11-03 17:30] server.js ollama-status支援任意模型 | install-local-ai.bat CRLF+BOM修正 | openminiclaw.bat _RAW變數縮短行長 | 新增stop_all.bat+uninstall.bat | index.html下載按鈕加說明 | ai_talk.md新增分開回答規則

@@ -1,4 +1,4 @@
-/* 警告：必須遵守 RULES_MINI.md 規範，嚴禁隨意變更此防線！ */
+﻿/* 警告：必須遵守 RULES_MINI.md 規範，嚴禁隨意變更此防線！ */
 
 const http = require('http');
 const fs = require('fs');
@@ -234,9 +234,8 @@ const server = http.createServer((req, res) => {
       .then(r => r.json())
       .then(data => {
         const models = (data.models || []).map(m => m.name);
-        const hasGemma = models.some(m => m.includes('gemma3'));
         res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ running: true, models, ready: hasGemma }));
+        res.end(JSON.stringify({ running: true, models, ready: models.length > 0 }));
       })
       .catch(() => {
         res.writeHead(200, { 'Content-Type': 'application/json' });
