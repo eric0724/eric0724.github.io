@@ -1,4 +1,4 @@
-﻿@echo off
+﻿﻿@echo off
 chcp 65001 >nul
 echo ============================================
 echo   Miniclaw - 停止所有服務
